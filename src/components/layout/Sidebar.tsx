@@ -1,48 +1,91 @@
 "use client";
-
-import { cn } from "@/utils/lib/utils";
 import {
-  AlignJustify,
-  ChevronsLeft,
-  LayoutGrid,
-  TrainFront,
+  Database,
+  LayoutGridIcon,
+  LogOut,
+  TrainFrontIcon,
+  User,
+  Wrench,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import TooltipComponents from "../features/tooltip/TooltipComponent";
+import { usePathname } from "next/navigation";
 
 type Props = {};
 
-export default function Sidebar({}: Props) {
-  const [isOpen, setisOpen] = useState<boolean>(false);
-
+export default function Sidebar() {
+  const pathname = usePathname();
   return (
-    <aside
-      className={cn(
-        `fixed min-h-screen bg-slate-800 flex flex-col px-5 py-7 z-10 space-y-10 items-center transition-all duration-300 ease-in-out`,
-        isOpen ? `w-60` : `w-16`
-      )}
-    >
-      <div className="w-full flex h-20 justify-between ">
-        <Image
-          src="/logo-fastpec.png"
-          alt="Logo"
-          width={100}
-          height={50}
-          className={`${!isOpen ? "hidden" : ""} w-[130px] object-contain`}
-        />
-        <button className="text-white" onClick={() => setisOpen(!isOpen)}>
-          {isOpen ? <ChevronsLeft size={28} /> : <AlignJustify size={28} />}
-        </button>
-      </div>
-      <nav className="w-full space-y-10">
-        <div className="space-y-5">
-          <Link href="/" className={cn(`text-white inline-block `)}>
-            <div className="flex items-center gap-3 ">
-              <LayoutGrid size={30} />
-              {isOpen ? "Dashboard" : ""}
-            </div>
-          </Link>
+    <aside className="h-screen fixed top-0 left-0 bottom-0 ">
+      <nav className="w-16 text-slate-600 h-full border-r py-10 flex item-center flex-col shadow-sm justify-between">
+        <div className="flex flex-col gap-3">
+          <TooltipComponents content="Dashboard">
+            <Link href="/" className="flex justify-center">
+              <div
+                className={`p-2 hover:bg-primary ${
+                  pathname == "/" ? "bg-primary text-white" : ""
+                } hover:text-white rounded-lg`}
+              >
+                <LayoutGridIcon size={25} />
+              </div>
+            </Link>
+          </TooltipComponents>
+          <div className="mt-10 space-y-2">
+            <TooltipComponents content="Stasiun">
+              <Link href="/stasiun" className="flex justify-center">
+                <div
+                  className={`p-2 hover:bg-primary ${
+                    pathname == "/stasiun" ? "bg-primary text-white" : ""
+                  } hover:text-white rounded-lg`}
+                >
+                  <TrainFrontIcon size={25} />
+                </div>
+              </Link>
+            </TooltipComponents>
+            <TooltipComponents content="User">
+              <Link href="/user" className="flex justify-center">
+                <div
+                  className={`p-2 hover:bg-primary ${
+                    pathname == "/user" ? "bg-primary text-white" : ""
+                  } hover:text-white rounded-lg`}
+                >
+                  <User size={25} />
+                </div>
+              </Link>
+            </TooltipComponents>
+            <TooltipComponents content="Mesin">
+              <Link href="/mesin" className="flex justify-center">
+                <div
+                  className={`p-2 hover:bg-primary ${
+                    pathname == "/mesin" ? "bg-primary text-white" : ""
+                  } hover:text-white rounded-lg`}
+                >
+                  <Wrench size={25} />
+                </div>
+              </Link>
+            </TooltipComponents>
+
+            <TooltipComponents content="Database">
+              <Link href="/database" className="flex justify-center">
+                <div
+                  className={`p-2 hover:bg-primary ${
+                    pathname == "/database" ? "bg-primary text-white" : ""
+                  } hover:text-white rounded-lg`}
+                >
+                  <Database size={25} />
+                </div>
+              </Link>
+            </TooltipComponents>
+          </div>
+        </div>
+        <div className="">
+          <TooltipComponents content="Logout" classname="bg-danger">
+            <Link href="/" className="flex justify-center">
+              <div className="p-2 hover:bg-danger hover:text-white rounded-lg">
+                <LogOut size={25} />
+              </div>
+            </Link>
+          </TooltipComponents>
         </div>
       </nav>
     </aside>
