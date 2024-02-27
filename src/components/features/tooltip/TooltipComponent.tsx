@@ -17,13 +17,15 @@ export default function TooltipComponents({
   classname,
 }: Props) {
   return (
-    <TooltipProvider>
-      <Tooltip delayDuration={200}>
-        <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent side="right" className={classname}>
-          <p>{content}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div className="">
+      <TooltipProvider>
+        <Tooltip delayDuration={200}>
+          <TooltipTrigger asChild>{children}</TooltipTrigger>
+          <TooltipContent side="right" className={classname}>
+            <p>{content}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
   );
 }
