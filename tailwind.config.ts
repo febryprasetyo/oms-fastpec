@@ -20,7 +20,11 @@ const config = {
     extend: {
       colors: {
         primary: "#3b82f6",
+        hover: "#1e40af",
         danger: "#f43f5e",
+        dark: "#0c0d11",
+        darkSecondary: "#1a1b20 ",
+        dark_accent: "#27272a",
       },
       keyframes: {
         "accordion-down": {

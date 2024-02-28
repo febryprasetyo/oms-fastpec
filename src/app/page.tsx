@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="pl-20 py-5 px-5 sm:px-10 sm:pl-24">
+    <>
       <section className="">
         <h1 className="text-3xl font-semibold">List Stasiun</h1>
         <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 py-6">
@@ -28,6 +28,6 @@ export default function Home() {
           />
         </div>
       </section>
-    </main>
+    </>
   );
 }
