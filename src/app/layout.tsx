@@ -3,6 +3,8 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
+import { NextThemesProvider } from "@/services/providers/NextThemeProvider";
+import MainContainer from "@/components/layout/MainContainer";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -21,10 +23,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${poppins.className} bg-slate-50 text-slate-700`}>
-        <Sidebar />
-        <Header />
-        {children}
+      <body
+        className={`${poppins.className} bg-slate-50 text-slate-700 dark:bg-dark dark:text-white`}
+      >
+        <NextThemesProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Sidebar />
+          <Header />
+          <MainContainer>{children}</MainContainer>
+        </NextThemesProvider>
       </body>
     </html>
   );
