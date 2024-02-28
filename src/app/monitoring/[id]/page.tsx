@@ -9,7 +9,7 @@ type Props = {
 
 export default function page({ params: { id } }: Props) {
   return (
-    <main className="pl-20 py-5 px-5 sm:px-10 sm:pl-24">
+    <>
       <section className="">
         <h1 className="text-3xl font-semibold">Id Stasiun : {id}</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 py-7 gap-4">
@@ -75,6 +75,6 @@ export default function page({ params: { id } }: Props) {
           />
         </div>
       </section>
-    </main>
+    </>
   );
 }
