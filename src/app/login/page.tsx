@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 export default function Login() {
   return (
-    <main className="min-h-screen w-full overflow-x-hidden lg:grid lg:grid-cols-2 flex justify-center items-center bg-white dark:bg-dark dark:text-white">
+    <>
       <section className="px-10 sm:px-20 space-y-8 w-full py-10 lg:col-start-1 col-end-2">
         <div className="w-fit mx-auto px-3 py-2 rounded-xl mb-6">
           <Image
@@ -36,6 +36,6 @@ export default function Login() {
         </form>
       </section>
       <section className="hidden w-full lg:flex bg-slate-500 h-screen lg:col-start-2 lg:col-end-3 bg-login"></section>
-    </main>
+    </>
   );
 }
