@@ -4,7 +4,7 @@ import {
   Database,
   LayoutGridIcon,
   LogOut,
-  TrainFrontIcon,
+  Settings,
   User,
   Wrench,
 } from "lucide-react";
@@ -65,7 +65,7 @@ export default function Sidebar() {
                         pathname == "/stasiun" ? "bg-primary text-white" : ""
                       } hover:text-white rounded-lg`}
                     >
-                      <TrainFrontIcon size={25} />
+                      <Settings size={25} />
                     </div>
                   </Link>
                 </TooltipComponents>

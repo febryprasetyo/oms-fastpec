@@ -1,10 +1,11 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import FastpecLogo from "/public/logo.png";
-import { Button } from "@/components/ui/button";
+import LoginForm from "@/components/features/form/LoginForm";
 
-export default function Login() {
+type Props = {
+  searchParams: Record<"error" | "callbackUrl", string>;
+};
+export default function Login({ searchParams }: Props) {
   return (
     <>
       <section className="px-10 sm:px-20 space-y-8 w-full py-10 lg:col-start-1 col-end-2">
@@ -12,7 +13,7 @@ export default function Login() {
           <Image
             src={FastpecLogo}
             alt="Fastpect logo"
-            className="w-[150px] sm:w-[180px] dark:invert"
+            className="w-[150px] sm:w-[200px] dark:invert"
           />
         </div>
         <div className="space-y-2 text-center">
@@ -23,17 +24,10 @@ export default function Login() {
             Silahkan login untuk melanjutkan
           </p>
         </div>
-        <form className="mt-5 space-y-6 w-full sm:max-w-lg mx-auto">
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="username">Username :</Label>
-            <Input type="text" id="username" placeholder="Username" />
-          </div>
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="password">Password :</Label>
-            <Input type="password" id="password" placeholder="Password" />
-          </div>
-          <Button className="w-full bg-primary hover:bg-hover">Login</Button>
-        </form>
+        <LoginForm
+          callBackUrl={searchParams?.callbackUrl}
+          error={searchParams?.error}
+        />
       </section>
       <section className="hidden w-full lg:flex bg-slate-500 h-screen lg:col-start-2 lg:col-end-3 bg-login"></section>
     </>

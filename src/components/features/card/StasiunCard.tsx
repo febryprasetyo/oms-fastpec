@@ -13,7 +13,13 @@ export default function StasiunCard({ name, id, location, imgUrl }: Props) {
     <Link href={`/monitoring/${id}`}>
       <div className="w-full bg-white shadow rounded-lg overflow-hidden h-full dark:bg-darkSecondary">
         <div className="relative w-full aspect-video">
-          <Image src={imgUrl} fill alt="stasiun" className="object-cover" />
+          <Image
+            src={imgUrl}
+            fill
+            alt="stasiun"
+            className="object-cover"
+            quality={60}
+          />
         </div>
         <div className="p-5 space-y-1">
           <h2 className="text-xl font-semibold">{name}</h2>
@@ -21,7 +27,7 @@ export default function StasiunCard({ name, id, location, imgUrl }: Props) {
             {" "}
             Id : {id}
           </p>
-          <p className="text-slate-400 ">{location}</p>
+          <p className="text-slate-500 dark:text-slate-300 ">{location}</p>
         </div>
       </div>
     </Link>
