@@ -8,23 +8,22 @@ type Props = {
 
 export default function MainContainer({ children }: Props) {
   const isExpanded = useExpandedStore((state: Expanded) => state.isExpanded);
-  const unRenderPathname = ["/login"];
+  // Route yang akan di render main container
+  const renderRoute = ["/", "/stasiun", "/user", "/mesin", "/database"];
   const pathname = usePathname();
-
-  if (!unRenderPathname.includes(pathname)) {
+  // Jika route ada di dalam array, maka render main container
+  if (renderRoute.includes(pathname)) {
+    // Jika sidebar di expanded, maka tambahkan padding left
     return (
       <main
-        className={`py-5 px-5 sm:px-10 transition-all ${
+        className={`px-5 py-5 transition-all sm:px-10 ${
           isExpanded ? "pl-20 sm:pl-24" : ""
         }`}
       >
+        {/* Tujuannya Adalah agar Children bisa menggunakan server components */}
         {children}
       </main>
     );
   }
-  return (
-    <main className="min-h-screen w-full overflow-x-hidden lg:grid lg:grid-cols-2 flex justify-center items-center bg-white dark:bg-dark dark:text-white">
-      {children}
-    </main>
-  );
+  return <>{children}</>;
 }

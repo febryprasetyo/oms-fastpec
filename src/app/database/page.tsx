@@ -1,16 +1,4 @@
 type Props = {};
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
 import {
   Table,
@@ -22,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import ModalForm from "@/components/features/modalForm/ModalForm";
 
 const invoices = [
   {
@@ -73,44 +62,7 @@ export default function Database({}: Props) {
     <section className="space-y-5">
       <div className="w-full flex justify-between items-center">
         <h1 className="text-3xl font-semibold">Database</h1>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-hover">Tambah Data</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Edit profile</DialogTitle>
-              <DialogDescription>
-                Make changes to your profile here. Click save when you are done.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
-                <Input
-                  id="name"
-                  defaultValue="Pedro Duarte"
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="username" className="text-right">
-                  Username
-                </Label>
-                <Input
-                  id="username"
-                  defaultValue="@peduarte"
-                  className="col-span-3"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button className="bg-primary hover:bg-hover">Tambah Data</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <ModalForm />
       </div>
       <div className="p-5 bg-white rounded-xl shadow dark:bg-darkSecondary">
         <Table className="">
