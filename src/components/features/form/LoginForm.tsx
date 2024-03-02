@@ -3,17 +3,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 type Props = {
   callBackUrl?: string;
   error?: string;
 };
 
-export default function LoginForm({ callBackUrl = "/", error }: Props) {
+export default function LoginForm({ callBackUrl = "/" }: Props) {
   const [userName, setUserName] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const router = useRouter();
+  const { toast } = useToast();
 
   const handleUserNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserName(e.target.value);
@@ -23,21 +27,38 @@ export default function LoginForm({ callBackUrl = "/", error }: Props) {
     setPassword(e.target.value);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    signIn("credentials", {
+    // Login menggunakan next-auth
+    const login = await signIn("credentials", {
       username: userName,
       password: password,
-      redirect: true,
       callbackUrl: callBackUrl,
+      redirect: false,
     });
+
+    // Jika login berhasil, maka redirect ke callbackUrl dan tampilkan toast
+    if (login?.ok) {
+      router.push(callBackUrl);
+      toast({
+        title: "Login Berhasil",
+        description: "Selamat datang, Anda telah berhasil Login",
+      });
+    } else {
+      // Jika login gagal, maka tampilkan toast
+      toast({
+        title: "Login Gagal",
+        description: "Username atau password salah!",
+        variant: "destructive",
+      });
+    }
     setLoading(false);
   };
 
   return (
     <form
-      className="mt-5 space-y-6 w-full sm:max-w-lg mx-auto"
+      className="mx-auto mt-5 w-full space-y-6 sm:max-w-lg"
       onSubmit={handleSubmit}
     >
       <div className="grid w-full items-center gap-1.5">

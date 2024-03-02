@@ -6,6 +6,7 @@ import Header from "@/components/layout/Header";
 import { NextThemesProvider } from "@/services/providers/NextThemeProvider";
 import MainContainer from "@/components/layout/MainContainer";
 import AuthProvider from "@/services/providers/AuthProvider";
+import { Toaster } from "@/components/ui/toaster";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -25,6 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
+        suppressHydrationWarning
         className={`${poppins.className} bg-slate-50 text-slate-700 dark:bg-dark dark:text-white`}
       >
         <NextThemesProvider
@@ -37,6 +39,7 @@ export default function RootLayout({
             <Sidebar />
             <Header />
             <MainContainer>{children}</MainContainer>
+            <Toaster />
           </AuthProvider>
         </NextThemesProvider>
       </body>
