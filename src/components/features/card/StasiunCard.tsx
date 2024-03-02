@@ -27,7 +27,7 @@ export default function StasiunCard({ name, id, location, imgUrl }: Props) {
             {" "}
             Id : {id}
           </p>
-          <p className="text-slate-500 dark:text-slate-300 ">{location}</p>
+          <p className="text-slate-500 dark:text-slate-300">{location}</p>
         </div>
       </div>
     </Link>

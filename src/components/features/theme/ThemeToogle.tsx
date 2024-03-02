@@ -9,12 +9,12 @@ export default function ThemeToogle({}: Props) {
   const handleClick = () => {
     setTheme(theme === "dark" ? "light" : "dark");
   };
-
+  //  button untuk toggle theme
   return (
     <Button
       aria-label="Toggle Theme"
       size="icon"
-      className="bg-primary text-white aspect-square w-8 h-8"
+      className="aspect-square h-8 w-8 bg-primary text-white"
       onClick={handleClick}
     >
       <Moon size={20} />

@@ -2,7 +2,15 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { AuthOptions } from "next-auth";
 import NextAuth from "next-auth/next";
 
+// Konfigurasi next-auth untuk login menggunakan username dan password
+
 export const authOptions: AuthOptions = {
+  session: {
+    strategy: "jwt",
+  },
+  // Secret untuk enkripsi cookie
+  secret: process.env.NEXTAUTH_SECRET,
+  // Provider untuk login menggunakan username dan password
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -10,7 +18,8 @@ export const authOptions: AuthOptions = {
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials, req) {
+      // Fungsi untuk authorize user
+      async authorize(credentials) {
         try {
           const res = await fetch(`${process.env.API_URL}/api/auth/login`, {
             method: "POST",
@@ -19,9 +28,9 @@ export const authOptions: AuthOptions = {
             },
             body: JSON.stringify(credentials),
           });
-          const user = await res.json();
 
-          if (res.ok && user) {
+          const user = await res.json();
+          if (user.success) {
             return user;
           } else {
             return null;
@@ -32,6 +41,17 @@ export const authOptions: AuthOptions = {
       },
     }),
   ],
+  callbacks: {
+    // Fungsi untuk mengambil data user dari token
+    async jwt({ token, user }) {
+      return { ...token, ...user };
+    },
+    // Fungsi untuk membuat session
+    async session({ session, token }) {
+      session.user = token as any;
+      return session;
+    },
+  },
   pages: {
     signIn: "/login",
   },

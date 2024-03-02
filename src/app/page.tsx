@@ -1,11 +1,11 @@
 import StasiunCard from "@/components/features/card/StasiunCard";
 
-export default async function Home() {
+export default function Home() {
   return (
     <>
       <section className="">
         <h1 className="text-3xl font-semibold">List Stasiun</h1>
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 py-6">
+        <div className="grid w-full grid-cols-1 gap-5 py-6 md:grid-cols-2 xl:grid-cols-3">
           <StasiunCard
             name="Stasiun Bangli 1"
             id={240305005225028}
