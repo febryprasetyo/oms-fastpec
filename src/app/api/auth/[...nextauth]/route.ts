@@ -1,10 +1,8 @@
 import CredentialsProvider from "next-auth/providers/credentials";
-import { AuthOptions } from "next-auth";
 import NextAuth from "next-auth/next";
 
 // Konfigurasi next-auth untuk login menggunakan username dan password
-
-export const authOptions: AuthOptions = {
+const handler = NextAuth({
   session: {
     strategy: "jwt",
   },
@@ -28,7 +26,6 @@ export const authOptions: AuthOptions = {
             },
             body: JSON.stringify(credentials),
           });
-
           const user = await res.json();
           if (user.success) {
             return user;
@@ -55,8 +52,5 @@ export const authOptions: AuthOptions = {
   pages: {
     signIn: "/login",
   },
-};
-
-const handler = NextAuth(authOptions);
-
+});
 export { handler as GET, handler as POST };
