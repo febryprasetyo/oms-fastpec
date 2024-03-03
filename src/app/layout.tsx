@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/layout/Sidebar";
-import Header from "@/components/layout/Header";
 import { NextThemesProvider } from "@/services/providers/NextThemeProvider";
-import MainContainer from "@/components/layout/MainContainer";
 import AuthProvider from "@/services/providers/AuthProvider";
 import { Toaster } from "@/components/ui/toaster";
+import Sidebar from "@/components/layout/Sidebar";
+import Header from "@/components/layout/Header";
+import MainContainer from "@/components/layout/MainContainer";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -24,9 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        suppressHydrationWarning
         className={`${poppins.className} bg-slate-50 text-slate-700 dark:bg-dark dark:text-white`}
       >
         <NextThemesProvider

@@ -14,7 +14,6 @@ import { usePathname } from "next/navigation";
 import { Button } from "../ui/button";
 import { useExpandedStore } from "@/services/store";
 import { signOut, useSession } from "next-auth/react";
-import NavLink from "../ui/NavLink";
 import NavLinkSkeleton from "../features/skeleton/NavLinkSkeleton";
 
 export default function Sidebar() {
@@ -49,36 +48,41 @@ export default function Sidebar() {
             <div className="space-y-5">
               <div className="space-y-2">
                 <p className="text-center text-sm dark:text-white">Menu</p>
-                <TooltipComponents content="Dashboard">
-                  <NavLink pathname={pathname} to="/">
-                    <LayoutGridIcon size={25} />
-                  </NavLink>
-                </TooltipComponents>
+                <TooltipComponents
+                  content="Dashboard"
+                  Icon={LayoutGridIcon}
+                  pathname={pathname}
+                  to="/"
+                />
               </div>
               {/* Link Client Hanya Akan di Render Ketika role = Admin */}
               {session.data?.user?.user_data?.role_name === "Admin" ? (
                 <div className="space-y-2">
                   <p className="text-center text-sm dark:text-white">Client</p>
-                  <TooltipComponents content="Stasiun">
-                    <NavLink pathname={pathname} to="/stasiun">
-                      <Settings size={25} />
-                    </NavLink>
-                  </TooltipComponents>
-                  <TooltipComponents content="User">
-                    <NavLink pathname={pathname} to="/user">
-                      <User size={25} />
-                    </NavLink>
-                  </TooltipComponents>
-                  <TooltipComponents content="Mesin">
-                    <NavLink pathname={pathname} to="/mesin">
-                      <Wrench size={25} />
-                    </NavLink>
-                  </TooltipComponents>
-                  <TooltipComponents content="Database">
-                    <NavLink pathname={pathname} to="/database">
-                      <Database size={25} />
-                    </NavLink>
-                  </TooltipComponents>
+                  <TooltipComponents
+                    content="Stasiun"
+                    to="stasiun"
+                    pathname={pathname}
+                    Icon={Settings}
+                  />
+                  <TooltipComponents
+                    content="User"
+                    to="user"
+                    pathname={pathname}
+                    Icon={User}
+                  />
+                  <TooltipComponents
+                    content="Mesin"
+                    to="mesin"
+                    pathname={pathname}
+                    Icon={Wrench}
+                  />
+                  <TooltipComponents
+                    content="Database"
+                    to="database"
+                    pathname={pathname}
+                    Icon={Database}
+                  />
                 </div>
               ) : // Jika role = User, maka tidak akan di render dan akan di ganti dengan component skeleton
               session.data?.user?.user_data?.role_name === "User" ? null : (
@@ -86,22 +90,17 @@ export default function Sidebar() {
               )}
             </div>
           </div>
-          <div className="">
-            <TooltipComponents
-              content="Logout"
-              classname="bg-danger dark:bg-danger"
-            >
-              <div className="flex justify-center bg-transparent hover:text-white">
-                <Button
-                  className="rounded-lg p-2 text-slate-700 hover:bg-danger hover:text-white dark:text-white"
-                  onClick={() => {
-                    signOut({ callbackUrl: "/login" });
-                  }}
-                >
-                  <LogOut size={25} />
-                </Button>
-              </div>
-            </TooltipComponents>
+          <div>
+            <div className="flex justify-center bg-transparent hover:text-white">
+              <Button
+                className="rounded-lg p-2 text-slate-700 hover:bg-danger hover:text-white dark:text-white"
+                onClick={() => {
+                  signOut({ callbackUrl: "/login" });
+                }}
+              >
+                <LogOut size={25} />
+              </Button>
+            </div>
           </div>
         </nav>
       </aside>
