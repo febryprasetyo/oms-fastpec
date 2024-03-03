@@ -52,7 +52,7 @@ export default function Header({}: Props) {
                   {session.data?.user?.user_data?.username.substring(0, 2)}
                 </AvatarFallback>
               </Avatar>
-              <div className="">
+              <div>
                 <p className="text-slate-600 dark:text-slate-300">
                   Selamat datang ,
                 </p>

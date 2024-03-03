@@ -1,9 +1,11 @@
 import StasiunCard from "@/components/features/card/StasiunCard";
+import { auth } from "@/lib/auth";
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth();
   return (
     <>
-      <section className="">
+      <section>
         <h1 className="text-3xl font-semibold">List Stasiun</h1>
         <div className="grid w-full grid-cols-1 gap-5 py-6 md:grid-cols-2 xl:grid-cols-3">
           <StasiunCard

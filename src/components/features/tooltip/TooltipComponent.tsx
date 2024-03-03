@@ -4,24 +4,40 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import { LucideIcon } from "lucide-react";
+import Link from "next/link";
 
 type Props = {
-  children: React.ReactNode;
   content: string;
+  pathname: string;
+  to: string;
   classname?: string;
+  Icon: LucideIcon;
 };
 
 export default function TooltipComponents({
-  children,
   content,
   classname,
+  to,
+  pathname,
+  Icon,
 }: Props) {
   return (
-    <div className="">
+    <div>
       <TooltipProvider>
         <Tooltip delayDuration={200}>
-          <TooltipTrigger asChild>{children}</TooltipTrigger>
-          <TooltipContent side="right" className={classname}>
+          <TooltipTrigger asChild>
+            <Link href={to} className="flex justify-center">
+              <div
+                className={`p-2 hover:bg-primary dark:text-white ${
+                  pathname == to ? "bg-primary text-white" : ""
+                } rounded-lg hover:text-white`}
+              >
+                <Icon size={25} />
+              </div>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right" className={classname} sideOffset={10}>
             <p>{content}</p>
           </TooltipContent>
         </Tooltip>

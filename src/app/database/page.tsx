@@ -60,12 +60,12 @@ const invoices = [
 export default function Database({}: Props) {
   return (
     <section className="space-y-5">
-      <div className="w-full flex justify-between items-center">
+      <div className="flex w-full items-center justify-between">
         <h1 className="text-3xl font-semibold">Database</h1>
         <ModalForm />
       </div>
-      <div className="p-5 bg-white rounded-xl shadow dark:bg-darkSecondary">
-        <Table className="">
+      <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
+        <Table>
           <TableCaption>A list of your recent invoices.</TableCaption>
           <TableHeader>
             <TableRow>
