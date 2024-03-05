@@ -9,12 +9,6 @@ import CredentialsProvider from "next-auth/providers/credentials";
 
 // Config untuk next-auth
 export const config = {
-  session: {
-    strategy: "jwt",
-    maxAge: 60 * 60, // Expired dalam 1 jam
-  },
-  // Secret untuk enkripsi cookie
-  secret: process.env.NEXTAUTH_SECRET,
   // Provider untuk login menggunakan username dan password
   providers: [
     CredentialsProvider({
@@ -45,6 +39,15 @@ export const config = {
       },
     }),
   ],
+  session: {
+    strategy: "jwt",
+    maxAge: 3400, // Expired dalam 1 jam
+  },
+  jwt: {
+    maxAge: 3400, // Expired dalam 1 jam
+  },
+  // Secret untuk enkripsi cookie
+  secret: process.env.NEXTAUTH_SECRET,
   // Fungsi yang dijalankan ketika user berhasil login
   callbacks: {
     // Fungsi untuk mengambil data user dari token

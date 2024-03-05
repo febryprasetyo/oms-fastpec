@@ -4,15 +4,14 @@ import Link from "next/link";
 type Props = {
   name: string;
   id: number;
-  location: string;
   imgUrl: string;
 };
 
-export default function StasiunCard({ name, id, location, imgUrl }: Props) {
+export default function StasiunCard({ name, id, imgUrl }: Props) {
   return (
     <Link href={`/monitoring/${id}`}>
-      <div className="w-full bg-white shadow rounded-lg overflow-hidden h-full dark:bg-darkSecondary">
-        <div className="relative w-full aspect-video">
+      <div className="h-full w-full overflow-hidden rounded-lg bg-white shadow dark:bg-darkSecondary">
+        <div className="relative aspect-video w-full">
           <Image
             src={imgUrl}
             fill
@@ -21,13 +20,12 @@ export default function StasiunCard({ name, id, location, imgUrl }: Props) {
             quality={60}
           />
         </div>
-        <div className="p-5 space-y-1">
-          <h2 className="text-xl font-semibold">{name}</h2>
-          <p className="text-slate-700 dark:text-slate-100 text-lg">
+        <div className="space-y-1 p-5">
+          <h2 className="text-lg font-semibold">{name}</h2>
+          <p className="text-lg text-slate-700 dark:text-slate-100">
             {" "}
-            Id : {id}
+            Id Mesin : {id}
           </p>
-          <p className="text-slate-500 dark:text-slate-300">{location}</p>
         </div>
       </div>
     </Link>

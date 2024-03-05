@@ -1,103 +1,66 @@
-type Props = {};
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import ModalForm from "@/components/features/modalForm/ModalForm";
+import { DataTable } from "@/components/features/dataTable/DataTable";
+import AddStationModal from "@/components/features/modal/AddStationModal";
+import { auth } from "@/lib/auth";
+import { getStationTable } from "@/services/api/stationTabel";
+import { ColumnDef } from "@tanstack/react-table";
+import { redirect } from "next/navigation";
 
-const invoices = [
+const columns: ColumnDef<StasionData>[] = [
   {
-    invoice: "INV001",
-    paymentStatus: "Paid",
-    totalAmount: "$250.00",
-    paymentMethod: "Credit Card",
+    accessorKey: "id",
+    header: "ID",
   },
   {
-    invoice: "INV002",
-    paymentStatus: "Pending",
-    totalAmount: "$150.00",
-    paymentMethod: "PayPal",
+    accessorKey: "nama_stasiun",
+    header: "Nama Stasiun",
   },
   {
-    invoice: "INV003",
-    paymentStatus: "Unpaid",
-    totalAmount: "$350.00",
-    paymentMethod: "Bank Transfer",
+    accessorKey: "id_mesin",
+    header: "ID Mesin",
   },
   {
-    invoice: "INV004",
-    paymentStatus: "Paid",
-    totalAmount: "$450.00",
-    paymentMethod: "Credit Card",
+    accessorKey: "address",
+    header: "Alamat",
   },
   {
-    invoice: "INV005",
-    paymentStatus: "Paid",
-    totalAmount: "$550.00",
-    paymentMethod: "PayPal",
+    accessorKey: "province_name",
+    header: "Provinsi",
   },
   {
-    invoice: "INV006",
-    paymentStatus: "Pending",
-    totalAmount: "$200.00",
-    paymentMethod: "Bank Transfer",
-  },
-  {
-    invoice: "INV007",
-    paymentStatus: "Unpaid",
-    totalAmount: "$300.00",
-    paymentMethod: "Credit Card",
+    accessorKey: "city_name",
+    header: "Kota",
   },
 ];
 
-export default function Stasiun({}: Props) {
-  return (
-    <>
+export default async function page() {
+  const session = await auth();
+
+  if (session !== null) {
+    const currentTime = new Date().getTime();
+    if (session.user.exp > currentTime) {
+      redirect("/login");
+    }
+    const data = await getStationTable(
+      session.user.token.access_token as string,
+    );
+
+    return (
       <section className="space-y-5">
-        <div className="w-full flex justify-between items-center">
+        <div className="flex w-full items-center justify-between">
           <h1 className="text-3xl font-semibold">Stasiun</h1>
-          <ModalForm />
+          <AddStationModal />
         </div>
-        <div className="p-5 bg-white rounded-xl shadow dark:bg-darkSecondary">
-          <Table>
-            <TableCaption>A list of your recent invoices.</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">Invoice</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoices.map((invoice) => (
-                <TableRow key={invoice.invoice}>
-                  <TableCell className="font-medium">
-                    {invoice.invoice}
-                  </TableCell>
-                  <TableCell>{invoice.paymentStatus}</TableCell>
-                  <TableCell>{invoice.paymentMethod}</TableCell>
-                  <TableCell className="text-right">
-                    {invoice.totalAmount}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TableCell colSpan={3}>Total</TableCell>
-                <TableCell className="text-right">$2,500.00</TableCell>
-              </TableRow>
-            </TableFooter>
-          </Table>
+        <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
+          {
+            <DataTable
+              columns={columns}
+              data={data.data.values}
+              caption="List Stasiun"
+            />
+          }
         </div>
       </section>
-    </>
-  );
+    );
+  }
+  redirect("/login");
 }

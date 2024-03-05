@@ -61,25 +61,25 @@ export default function Sidebar() {
                   <p className="text-center text-sm dark:text-white">Client</p>
                   <TooltipComponents
                     content="Stasiun"
-                    to="stasiun"
+                    to="/stasiun"
                     pathname={pathname}
                     Icon={Settings}
                   />
                   <TooltipComponents
                     content="User"
-                    to="user"
+                    to="/user"
                     pathname={pathname}
                     Icon={User}
                   />
                   <TooltipComponents
                     content="Mesin"
-                    to="mesin"
+                    to="/mesin"
                     pathname={pathname}
                     Icon={Wrench}
                   />
                   <TooltipComponents
                     content="Database"
-                    to="database"
+                    to="/database"
                     pathname={pathname}
                     Icon={Database}
                   />
@@ -93,7 +93,7 @@ export default function Sidebar() {
           <div>
             <div className="flex justify-center bg-transparent hover:text-white">
               <Button
-                className="rounded-lg p-2 text-slate-700 hover:bg-danger hover:text-white dark:text-white"
+                className="rounded-lg bg-transparent p-2 text-slate-700 hover:bg-danger hover:text-white dark:text-white"
                 onClick={() => {
                   signOut({ callbackUrl: "/login" });
                 }}

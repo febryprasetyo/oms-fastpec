@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import ModalForm from "@/components/features/modalForm/ModalForm";
+import ModalForm from "@/components/features/modal/AddStationModal";
 
 const invoices = [
   {

@@ -15,5 +15,5 @@
 }
 
 #table::-webkit-scrollbar-thumb {
-  @apply bg-slate-300 rounded-full;
+  @apply rounded-full bg-slate-300;
 }

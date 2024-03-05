@@ -114,7 +114,7 @@ export default function LoginForm({ callBackUrl = "/" }: Props) {
         <Button
           type="submit"
           disabled={form.formState.isSubmitting}
-          className="w-full bg-primary hover:bg-blue-800 disabled:opacity-50"
+          className="w-full bg-primary hover:bg-hover disabled:opacity-50"
         >
           {form.formState.isSubmitting ? "Loading..." : "Login"}
         </Button>

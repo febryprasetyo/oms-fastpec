@@ -18,7 +18,9 @@ export default function withAuth(
 ) {
   return async (req: NextRequest, next: NextFetchEvent) => {
     const pathname = req.nextUrl.pathname;
+
     if (requireAuth.includes(pathname)) {
+      // Mendapatkan token dari cookie
       const token = await getToken({
         req,
         secret: process.env.NEXTAUTH_SECRET,

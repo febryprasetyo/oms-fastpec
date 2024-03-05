@@ -23,6 +23,7 @@ declare module "next-auth" {
       success: boolean;
       user_data: UserData;
       token: Token;
+      exp: number;
     };
   }
 }

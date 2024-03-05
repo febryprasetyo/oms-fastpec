@@ -1,5 +1,5 @@
 type Props = {};
-import ModalForm from "@/components/features/modalForm/ModalForm";
+import ModalForm from "@/components/features/modal/AddStationModal";
 
 import {
   Table,
@@ -61,11 +61,11 @@ export default function User({}: Props) {
   return (
     <>
       <section className="space-y-5">
-        <div className="w-full flex justify-between items-center">
+        <div className="flex w-full items-center justify-between">
           <h1 className="text-3xl font-semibold">User</h1>
           <ModalForm />
         </div>
-        <div className="p-5 bg-white rounded-xl shadow dark:bg-darkSecondary">
+        <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
           <Table>
             <TableCaption>A list of your recent invoices.</TableCaption>
             <TableHeader>
