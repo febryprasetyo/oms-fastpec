@@ -20,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCity, useDevice, useProvince } from "@/services/query";
 import { toast } from "@/components/ui/use-toast";
 
 const formSchema = z.object({
@@ -37,27 +36,9 @@ const formSchema = z.object({
 });
 
 export default function AddStationForm({}: Props) {
-  const {
-    data: province,
-    error: provinceError,
-    isLoading: isProvinceLoading,
-  } = useProvince();
-  const {
-    data: device,
-    error: deviceError,
-    isLoading: isDeviceLoading,
-  } = useDevice();
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   });
-  const provice = form.watch("province");
-
-  const {
-    data: city,
-    error: cityError,
-    isLoading: isCityLoading,
-  } = useCity(provice);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const res = await fetch("/api/station/create", {
@@ -141,7 +122,7 @@ export default function AddStationForm({}: Props) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent className="w-full" side="top">
-                  {device ? (
+                  {/* {device ? (
                     device?.data?.map((item) => {
                       const stringId = item.device_id.toString();
 
@@ -161,7 +142,7 @@ export default function AddStationForm({}: Props) {
                             : "Tidak Ada Data"}
                       </p>
                     </div>
-                  )}
+                  )} */}
                 </SelectContent>
               </Select>
 
@@ -186,7 +167,7 @@ export default function AddStationForm({}: Props) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent className="w-full" side="top">
-                    {province ? (
+                    {/* {province ? (
                       province?.data?.map(
                         (item: { id: number; province_name: string }) => {
                           const stringId = item.id.toString();
@@ -207,7 +188,7 @@ export default function AddStationForm({}: Props) {
                               : "Tidak Ada Data"}
                         </p>
                       </div>
-                    )}
+                    )} */}
                   </SelectContent>
                 </Select>
 
@@ -232,7 +213,7 @@ export default function AddStationForm({}: Props) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {city ? (
+                    {/* {city ? (
                       city?.data?.map((item) => {
                         const stringId = item.id.toString();
 
@@ -252,7 +233,7 @@ export default function AddStationForm({}: Props) {
                               : "Memuat Data"}
                         </p>
                       </div>
-                    )}
+                    )} */}
                   </SelectContent>
                 </Select>
 

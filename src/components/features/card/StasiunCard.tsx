@@ -3,11 +3,19 @@ import Link from "next/link";
 
 type Props = {
   name: string;
-  id: number;
+  id: string;
   imgUrl: string;
+  city: string;
+  province: string;
 };
 
-export default function StasiunCard({ name, id, imgUrl }: Props) {
+export default function StasiunCard({
+  name,
+  id,
+  imgUrl,
+  city,
+  province,
+}: Props) {
   return (
     <Link href={`/monitoring/${id}`}>
       <div className="h-full w-full overflow-hidden rounded-lg bg-white shadow dark:bg-darkSecondary">
@@ -22,9 +30,12 @@ export default function StasiunCard({ name, id, imgUrl }: Props) {
         </div>
         <div className="space-y-1 p-5">
           <h2 className="text-lg font-semibold">{name}</h2>
-          <p className="text-lg text-slate-700 dark:text-slate-100">
+          <p className="text-lg text-slate-600 dark:text-slate-100">
             {" "}
             Id Mesin : {id}
+          </p>
+          <p className="text-slate-500 ">
+            {city} , {province}
           </p>
         </div>
       </div>
