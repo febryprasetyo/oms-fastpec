@@ -95,7 +95,7 @@ export default function Sidebar() {
               <Button
                 className="rounded-lg bg-transparent p-2 text-slate-700 hover:bg-danger hover:text-white dark:text-white"
                 onClick={() => {
-                  signOut({ callbackUrl: "/login" });
+                  signOut();
                 }}
               >
                 <LogOut size={25} />
