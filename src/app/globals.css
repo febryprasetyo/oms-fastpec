@@ -7,7 +7,7 @@
 }
 
 #table::-webkit-scrollbar {
-  @apply h-[10px] bg-transparent;
+  @apply h-[8px] bg-transparent;
 }
 
 #table::-webkit-scrollbar-track {
@@ -15,6 +15,18 @@
 }
 
 #table::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-slate-300;
+}
+
+#pagination::-webkit-scrollbar {
+  @apply h-[8px] bg-transparent;
+}
+
+#pagination::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+#pagination::-webkit-scrollbar-thumb {
   @apply rounded-full bg-slate-300;
 }
 

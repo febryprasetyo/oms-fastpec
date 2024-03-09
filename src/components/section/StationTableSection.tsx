@@ -4,7 +4,7 @@ import AddStationModal from "../features/modal/AddStationModal";
 import { DataTable } from "../features/dataTable/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { useQuery } from "@tanstack/react-query";
-import { getStationList } from "@/services/api/stationList";
+import { getStationList } from "@/services/api/station";
 import { useSession } from "next-auth/react";
 
 type Props = {};
@@ -12,7 +12,12 @@ type Props = {};
 export default function StationTableSection({}: Props) {
   const session = useSession();
   const accessToken = session.data?.user.token.access_token;
-  const { data, isLoading, isError, error } = useQuery({
+
+  const {
+    data: station,
+    isLoading: stationLoading,
+    isError: stationError,
+  } = useQuery({
     queryKey: ["stasiun"],
     queryFn: async () => {
       const res = await getStationList(accessToken as string);
@@ -21,10 +26,6 @@ export default function StationTableSection({}: Props) {
   });
 
   const columns: ColumnDef<StationData>[] = [
-    {
-      accessorKey: "id",
-      header: "ID",
-    },
     {
       accessorKey: "nama_stasiun",
       header: "Nama Stasiun",
@@ -50,16 +51,27 @@ export default function StationTableSection({}: Props) {
     <section className="space-y-5">
       <div className="flex w-full items-center justify-between">
         <h1 className="text-3xl font-semibold">Stasiun</h1>
-        <AddStationModal />
+        {station && !stationError && <AddStationModal />}
       </div>
       <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
-        {data ? (
+        {station && !stationError ? (
           <DataTable
             columns={columns}
-            data={data?.data?.values}
+            data={station?.data?.values}
             caption="List Stasiun"
           />
         ) : null}
+
+        {stationLoading && (
+          <div className="flex min-h-[300px] w-full items-center justify-center">
+            <p className="text-xl font-medium">Memuat Data</p>
+          </div>
+        )}
+        {stationError && (
+          <div className="flex min-h-[300px] w-full items-center justify-center">
+            <p className="text-xl font-medium">Gagal Memuat Data</p>
+          </div>
+        )}
       </div>
     </section>
   );

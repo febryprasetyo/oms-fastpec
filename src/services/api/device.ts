@@ -1,11 +1,11 @@
 import { axiosInstance } from "@/lib/axiosInstance";
 import axios, { AxiosResponse } from "axios";
 
-export const getStationList = async (
+export const getDeviceTableList = async (
   accessToken: string,
-): Promise<StationResponse> => {
+): Promise<DeviceTableResponse> => {
   try {
-    const res: AxiosResponse<StationResponse> = await axiosInstance.post(
+    const res: AxiosResponse<DeviceTableResponse> = await axiosInstance.post(
       `/api/data/station/list`,
       {
         limit: 10,
@@ -40,20 +40,4 @@ export const getStationList = async (
       },
     };
   }
-};
-
-export const deleteStation = async (id: string, accessToken: string) => {
-  const res = await axiosInstance.post(
-    "/api/data/station/remove",
-    {
-      id: 14,
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    },
-  );
-  console.log(res);
-  return res.data;
 };

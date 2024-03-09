@@ -1,16 +1,13 @@
 import { axiosInstance } from "@/lib/axiosInstance";
 import axios, { AxiosResponse } from "axios";
 
-export const getUserList = async (
+export const getDatabaseList = async (
   accessToken: string,
-): Promise<UserResponse> => {
+): Promise<DatabaseResponse> => {
   try {
-    const res: AxiosResponse<UserResponse> = await axiosInstance.post(
-      `/api/data/user/list`,
-      {
-        limit: 10,
-        offset: 0,
-      },
+    const res: AxiosResponse<DatabaseResponse> = await axiosInstance.get(
+      `/api/data/klhk/list`,
+
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -24,19 +21,13 @@ export const getUserList = async (
       return {
         success: false,
         statusCode: error.response?.status,
-        data: {
-          values: [],
-          total: "0",
-        },
+        data: [],
       };
     }
     return {
       success: false,
       statusCode: 500,
-      data: {
-        values: [],
-        total: "0",
-      },
+      data: [],
     };
   }
 };

@@ -1,10 +1,19 @@
-interface deviceData {
-  device_id: number;
-  nama_dinas: string;
+interface DeviceTableData {
+  id: string;
+  created_at: string;
+  updated_at: string;
   id_mesin: string;
+  nama_dinas: string;
+  nama_stasiun: string;
+  created_by: number;
+  dinas_id: number;
 }
 
-interface Device {
+interface DeviceTableResponse {
   success: boolean;
-  data: deviceData[];
+  statusCode?: number;
+  data: {
+    values: deviceData[];
+    total: string;
+  };
 }

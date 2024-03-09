@@ -53,6 +53,7 @@ export function DataTable<TData, TValue>({
       <TableHeader>
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id}>
+            <TableHead>No</TableHead>
             {headerGroup.headers.map((header) => {
               return (
                 <TableHead key={header.id}>
@@ -71,12 +72,17 @@ export function DataTable<TData, TValue>({
       </TableHeader>
       <TableBody>
         {table.getRowModel().rows?.length
-          ? table.getRowModel().rows.map((row) => {
+          ? table.getRowModel().rows.map((row, index) => {
               return (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                 >
+                  <TableCell>
+                    <p className="font-semibold text-slate-500 dark:text-slate-200">
+                      {index}
+                    </p>
+                  </TableCell>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
