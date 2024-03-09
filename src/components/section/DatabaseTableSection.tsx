@@ -60,22 +60,22 @@ export default function DatabaseTableSection({}: Props) {
       <div className="flex w-full items-center justify-between">
         <h1 className="text-3xl font-semibold">Database</h1>
         <Select
-          defaultValue={itemsPerPage}
+          defaultValue={`${itemsPerPage}`}
           onValueChange={(e) => {
             const value = parseInt(e);
             setItemPerPage(value);
           }}
         >
           <SelectTrigger className="w-[100px]">
-            <SelectValue placeholder={10} />
+            <SelectValue placeholder={"10"} />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value={5}>5</SelectItem>
-              <SelectItem value={10} defaultChecked>
+              <SelectItem value={"5"}>5</SelectItem>
+              <SelectItem value={"10"} defaultChecked>
                 10
               </SelectItem>
-              <SelectItem value={20}>20</SelectItem>
+              <SelectItem value={"20"}>20</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
