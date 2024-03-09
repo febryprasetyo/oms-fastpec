@@ -1,4 +1,3 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,9 +10,7 @@ import {
 
 import AddStationForm from "../form/AddStationForm";
 
-type Props = {};
-
-export default function AddStationModal({}: Props) {
+export default function AddStationModal() {
   return (
     <Dialog>
       <DialogTrigger asChild>

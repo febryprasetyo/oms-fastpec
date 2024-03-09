@@ -1,5 +1,4 @@
 "use client";
-type Props = {};
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -21,6 +20,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import {
+  getCityList,
+  getDeviceList,
+  getProvinceList,
+} from "@/services/api/station";
+import { useSession } from "next-auth/react";
 
 const formSchema = z.object({
   stationName: z.string({
@@ -35,33 +41,51 @@ const formSchema = z.object({
   city: z.string(),
 });
 
-export default function AddStationForm({}: Props) {
+export default function AddStationForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    const res = await fetch("/api/station/create", {
-      method: "POST",
-      body: JSON.stringify(values),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await res.json();
-    if (data.success) {
-      toast({
-        title: "Berhasil",
-        description: "Data berhasil ditambahkan",
-      });
-    } else {
-      toast({
-        title: "Gagal",
-        description: "Terjadi kesalahan",
-        variant: "destructive",
-      });
-    }
-  }
+  const session = useSession();
+  const accessToken = session.data?.user.token.access_token;
+  const provinceData = form.watch("province");
+  const {
+    data: province,
+    isLoading: provinceLoading,
+    isError: provinceError,
+  } = useQuery({
+    queryKey: ["province"],
+    queryFn: async () => {
+      const res = await getProvinceList(accessToken as string);
+      return res;
+    },
+  });
+
+  const {
+    data: device,
+    isLoading: isDeviceLoading,
+    isError: deviceError,
+  } = useQuery({
+    queryKey: ["device"],
+    queryFn: async () => {
+      const res = await getDeviceList(accessToken as string);
+      return res;
+    },
+  });
+
+  const {
+    data: city,
+    isLoading: isCityLoading,
+    isError: cityError,
+  } = useQuery({
+    queryKey: ["city", provinceData],
+    queryFn: async () => {
+      const res = await getCityList(accessToken as string, provinceData);
+      return res;
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {}
 
   return (
     <Form {...form}>
@@ -117,12 +141,12 @@ export default function AddStationForm({}: Props) {
               <FormLabel>Device</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger className="dark:bg-dark">
                     <SelectValue placeholder="Pilih Device" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent className="w-full" side="top">
-                  {/* {device ? (
+                <SelectContent className="w-full py-2" side="top">
+                  {device ? (
                     device?.data?.map((item) => {
                       const stringId = item.device_id.toString();
 
@@ -142,7 +166,7 @@ export default function AddStationForm({}: Props) {
                             : "Tidak Ada Data"}
                       </p>
                     </div>
-                  )} */}
+                  )}
                 </SelectContent>
               </Select>
 
@@ -162,13 +186,13 @@ export default function AddStationForm({}: Props) {
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="dark:bg-dark">
                       <SelectValue placeholder="Provinsi" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent className="w-full" side="top">
-                    {/* {province ? (
-                      province?.data?.map(
+                    {province ? (
+                      province.data.map(
                         (item: { id: number; province_name: string }) => {
                           const stringId = item.id.toString();
                           return (
@@ -181,14 +205,14 @@ export default function AddStationForm({}: Props) {
                     ) : (
                       <div className="w-full py-5 text-center">
                         <p>
-                          {isProvinceLoading
+                          {provinceLoading
                             ? "Memuat Data"
                             : provinceError
                               ? "Terjadi Kesalahan"
                               : "Tidak Ada Data"}
                         </p>
                       </div>
-                    )} */}
+                    )}
                   </SelectContent>
                 </Select>
 
@@ -208,12 +232,12 @@ export default function AddStationForm({}: Props) {
                   disabled={!form.getValues("province")}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="dark:bg-dark">
                       <SelectValue placeholder="Kabupaten" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {/* {city ? (
+                    {city ? (
                       city?.data?.map((item) => {
                         const stringId = item.id.toString();
 
@@ -233,7 +257,7 @@ export default function AddStationForm({}: Props) {
                               : "Memuat Data"}
                         </p>
                       </div>
-                    )} */}
+                    )}
                   </SelectContent>
                 </Select>
 
