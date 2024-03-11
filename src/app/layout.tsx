@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import MainContainer from "@/components/layout/MainContainer";
+import QueryProvider from "@/services/providers/QueryProvider";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -35,12 +36,14 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <Sidebar />
-            <Header />
-            <MainContainer>{children}</MainContainer>
-            <Toaster />
+            <QueryProvider>
+              <Sidebar />
+              <Header />
+              <MainContainer>{children}</MainContainer>
+            </QueryProvider>
           </AuthProvider>
         </NextThemesProvider>
+        <Toaster />
       </body>
     </html>
   );

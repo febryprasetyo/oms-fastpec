@@ -17,7 +17,7 @@ export default function GlobalError({
     <html className="flex h-screen w-full items-center justify-center bg-white dark:bg-dark">
       <body className="space-y-5 text-center">
         <h2 className="text-2xl font-medium text-slate-700 dark:text-white">
-          401 | Sesion Habis , Silahkan Login Ulang
+          Terjadi kesalahan yang tidak terduga
         </h2>
         <Button
           className="bg-primary"

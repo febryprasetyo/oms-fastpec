@@ -1,4 +1,3 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,13 +9,14 @@ import {
 } from "@/components/ui/dialog";
 
 import AddStationForm from "../form/AddStationForm";
+import { useState } from "react";
 
-type Props = {};
-
-export default function AddStationModal({}: Props) {
+export default function AddStationModal() {
+  const [isOpen, setIsOpen] = useState(false);
   return (
-    <Dialog>
-      <DialogTrigger asChild>
+    // @ts-ignore
+    <Dialog open={isOpen} setIsOpen={setIsOpen}>
+      <DialogTrigger asChild onClick={() => setIsOpen(true)}>
         <Button className="bg-primary hover:bg-hover">Tambah Data</Button>
       </DialogTrigger>
       <DialogContent className="w-full sm:max-w-[625px]">

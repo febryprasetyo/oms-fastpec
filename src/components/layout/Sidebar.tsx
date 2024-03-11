@@ -15,6 +15,7 @@ import { Button } from "../ui/button";
 import { useExpandedStore } from "@/services/store";
 import { signOut, useSession } from "next-auth/react";
 import NavLinkSkeleton from "../features/skeleton/NavLinkSkeleton";
+import Link from "next/link";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -95,7 +96,7 @@ export default function Sidebar() {
               <Button
                 className="rounded-lg bg-transparent p-2 text-slate-700 hover:bg-danger hover:text-white dark:text-white"
                 onClick={() => {
-                  signOut({ callbackUrl: "/login" });
+                  signOut();
                 }}
               >
                 <LogOut size={25} />
