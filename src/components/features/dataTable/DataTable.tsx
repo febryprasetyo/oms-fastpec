@@ -33,13 +33,11 @@ import { Pen, Trash } from "lucide-react";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  caption: string;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-  caption,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -49,7 +47,6 @@ export function DataTable<TData, TValue>({
 
   return (
     <Table>
-      <TableCaption>{caption}</TableCaption>
       <TableHeader>
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id}>

@@ -20,8 +20,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
+  addStationList,
   getCityList,
   getDeviceList,
   getProvinceList,
@@ -29,16 +30,16 @@ import {
 import { useSession } from "next-auth/react";
 
 const formSchema = z.object({
-  stationName: z.string({
+  nama_stasiun: z.string({
     required_error: "Nama Stasiun harus diisi",
   }),
   address: z.string({
     required_error: "Alamat harus diisi",
   }),
-  dinasName: z.string(),
-  device: z.string(),
-  province: z.string(),
-  city: z.string(),
+  nama_dinas: z.string(),
+  device_id: z.string(),
+  province_id: z.string(),
+  city_id: z.string(),
 });
 
 export default function AddStationForm() {
@@ -48,7 +49,8 @@ export default function AddStationForm() {
 
   const session = useSession();
   const accessToken = session.data?.user.token.access_token;
-  const provinceData = form.watch("province");
+  const provinceData = form.watch("province_id");
+
   const {
     data: province,
     isLoading: provinceLoading,
@@ -85,7 +87,32 @@ export default function AddStationForm() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {}
+  const addStationMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof formSchema>) => {
+      const res = await addStationList(data, accessToken as string);
+      return res;
+    },
+
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Berhasil",
+        description: "Data berhasil ditambahkan",
+        variant: "default",
+      });
+      form.reset();
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    addStationMutation.mutate(values);
+  }
 
   return (
     <Form {...form}>
@@ -95,7 +122,7 @@ export default function AddStationForm() {
       >
         <FormField
           control={form.control}
-          name="stationName"
+          name="nama_stasiun"
           render={({ field }) => (
             <FormItem className="w-full">
               <FormLabel>Nama Stasiun</FormLabel>
@@ -121,7 +148,7 @@ export default function AddStationForm() {
         />
         <FormField
           control={form.control}
-          name="dinasName"
+          name="nama_dinas"
           render={({ field }) => (
             <FormItem className="w-full">
               <FormLabel>Nama Dinas</FormLabel>
@@ -135,7 +162,7 @@ export default function AddStationForm() {
 
         <FormField
           control={form.control}
-          name="device"
+          name="device_id"
           render={({ field }) => (
             <FormItem className="w-full">
               <FormLabel>Device</FormLabel>
@@ -177,7 +204,7 @@ export default function AddStationForm() {
         <div className="flex w-full flex-col justify-between gap-3 pb-3">
           <FormField
             control={form.control}
-            name="province"
+            name="province_id"
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormLabel>Provinsi</FormLabel>
@@ -222,14 +249,14 @@ export default function AddStationForm() {
           />
           <FormField
             control={form.control}
-            name="city"
+            name="city_id"
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormLabel>Kabupaten</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
-                  disabled={!form.getValues("province")}
+                  disabled={!form.getValues("province_id")}
                 >
                   <FormControl>
                     <SelectTrigger className="dark:bg-dark">

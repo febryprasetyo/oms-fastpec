@@ -15,6 +15,7 @@ import { Button } from "../ui/button";
 import { useExpandedStore } from "@/services/store";
 import { signOut, useSession } from "next-auth/react";
 import NavLinkSkeleton from "../features/skeleton/NavLinkSkeleton";
+import Link from "next/link";
 
 export default function Sidebar() {
   const pathname = usePathname();

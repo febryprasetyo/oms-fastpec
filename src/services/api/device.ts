@@ -6,7 +6,7 @@ export const getDeviceTableList = async (
 ): Promise<DeviceTableResponse> => {
   try {
     const res: AxiosResponse<DeviceTableResponse> = await axiosInstance.post(
-      `/api/data/station/list`,
+      `/api/data/device/list`,
       {
         limit: 10,
         offset: 0,

@@ -17,31 +17,22 @@ export default async function Station() {
 
   await queryClient.prefetchQuery({
     queryKey: ["stasiun"],
-    queryFn: async () => {
-      const res = await getStationList(
-        session?.user.token.access_token as string,
-      );
-      return res;
+    queryFn: () => {
+      return getStationList(session?.user.token.access_token as string);
     },
   });
 
   await queryClient.prefetchQuery({
     queryKey: ["province"],
-    queryFn: async () => {
-      const res = await getProvinceList(
-        session?.user.token.access_token as string,
-      );
-      return res;
+    queryFn: () => {
+      return getProvinceList(session?.user.token.access_token as string);
     },
   });
 
   await queryClient.prefetchQuery({
     queryKey: ["device"],
-    queryFn: async () => {
-      const res = await getDeviceList(
-        session?.user.token.access_token as string,
-      );
-      return res;
+    queryFn: () => {
+      return getDeviceList(session?.user.token.access_token as string);
     },
   });
 

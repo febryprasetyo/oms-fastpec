@@ -13,11 +13,8 @@ export default async function Station() {
 
   await queryClient.prefetchQuery({
     queryKey: ["device"],
-    queryFn: async () => {
-      const res = await getDeviceTableList(
-        session?.user.token.access_token as string,
-      );
-      return res;
+    queryFn: () => {
+      return getDeviceTableList(session?.user.token.access_token as string);
     },
   });
 
