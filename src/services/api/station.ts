@@ -18,7 +18,6 @@ export const getStationList = async (
         },
       },
     );
-
     return res.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -140,17 +139,46 @@ export const getCityList = async (
     };
   }
 };
-export const deleteStation = async (id: string, accessToken: string) => {
-  const res = await axiosInstance.post(
-    "/api/data/station/remove",
-    {
-      id: 14,
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
+
+type AddStationRequest = {
+  device_id: string;
+  nama_stasiun: string;
+  address: string;
+  province_id: string;
+  city_id: string;
+  nama_dinas: string;
+};
+
+export const addStationList = async (
+  data: AddStationRequest,
+  accessToken: string,
+): Promise<CreateStationResponse> => {
+  try {
+    const res: AxiosResponse<CreateStationResponse> = await axiosInstance.post(
+      `/api/data/station/create`,
+      {
+        ...data,
       },
-    },
-  );
-  return res.data;
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    return res.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      return {
+        success: false,
+        statusCode: error.response?.status,
+        message: error.response?.data.message,
+      };
+    }
+    return {
+      success: false,
+      statusCode: 500,
+      message: "Internal Server Error",
+    };
+  }
 };

@@ -13,11 +13,8 @@ export default async function User() {
 
   await queryClient.prefetchQuery({
     queryKey: ["database"],
-    queryFn: async () => {
-      const res = await getDatabaseList(
-        session?.user.token.access_token as string,
-      );
-      return res;
+    queryFn: () => {
+      return getDatabaseList(session?.user.token.access_token as string);
     },
   });
 

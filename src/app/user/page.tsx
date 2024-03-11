@@ -1,6 +1,6 @@
 import UserTableSection from "@/components/section/UserTableSection";
 import { auth } from "@/lib/auth";
-import { getUserList } from "@/services/api/userList";
+import { getUserList } from "@/services/api/user";
 import {
   HydrationBoundary,
   QueryClient,
@@ -13,9 +13,8 @@ export default async function User() {
 
   await queryClient.prefetchQuery({
     queryKey: ["user"],
-    queryFn: async () => {
-      const res = await getUserList(session?.user.token.access_token as string);
-      return res;
+    queryFn: () => {
+      return getUserList(session?.user.token.access_token as string);
     },
   });
 

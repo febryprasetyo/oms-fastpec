@@ -5,7 +5,8 @@ import { DataTable } from "../features/dataTable/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { getUserList } from "@/services/api/userList";
+import { getUserList } from "@/services/api/user";
+import UnAuthorizedModal from "../features/modal/UnAuthorizedModal";
 
 type Props = {};
 
@@ -13,11 +14,14 @@ export default function UserTableSection({}: Props) {
   const session = useSession();
   const accessToken = session.data?.user.token.access_token;
 
-  const { data, isLoading, isError, error } = useQuery({
+  const {
+    data: user,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["user"],
-    queryFn: async () => {
-      const res = await getUserList(accessToken as string);
-      return res;
+    queryFn: () => {
+      return getUserList(accessToken as string);
     },
   });
 
@@ -36,20 +40,22 @@ export default function UserTableSection({}: Props) {
     },
   ];
   return (
-    <section className="space-y-5">
-      <div className="flex w-full items-center justify-between">
-        <h1 className="text-3xl font-semibold">User</h1>
-        <AddStationModal />
-      </div>
-      <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
-        {data ? (
-          <DataTable
-            columns={columns}
-            data={data?.data?.values}
-            caption="List User yang tersedia"
-          />
-        ) : null}
-      </div>
-    </section>
+    <>
+      {user?.statusCode === 401 ? (
+        <UnAuthorizedModal />
+      ) : (
+        <section className="space-y-5">
+          <div className="flex w-full items-center justify-between">
+            <h1 className="text-3xl font-semibold">User</h1>
+            <AddStationModal />
+          </div>
+          <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
+            {user ? (
+              <DataTable columns={columns} data={user?.data?.values} />
+            ) : null}
+          </div>
+        </section>
+      )}
+    </>
   );
 }

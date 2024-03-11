@@ -15,6 +15,7 @@ export const getDatabaseList = async (
         },
       },
     );
+
     return res.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
