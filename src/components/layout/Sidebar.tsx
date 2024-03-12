@@ -16,6 +16,17 @@ import { useExpandedStore } from "@/services/store";
 import { signOut, useSession } from "next-auth/react";
 import NavLinkSkeleton from "../features/skeleton/NavLinkSkeleton";
 import Link from "next/link";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -93,14 +104,36 @@ export default function Sidebar() {
           </div>
           <div>
             <div className="flex justify-center bg-transparent hover:text-white">
-              <Button
-                className="rounded-lg bg-transparent p-2 text-slate-700 hover:bg-danger hover:text-white dark:text-white"
-                onClick={() => {
-                  signOut();
-                }}
-              >
-                <LogOut size={25} />
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button className="rounded-lg bg-transparent p-2 text-slate-700 hover:bg-danger hover:text-white dark:text-white">
+                    <LogOut size={25} />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="">
+                      Apakah anda yakin ingin logout?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Anda akan di arahkan ke halaman login
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-danger hover:bg-red-800"
+                      onClick={() => {
+                        signOut({
+                          callbackUrl: pathname,
+                        });
+                      }}
+                    >
+                      Logout
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </nav>

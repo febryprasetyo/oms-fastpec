@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addStationList,
   getCityList,
@@ -36,13 +36,21 @@ const formSchema = z.object({
   address: z.string({
     required_error: "Alamat harus diisi",
   }),
-  nama_dinas: z.string(),
-  device_id: z.string(),
-  province_id: z.string(),
-  city_id: z.string(),
+  nama_dinas: z.string({
+    required_error: "Nama Dinas harus diisi",
+  }),
+  device_id: z.string({
+    required_error: "Device harus diisi",
+  }),
+  province_id: z.string({
+    required_error: "Provinsi harus diisi",
+  }),
+  city_id: z.string({
+    required_error: "Kabupaten harus diisi",
+  }),
 });
 
-export default function AddStationForm() {
+export default function AddStationForm({ setIsOpen }: { setIsOpen: Function }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   });
@@ -50,6 +58,7 @@ export default function AddStationForm() {
   const session = useSession();
   const accessToken = session.data?.user.token.access_token;
   const provinceData = form.watch("province_id");
+  const queryClient = useQueryClient();
 
   const {
     data: province,
@@ -100,6 +109,7 @@ export default function AddStationForm() {
         variant: "destructive",
       });
     },
+
     onSuccess: () => {
       toast({
         title: "Berhasil",
@@ -108,10 +118,17 @@ export default function AddStationForm() {
       });
       form.reset();
     },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["station"],
+      });
+    },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     addStationMutation.mutate(values);
+    setIsOpen(false);
   }
 
   return (
