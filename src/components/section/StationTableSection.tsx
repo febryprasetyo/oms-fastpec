@@ -18,14 +18,19 @@ export default function StationTableSection({}: Props) {
     data: station,
     isLoading: stationLoading,
     isError: stationError,
+    error,
   } = useQuery({
-    queryKey: ["stasiun"],
+    queryKey: ["station"],
     queryFn: () => {
       return getStationList(accessToken as string);
     },
   });
 
   const columns: ColumnDef<StationData>[] = [
+    {
+      accessorKey: "id",
+      header: "ID",
+    },
     {
       accessorKey: "nama_stasiun",
       header: "Nama Stasiun",
@@ -59,17 +64,23 @@ export default function StationTableSection({}: Props) {
           </div>
           <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
             {station && !stationError ? (
-              <DataTable columns={columns} data={station?.data?.values} />
+              <DataTable
+                columns={columns}
+                data={station?.data?.values}
+                type="station"
+              />
             ) : null}
 
             {stationLoading && (
-              <div className="flex min-h-[300px] w-full items-center justify-center">
-                <p className="text-xl font-medium">Memuat Data</p>
+              <div className="flex h-[400px] animate-pulse items-center justify-center">
+                <p className="text-lg">Memuat data...</p>
               </div>
             )}
             {stationError && (
-              <div className="flex min-h-[300px] w-full items-center justify-center">
-                <p className="text-xl font-medium">Gagal Memuat Data</p>
+              <div className="flex h-[400px] items-center justify-center">
+                <p className="text-lg text-red-500">
+                  Gagal memuat data: {error?.message} , Coba muat ulang halaman
+                </p>
               </div>
             )}
           </div>

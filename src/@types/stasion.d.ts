@@ -17,11 +17,6 @@ interface StationResponse {
     total: string;
   };
 }
-interface CreateStationResponse {
-  success: boolean;
-  statusCode?: number;
-  message: string;
-}
 interface DeviceData {
   device_id: string;
   nama_dinas: string;

@@ -8,11 +8,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-import AddStationForm from "../form/AddStationForm";
 import { useState } from "react";
 import { X } from "lucide-react";
+import AddUserForm from "../form/AddUserForm";
 
-export default function AddStationModal() {
+export default function AddUserModal() {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <Dialog open={isOpen}>
@@ -32,11 +32,9 @@ export default function AddStationModal() {
             </Button>
           </div>
           <DialogTitle>Tambah Data</DialogTitle>
-          <DialogDescription>Tambah data stasiun baru</DialogDescription>
+          <DialogDescription>Tambah data User baru</DialogDescription>
         </DialogHeader>
-        <AddStationForm
-          setIsOpen={setIsOpen as React.Dispatch<React.SetStateAction<boolean>>}
-        />
+        <AddUserForm setIsOpen={setIsOpen} />
       </DialogContent>
     </Dialog>
   );

@@ -13,7 +13,7 @@ interface DeviceTableResponse {
   success: boolean;
   statusCode?: number;
   data: {
-    values: deviceData[];
+    values: DeviceTableData[];
     total: string;
   };
 }

@@ -40,3 +40,58 @@ export const getUserList = async (
     };
   }
 };
+
+type AddUserRequest = {
+  username: string;
+  password: string;
+  nama_dinas: string;
+  api_key: string;
+  secret_key: string;
+};
+
+type AddUserResponse = MutateDataResponse | undefined;
+
+export const addUserList = async (
+  data: AddUserRequest,
+  accessToken: string,
+): Promise<AddUserResponse> => {
+  try {
+    const res: AxiosResponse<MutateDataResponse> = await axiosInstance.post(
+      `/api/data/user/create`,
+      {
+        ...data,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    return res.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data.message);
+    }
+  }
+};
+
+export const DeleteUserList = async (id: string, accessToken: string) => {
+  try {
+    const res: AxiosResponse<MutateDataResponse> = await axiosInstance.post(
+      `/api/data/user/remove`,
+      {
+        id: id,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data.message);
+    }
+  }
+};
