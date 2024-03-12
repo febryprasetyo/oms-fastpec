@@ -16,7 +16,7 @@ export default async function Station() {
   const session = await auth();
 
   await queryClient.prefetchQuery({
-    queryKey: ["stasiun"],
+    queryKey: ["station"],
     queryFn: () => {
       return getStationList(session?.user.token.access_token as string);
     },

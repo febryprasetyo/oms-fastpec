@@ -149,12 +149,14 @@ type AddStationRequest = {
   nama_dinas: string;
 };
 
+type AddStationResponse = MutateDataResponse | undefined;
+
 export const addStationList = async (
   data: AddStationRequest,
   accessToken: string,
-): Promise<CreateStationResponse> => {
+): Promise<AddStationResponse> => {
   try {
-    const res: AxiosResponse<CreateStationResponse> = await axiosInstance.post(
+    const res: AxiosResponse<MutateDataResponse> = await axiosInstance.post(
       `/api/data/station/create`,
       {
         ...data,
@@ -169,16 +171,32 @@ export const addStationList = async (
     return res.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      return {
-        success: false,
-        statusCode: error.response?.status,
-        message: error.response?.data.message,
-      };
+      throw new Error(error.response?.data.message);
     }
-    return {
-      success: false,
-      statusCode: 500,
-      message: "Internal Server Error",
-    };
+  }
+};
+
+export const DeleteStationList = async (
+  data: string,
+  accessToken: string,
+): Promise<AddStationResponse> => {
+  try {
+    const res: AxiosResponse<MutateDataResponse> = await axiosInstance.post(
+      `/api/data/station/remove`,
+      {
+        id: data,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    return res.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data.message);
+    }
   }
 };

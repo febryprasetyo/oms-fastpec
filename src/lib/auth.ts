@@ -6,6 +6,7 @@ import type {
 import type { NextAuthOptions } from "next-auth";
 import { getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { axiosInstance } from "./axiosInstance";
 
 // Config untuk next-auth
 export const config = {
@@ -20,14 +21,11 @@ export const config = {
       // Fungsi untuk authorize user
       async authorize(credentials) {
         try {
-          const res = await fetch(`${process.env.API_URL}/api/auth/login`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(credentials),
+          const res = await axiosInstance.post(`/api/auth/login`, {
+            username: credentials?.username,
+            password: credentials?.password,
           });
-          const user = await res.json();
+          const user = res.data;
           if (user.success) {
             return user;
           } else {
