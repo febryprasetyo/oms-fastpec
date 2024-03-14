@@ -10,9 +10,9 @@ import {
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import AddUserForm from "../form/AddUserForm";
+import AddDeviceForm from "../form/AddDeviceForm";
 
-export default function AddUserModal() {
+export default function DeviceModal() {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <Dialog open={isOpen}>
@@ -32,9 +32,9 @@ export default function AddUserModal() {
             </Button>
           </div>
           <DialogTitle>Tambah Data</DialogTitle>
-          <DialogDescription>Tambah data User baru</DialogDescription>
+          <DialogDescription>Tambah data Device baru</DialogDescription>
         </DialogHeader>
-        <AddUserForm setIsOpen={setIsOpen} />
+        <AddDeviceForm setIsOpen={setIsOpen} />
       </DialogContent>
     </Dialog>
   );

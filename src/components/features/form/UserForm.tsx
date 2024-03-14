@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { addUserList } from "@/services/api/user";
+import { addUserList, editUserList } from "@/services/api/user";
 
 const formSchema = z.object({
   username: z.string({
@@ -35,9 +35,33 @@ const formSchema = z.object({
   }),
 });
 
-export default function AddUserForm({ setIsOpen }: { setIsOpen: Function }) {
+type props = {
+  setIsOpen: Function;
+  id?: string;
+  action: "edit" | "add";
+  default_username?: string;
+  default_nama_dinas?: string;
+  default_api_key?: string;
+  default_secret_key?: string;
+};
+
+export default function UserForm({
+  setIsOpen,
+  action,
+  id,
+  default_username,
+  default_nama_dinas,
+  default_api_key,
+  default_secret_key,
+}: props) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      username: default_username,
+      nama_dinas: default_nama_dinas,
+      api_key: default_api_key,
+      secret_key: default_secret_key,
+    },
   });
 
   const session = useSession();
@@ -46,7 +70,14 @@ export default function AddUserForm({ setIsOpen }: { setIsOpen: Function }) {
 
   const addStationMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
-      return await addUserList(data, accessToken as string);
+      if (action === "edit") {
+        return await editUserList(
+          { id: id || "", ...data },
+          accessToken as string,
+        );
+      } else if (action === "add") {
+        return await addUserList(data, accessToken as string);
+      }
     },
 
     onError: (error) => {
@@ -60,7 +91,10 @@ export default function AddUserForm({ setIsOpen }: { setIsOpen: Function }) {
     onSuccess: () => {
       toast({
         title: "Berhasil",
-        description: "Data berhasil ditambahkan",
+        description:
+          action === "edit"
+            ? "Data berhasil diubah"
+            : "Data berhasil ditambahkan",
         variant: "default",
       });
       form.reset();
@@ -77,7 +111,7 @@ export default function AddUserForm({ setIsOpen }: { setIsOpen: Function }) {
     addStationMutation.mutate(values);
     setIsOpen(false);
   }
-
+  console.log(action);
   return (
     <Form {...form}>
       <form
@@ -92,7 +126,7 @@ export default function AddUserForm({ setIsOpen }: { setIsOpen: Function }) {
               <FormItem className="w-full">
                 <FormLabel>Username</FormLabel>
                 <FormControl>
-                  <Input placeholder="Username" {...field} />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -105,7 +139,7 @@ export default function AddUserForm({ setIsOpen }: { setIsOpen: Function }) {
               <FormItem className="w-full">
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input placeholder="Password" type="password" {...field} />
+                  <Input type="password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -118,7 +152,7 @@ export default function AddUserForm({ setIsOpen }: { setIsOpen: Function }) {
               <FormItem className="w-full">
                 <FormLabel>Nama Dinas</FormLabel>
                 <FormControl>
-                  <Input placeholder="Nama Dinas" {...field} />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -131,7 +165,7 @@ export default function AddUserForm({ setIsOpen }: { setIsOpen: Function }) {
               <FormItem className="w-full">
                 <FormLabel>API Key</FormLabel>
                 <FormControl>
-                  <Input placeholder="API Key" {...field} />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -144,7 +178,7 @@ export default function AddUserForm({ setIsOpen }: { setIsOpen: Function }) {
               <FormItem className="w-full">
                 <FormLabel>Secret Key</FormLabel>
                 <FormControl>
-                  <Input placeholder="Secret Key" {...field} />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -152,7 +186,7 @@ export default function AddUserForm({ setIsOpen }: { setIsOpen: Function }) {
           />
         </div>
         <Button type="submit" className="w-full">
-          Tambah Data
+          {action == "add" ? "Tambah Data" : "Edit Data"}
         </Button>
       </form>
     </Form>

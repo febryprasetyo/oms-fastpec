@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Pen, Trash } from "lucide-react";
+import { Trash } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,12 +15,27 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/use-toast";
 import { useSession } from "next-auth/react";
 import { DeleteStationList } from "@/services/api/station";
+import StationModal from "../modal/StationModal";
 
 type Props = {
   id: string;
+  default_nama_stasiun: string;
+  default_address: string;
+  default_nama_dinas: string;
+  default_device_id: string;
+  default_province_id: string;
+  default_city_id: string;
 };
 
-export default function StationActionButton({ id }: Props) {
+export default function StationActionButton({
+  id,
+  default_nama_stasiun,
+  default_address,
+  default_nama_dinas,
+  default_device_id,
+  default_province_id,
+  default_city_id,
+}: Props) {
   const queryClient = useQueryClient();
   const session = useSession();
   const accessToken = session.data?.user.token.access_token;
@@ -54,9 +69,16 @@ export default function StationActionButton({ id }: Props) {
 
   return (
     <div className="flex gap-3">
-      <Button size="icon">
-        <Pen size={20} />
-      </Button>
+      <StationModal
+        action="edit"
+        id={id}
+        default_nama_stasiun={default_nama_stasiun}
+        default_address={default_address}
+        default_nama_dinas={default_nama_dinas}
+        default_device_id={default_device_id}
+        default_province_id={default_province_id}
+        default_city_id={default_city_id}
+      />
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button size="icon" variant="destructive">
