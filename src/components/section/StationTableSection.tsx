@@ -1,12 +1,12 @@
 "use client";
 import React from "react";
-import AddStationModal from "../features/modal/AddStationModal";
 import { DataTable } from "../features/dataTable/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { useQuery } from "@tanstack/react-query";
 import { getStationList } from "@/services/api/station";
 import { useSession } from "next-auth/react";
 import UnAuthorizedModal from "../features/modal/UnAuthorizedModal";
+import StationModal from "../features/modal/StationModal";
 
 type Props = {};
 
@@ -44,8 +44,16 @@ export default function StationTableSection({}: Props) {
       header: "Alamat",
     },
     {
+      accessorKey: "province_id",
+      header: "ID Provinsi",
+    },
+    {
       accessorKey: "province_name",
       header: "Provinsi",
+    },
+    {
+      accessorKey: "city_id",
+      header: "ID Kota",
     },
     {
       accessorKey: "city_name",
@@ -60,10 +68,10 @@ export default function StationTableSection({}: Props) {
         <section className="space-y-5">
           <div className="flex w-full items-center justify-between">
             <h1 className="text-3xl font-semibold">Stasiun</h1>
-            {station && !stationError && <AddStationModal />}
+            {station?.success && !stationError && <StationModal action="add" />}
           </div>
           <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
-            {station && !stationError ? (
+            {station?.success && !stationError ? (
               <DataTable
                 columns={columns}
                 data={station?.data?.values}
@@ -76,13 +84,15 @@ export default function StationTableSection({}: Props) {
                 <p className="text-lg">Memuat data...</p>
               </div>
             )}
-            {stationError && (
-              <div className="flex h-[400px] items-center justify-center">
-                <p className="text-lg text-red-500">
-                  Gagal memuat data: {error?.message} , Coba muat ulang halaman
-                </p>
-              </div>
-            )}
+            {!station?.success ||
+              (stationError && (
+                <div className="flex h-[400px] items-center justify-center">
+                  <p className="text-lg text-red-500">
+                    Gagal memuat data: {error?.message} , Coba muat ulang
+                    halaman
+                  </p>
+                </div>
+              ))}
           </div>
         </section>
       )}

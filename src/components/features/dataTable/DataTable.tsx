@@ -80,14 +80,28 @@ export function DataTable<TData, TValue>({
                   })}
                   <TableCell>
                     {type === "station" && (
-                      <StationActionButton id={row.getValue("id")} />
+                      <StationActionButton
+                        id={row.getValue("id")}
+                        default_nama_stasiun={row.getValue("nama_stasiun")}
+                        default_address={row.getValue("address")}
+                        default_nama_dinas={row.getValue("nama_dinas")}
+                        default_device_id={row.getValue("device_id")}
+                        default_province_id={row.getValue("province_id")}
+                        default_city_id={row.getValue("city_id")}
+                      />
                     )}
                     {type === "device" && (
                       <DeviceActionButton id={row.getValue("id")} />
                     )}
 
                     {type === "user" && (
-                      <UserActionButton id={row.getValue("id")} />
+                      <UserActionButton
+                        id={row.getValue("id")}
+                        default_username={row.getValue("username")}
+                        default_nama_dinas={row.getValue("nama_dinas")}
+                        default_api_key={row.getValue("api_key")}
+                        default_secret_key={row.getValue("secret_key")}
+                      />
                     )}
                   </TableCell>
                 </TableRow>
