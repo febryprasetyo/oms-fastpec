@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { getDeviceTableList } from "@/services/api/device";
 import UnAuthorizedModal from "../features/modal/UnAuthorizedModal";
-import AddDeviceModal from "../features/modal/AddDeviceModal";
+import DeviceModal from "../features/modal/DeviceModal";
 
 type Props = {};
 
@@ -59,10 +59,10 @@ export default function DeviceTableSection({}: Props) {
         <section className="space-y-5">
           <div className="flex w-full items-center justify-between">
             <h1 className="text-3xl font-semibold">Mesin</h1>
-            <AddDeviceModal />
+            {device?.success && !isError && <DeviceModal />}
           </div>
           <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
-            {device && !isError && (
+            {device?.success && !isError && (
               <DataTable
                 columns={columns}
                 data={device?.data.values}
@@ -74,13 +74,15 @@ export default function DeviceTableSection({}: Props) {
                 <p className="text-lg">Memuat data...</p>
               </div>
             )}
-            {isError && (
-              <div className="flex h-[400px] items-center justify-center">
-                <p className="text-xl text-red-500">
-                  Gagal memuat data: {error?.message} , Coba muat ulang halaman
-                </p>
-              </div>
-            )}
+            {!device?.success ||
+              (isError && (
+                <div className="flex h-[400px] items-center justify-center">
+                  <p className="text-lg text-red-500">
+                    Gagal memuat data: {error?.message} , Coba muat ulang
+                    halaman
+                  </p>
+                </div>
+              ))}
           </div>
         </section>
       )}

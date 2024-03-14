@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { getUserList } from "@/services/api/user";
 import UnAuthorizedModal from "../features/modal/UnAuthorizedModal";
-import AddUserModal from "../features/modal/AddUserModal";
+import UserModal from "../features/modal/UserModal";
 
 type Props = {};
 
@@ -36,6 +36,10 @@ export default function UserTableSection({}: Props) {
       header: "Username",
     },
     {
+      accessorKey: "nama_dinas",
+      header: "Nama Dinas",
+    },
+    {
       accessorKey: "api_key",
       header: "API Key",
     },
@@ -52,10 +56,10 @@ export default function UserTableSection({}: Props) {
         <section className="space-y-5">
           <div className="flex w-full items-center justify-between">
             <h1 className="text-3xl font-semibold">User</h1>
-            <AddUserModal />
+            {user?.success && !isError && <UserModal action="add" />}
           </div>
           <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
-            {user && !isError && (
+            {user?.success && !isError && (
               <DataTable
                 columns={columns}
                 data={user?.data?.values}
@@ -68,13 +72,15 @@ export default function UserTableSection({}: Props) {
                 <p className="text-lg">Memuat data...</p>
               </div>
             )}
-            {isError && (
-              <div className="flex h-[400px] items-center justify-center">
-                <p className="text-red-500">
-                  Gagal memuat data: {error?.message} , Coba muat ulang halaman
-                </p>
-              </div>
-            )}
+            {!user?.success ||
+              (isError && (
+                <div className="flex h-[400px] items-center justify-center">
+                  <p className="text-red-500">
+                    Gagal memuat data: {error?.message} , Coba muat ulang
+                    halaman
+                  </p>
+                </div>
+              ))}
           </div>
         </section>
       )}

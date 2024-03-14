@@ -104,7 +104,7 @@ export const getDeviceList = async (
 
 export const getCityList = async (
   accessToken: string,
-  provinceId: string,
+  provinceId: string | number,
 ): Promise<CityResponse> => {
   try {
     if (provinceId !== "") {
@@ -144,8 +144,8 @@ type AddStationRequest = {
   device_id: string;
   nama_stasiun: string;
   address: string;
-  province_id: string;
-  city_id: string;
+  province_id: string | number;
+  city_id: string | number;
   nama_dinas: string;
 };
 
@@ -158,6 +158,40 @@ export const addStationList = async (
   try {
     const res: AxiosResponse<MutateDataResponse> = await axiosInstance.post(
       `/api/data/station/create`,
+      {
+        ...data,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    return res.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data.message);
+    }
+  }
+};
+
+type EditStationRequest = {
+  id: string;
+  device_id: string;
+  nama_stasiun: string;
+  address: string;
+  province_id: string | number;
+  city_id: string | number;
+  nama_dinas: string;
+};
+export const editStationList = async (
+  data: EditStationRequest,
+  accessToken: string,
+): Promise<AddStationResponse> => {
+  try {
+    const res: AxiosResponse<MutateDataResponse> = await axiosInstance.post(
+      `/api/data/station/update`,
       {
         ...data,
       },

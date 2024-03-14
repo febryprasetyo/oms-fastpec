@@ -76,6 +76,42 @@ export const addUserList = async (
   }
 };
 
+type EditUserRequest = {
+  id: string;
+  username: string;
+  password: string;
+  nama_dinas: string;
+  api_key: string;
+  secret_key: string;
+};
+
+export const editUserList = async (
+  data: EditUserRequest,
+  accessToken: string,
+): Promise<AddUserResponse> => {
+  console.log(data);
+  try {
+    const res: AxiosResponse<MutateDataResponse> = await axiosInstance.post(
+      `/api/data/user/update`,
+      {
+        ...data,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    console.log(res.data);
+    return res.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data.message);
+    }
+  }
+};
+
 export const DeleteUserList = async (id: string, accessToken: string) => {
   try {
     const res: AxiosResponse<MutateDataResponse> = await axiosInstance.post(

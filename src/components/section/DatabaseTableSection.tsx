@@ -89,7 +89,7 @@ export default function DatabaseTableSection({}: Props) {
             </Select>
           </div>
           <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
-            {database && !isError && (
+            {database?.success && !isError && (
               <>
                 <Table>
                   <TableHeader>
@@ -209,13 +209,15 @@ export default function DatabaseTableSection({}: Props) {
                 <p className="text-lg">Memuat data...</p>
               </div>
             )}
-            {isError && (
-              <div className="flex h-[400px] items-center justify-center">
-                <p className="text-red-500">
-                  Gagal memuat data: {error?.message} , Coba muat ulang halaman
-                </p>
-              </div>
-            )}
+            {!database?.success ||
+              (isError && (
+                <div className="flex h-[400px] items-center justify-center">
+                  <p className="text-red-500">
+                    Gagal memuat data: {error?.message} , Coba muat ulang
+                    halaman
+                  </p>
+                </div>
+              ))}
           </div>
         </section>
       )}
