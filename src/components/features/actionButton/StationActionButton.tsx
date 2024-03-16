@@ -55,8 +55,6 @@ export default function StationActionButton({
         title: "Success",
         description: "Data berhasil dihapus",
       });
-    },
-    onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: ["station"],
       });

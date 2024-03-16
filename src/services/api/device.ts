@@ -8,7 +8,7 @@ export const getDeviceTableList = async (
     const res: AxiosResponse<DeviceTableResponse> = await axiosInstance.post(
       `/api/data/device/list`,
       {
-        limit: 10,
+        limit: 1000,
         offset: 0,
       },
       {
@@ -58,6 +58,32 @@ export const addDeviceList = async (
     const res: AxiosResponse<MutateDataResponse> = await axiosInstance.post(
       `/api/data/device/create`,
       {
+        ...data,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    return res.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data.message);
+    }
+  }
+};
+export const editDeviceList = async (
+  id: string | undefined,
+  data: AddDeviceRequest,
+  accessToken: string,
+): Promise<AddDeviceResponse> => {
+  try {
+    const res: AxiosResponse<MutateDataResponse> = await axiosInstance.post(
+      `/api/data/device/update`,
+      {
+        id: id || "",
         ...data,
       },
       {

@@ -14,7 +14,7 @@ interface StationResponse {
   statusCode?: number;
   data: {
     values: StasionData[];
-    total: string;
+    total: number;
   };
 }
 interface DeviceData {

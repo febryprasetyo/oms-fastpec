@@ -51,8 +51,6 @@ export default function UserActionButton({
         title: "Success",
         description: "Data berhasil dihapus",
       });
-    },
-    onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: ["user"],
       });
