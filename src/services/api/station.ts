@@ -1,6 +1,26 @@
 import { axiosInstance } from "@/lib/axiosInstance";
 import axios, { AxiosResponse } from "axios";
 
+type EditStationRequest = {
+  id: string;
+  device_id: string;
+  nama_stasiun: string;
+  address: string;
+  province_id: string | number;
+  city_id: string | number;
+  nama_dinas: string;
+};
+type AddStationRequest = {
+  device_id: string;
+  nama_stasiun: string;
+  address: string;
+  province_id: string | number;
+  city_id: string | number;
+  nama_dinas: string;
+};
+
+type AddStationResponse = MutateDataResponse | undefined;
+
 export const getStationList = async (
   accessToken: string,
 ): Promise<StationResponse> => {
@@ -8,7 +28,7 @@ export const getStationList = async (
     const res: AxiosResponse<StationResponse> = await axiosInstance.post(
       `/api/data/station/list`,
       {
-        limit: 10,
+        limit: 1000,
         offset: 0,
       },
       {
@@ -26,7 +46,7 @@ export const getStationList = async (
         statusCode: error.response?.status,
         data: {
           values: [],
-          total: "0",
+          total: 0,
         },
       };
     }
@@ -35,7 +55,7 @@ export const getStationList = async (
       statusCode: 500,
       data: {
         values: [],
-        total: "0",
+        total: 0,
       },
     };
   }
@@ -140,17 +160,6 @@ export const getCityList = async (
   }
 };
 
-type AddStationRequest = {
-  device_id: string;
-  nama_stasiun: string;
-  address: string;
-  province_id: string | number;
-  city_id: string | number;
-  nama_dinas: string;
-};
-
-type AddStationResponse = MutateDataResponse | undefined;
-
 export const addStationList = async (
   data: AddStationRequest,
   accessToken: string,
@@ -176,15 +185,6 @@ export const addStationList = async (
   }
 };
 
-type EditStationRequest = {
-  id: string;
-  device_id: string;
-  nama_stasiun: string;
-  address: string;
-  province_id: string | number;
-  city_id: string | number;
-  nama_dinas: string;
-};
 export const editStationList = async (
   data: EditStationRequest,
   accessToken: string,

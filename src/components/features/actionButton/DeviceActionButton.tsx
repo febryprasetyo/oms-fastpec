@@ -15,12 +15,21 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/use-toast";
 import { useSession } from "next-auth/react";
 import { DeleteDeviceList } from "@/services/api/device";
+import DeviceModal from "../modal/DeviceModal";
 
 type Props = {
   id: string;
+  default_id_mesin?: string;
+  default_dinas_id?: string;
+  default_nama_stasiun?: string;
 };
 
-export default function DeviceActionButton({ id }: Props) {
+export default function DeviceActionButton({
+  id,
+  default_dinas_id,
+  default_id_mesin,
+  default_nama_stasiun,
+}: Props) {
   const queryClient = useQueryClient();
   const session = useSession();
   const accessToken = session.data?.user.token.access_token;
@@ -40,10 +49,8 @@ export default function DeviceActionButton({ id }: Props) {
         title: "Success",
         description: "Data berhasil dihapus",
       });
-    },
-    onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: ["device"],
+        queryKey: ["mesin"],
       });
     },
   });
@@ -54,9 +61,13 @@ export default function DeviceActionButton({ id }: Props) {
 
   return (
     <div className="flex gap-3">
-      <Button size="icon">
-        <Pen size={20} />
-      </Button>
+      <DeviceModal
+        action="edit"
+        id={id}
+        default_dinas_id={default_dinas_id}
+        default_id_mesin={default_id_mesin}
+        default_nama_stasiun={default_nama_stasiun}
+      />
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button size="icon" variant="destructive">

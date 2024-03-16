@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { addDeviceList } from "@/services/api/device";
+import { addDeviceList, editDeviceList } from "@/services/api/device";
 
 const formSchema = z.object({
   id_mesin: z.string({ required_error: "ID Mesin harus diisi" }),
@@ -23,18 +23,44 @@ const formSchema = z.object({
   nama_stasiun: z.string({ required_error: "Nama Stasiun harus diisi" }),
 });
 
-export default function AddDeviceForm({ setIsOpen }: { setIsOpen: Function }) {
+type Props = {
+  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  action: "add" | "edit";
+  id?: string;
+  default_id_mesin?: string;
+  default_dinas_id?: string | number;
+  default_nama_stasiun?: string;
+};
+export default function DeviceForm({
+  setIsOpen,
+  default_dinas_id,
+  default_id_mesin,
+  default_nama_stasiun,
+  action,
+  id,
+}: Props) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      id_mesin: default_id_mesin || undefined,
+      dinas_id: default_dinas_id?.toString() || undefined,
+      nama_stasiun: default_nama_stasiun || undefined,
+    },
   });
 
   const session = useSession();
   const accessToken = session.data?.user.token.access_token;
   const queryClient = useQueryClient();
 
-  const addStationMutation = useMutation({
+  const DeviceMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
-      return await addDeviceList(data, accessToken as string);
+      if (action == "edit") {
+        const res = await editDeviceList(id, data, accessToken as string);
+        return res;
+      } else if (action == "add") {
+        const res = await addDeviceList(data, accessToken as string);
+        return res;
+      }
     },
 
     onError: (error) => {
@@ -48,7 +74,8 @@ export default function AddDeviceForm({ setIsOpen }: { setIsOpen: Function }) {
     onSuccess: () => {
       toast({
         title: "Berhasil",
-        description: "Data berhasil ditambahkan",
+        description:
+          action === "edit" ? "Data berhasil diubah" : "Data berhasil ditambah",
         variant: "default",
       });
       form.reset();
@@ -56,20 +83,21 @@ export default function AddDeviceForm({ setIsOpen }: { setIsOpen: Function }) {
 
     onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: ["device"],
+        queryKey: ["mesin"],
       });
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    addStationMutation.mutate(values);
+  const onsubmit = (data: z.infer<typeof formSchema>) => {
+    console.log(data.dinas_id);
+    DeviceMutation.mutate(data);
     setIsOpen(false);
-  }
+  };
 
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(onsubmit)}
         className="flex flex-col items-end justify-center space-y-5"
       >
         <div className="w-full space-y-3">

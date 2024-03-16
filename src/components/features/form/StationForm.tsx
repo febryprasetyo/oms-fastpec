@@ -122,7 +122,7 @@ export default function StationForm({
     },
   });
 
-  const addStationMutation = useMutation({
+  const StationMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
       if (action == "edit") {
         const res = await editStationList(
@@ -162,7 +162,7 @@ export default function StationForm({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    addStationMutation.mutate(values);
+    StationMutation.mutate(values);
     setIsOpen(false);
   }
 

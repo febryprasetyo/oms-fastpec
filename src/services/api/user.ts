@@ -8,7 +8,7 @@ export const getUserList = async (
     const res: AxiosResponse<UserResponse> = await axiosInstance.post(
       `/api/data/user/list`,
       {
-        limit: 10,
+        limit: 1000,
         offset: 0,
       },
       {

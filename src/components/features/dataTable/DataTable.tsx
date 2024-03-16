@@ -91,7 +91,12 @@ export function DataTable<TData, TValue>({
                       />
                     )}
                     {type === "device" && (
-                      <DeviceActionButton id={row.getValue("id")} />
+                      <DeviceActionButton
+                        id={row.getValue("id")}
+                        default_dinas_id={row.getValue("dinas_id")}
+                        default_id_mesin={row.getValue("id_mesin")}
+                        default_nama_stasiun={row.getValue("nama_stasiun")}
+                      />
                     )}
 
                     {type === "user" && (

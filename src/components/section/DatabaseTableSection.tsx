@@ -15,16 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import UnAuthorizedModal from "../features/modal/UnAuthorizedModal";
+import LimitPage from "../features/limitPage/LimitPage";
 
 type Props = {};
 
@@ -67,26 +59,10 @@ export default function DatabaseTableSection({}: Props) {
         <section className="space-y-5">
           <div className="flex w-full items-center justify-between">
             <h1 className="text-3xl font-semibold">Database</h1>
-            <Select
-              defaultValue={`${itemsPerPage}`}
-              onValueChange={(e) => {
-                const value = parseInt(e);
-                setItemPerPage(value);
-              }}
-            >
-              <SelectTrigger className="w-[100px]">
-                <SelectValue placeholder={"10"} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value={"5"}>5</SelectItem>
-                  <SelectItem value={"10"} defaultChecked>
-                    10
-                  </SelectItem>
-                  <SelectItem value={"20"}>20</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <LimitPage
+              itemsPerPage={itemsPerPage}
+              setItemPerPage={setItemPerPage}
+            />
           </div>
           <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
             {database?.success && !isError && (
@@ -195,11 +171,11 @@ export default function DatabaseTableSection({}: Props) {
                     renderOnZeroPageCount={null}
                     breakClassName="text-xl"
                     className=" mt-5 flex items-center justify-center gap-3 py-2"
-                    activeClassName="bg-primary text-white dark:bg-primary dark:text-white flex items-center justify-center rounded-md text-lg"
-                    pageLinkClassName="hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white py-1 px-3 flex items-center justify-center rounded-md text-lg border dark:border-dark_accent"
-                    nextLinkClassName="hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white py-1 px-3 flex items-center justify-center rounded-md text-lg border dark:border-dark_accent"
-                    previousLinkClassName="hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white py-1 px-3 flex items-center justify-center rounded-md text-lg border dark:border-dark_accent"
-                    disabledLinkClassName="text-gray-400 dark:text-gray-400 py-1 px-3 flex items-center justify-center rounded-md text-lg border dark:border-dark_accent cursor-not-allowed hover:bg-transparent hover:text-gray-400 dark:hover:text-gray-400 dark:hover:bg-transparent"
+                    activeClassName="bg-primary text-white dark:bg-primary dark:text-white flex items-center justify-center rounded-lg text-lg"
+                    pageLinkClassName="hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white size-10 flex items-center justify-center rounded-lg text-lg border dark:border-dark_accent"
+                    nextLinkClassName="hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white size-10 flex items-center justify-center rounded-lg text-lg border dark:border-dark_accent"
+                    previousLinkClassName="hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white size-10 flex items-center justify-center rounded-lg text-lg border dark:border-dark_accent"
+                    disabledLinkClassName="text-gray-400 dark:text-gray-400 size-10 flex items-center justify-center rounded-lg text-lg border dark:border-dark_accent cursor-not-allowed hover:bg-transparent hover:text-gray-400 dark:hover:text-gray-400 dark:hover:bg-transparent"
                   />
                 </div>
               </>
@@ -209,15 +185,14 @@ export default function DatabaseTableSection({}: Props) {
                 <p className="text-lg">Memuat data...</p>
               </div>
             )}
-            {!database?.success ||
-              (isError && (
-                <div className="flex h-[400px] items-center justify-center">
-                  <p className="text-red-500">
-                    Gagal memuat data: {error?.message} , Coba muat ulang
-                    halaman
-                  </p>
-                </div>
-              ))}
+            {!database?.success && (
+              <div className="flex h-[400px] items-center justify-center">
+                <p className="text-red-500">
+                  Gagal memuat data: {error?.message || "Network Error"} , Coba
+                  muat ulang halaman
+                </p>
+              </div>
+            )}
           </div>
         </section>
       )}
