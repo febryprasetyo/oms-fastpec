@@ -1,4 +1,4 @@
-interface UserData {
+interface UserTableData {
   id: number;
   username: string;
   api_key: string;
@@ -9,7 +9,7 @@ interface UserData {
 interface UserResponse {
   success: boolean;
   data: {
-    values: UserData[];
+    values: UserTableData[];
     total: string;
   };
   statusCode?: number;

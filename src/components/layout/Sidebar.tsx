@@ -15,7 +15,6 @@ import { Button } from "../ui/button";
 import { useExpandedStore } from "@/services/store";
 import { signOut, useSession } from "next-auth/react";
 import NavLinkSkeleton from "../features/skeleton/NavLinkSkeleton";
-import Link from "next/link";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,6 +53,7 @@ export default function Sidebar() {
               onClick={() => {
                 setIsExpanded(false);
               }}
+              aria-label="Close Sidebar"
             >
               <ChevronsLeftIcon size={25} />
             </Button>
@@ -66,11 +66,17 @@ export default function Sidebar() {
                   pathname={pathname}
                   to="/"
                 />
+                <TooltipComponents
+                  content="Database"
+                  to="/database"
+                  pathname={pathname}
+                  Icon={Database}
+                />
               </div>
               {/* Link Client Hanya Akan di Render Ketika role = Admin */}
               {session.data?.user?.user_data?.role_name === "Admin" ? (
                 <div className="space-y-2">
-                  <p className="text-center text-sm dark:text-white">Client</p>
+                  <p className="text-center text-sm dark:text-white">Admin</p>
                   <TooltipComponents
                     content="Stasiun"
                     to="/stasiun"
@@ -89,12 +95,6 @@ export default function Sidebar() {
                     pathname={pathname}
                     Icon={Wrench}
                   />
-                  <TooltipComponents
-                    content="Database"
-                    to="/database"
-                    pathname={pathname}
-                    Icon={Database}
-                  />
                 </div>
               ) : // Jika role = User, maka tidak akan di render dan akan di ganti dengan component skeleton
               session.data?.user?.user_data?.role_name === "User" ? null : (
@@ -106,13 +106,16 @@ export default function Sidebar() {
             <div className="flex justify-center bg-transparent hover:text-white">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button className="rounded-lg bg-transparent p-2 text-slate-700 hover:bg-danger hover:text-white dark:text-white">
+                  <Button
+                    className="rounded-lg bg-transparent p-2 text-slate-700 hover:bg-danger hover:text-white dark:text-white"
+                    aria-label="Logout button"
+                  >
                     <LogOut size={25} />
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle className="">
+                    <AlertDialogTitle>
                       Apakah anda yakin ingin logout?
                     </AlertDialogTitle>
                     <AlertDialogDescription>

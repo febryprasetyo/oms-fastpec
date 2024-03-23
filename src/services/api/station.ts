@@ -211,9 +211,9 @@ export const editStationList = async (
 };
 
 export const DeleteStationList = async (
-  data: string,
+  data: string | number,
   accessToken: string,
-): Promise<AddStationResponse> => {
+) => {
   try {
     const res: AxiosResponse<MutateDataResponse> = await axiosInstance.post(
       `/api/data/station/remove`,
@@ -226,8 +226,6 @@ export const DeleteStationList = async (
         },
       },
     );
-
-    return res.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       throw new Error(error.response?.data.message);

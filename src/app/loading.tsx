@@ -1,14 +1,16 @@
-import CardSkeleton from "@/components/features/skeleton/CardSkeleton";
+type Props = {};
 
-export default function Loading() {
+export default function loading({}: Props) {
   return (
-    <section>
-      <h1 className="text-3xl font-semibold">List Stasiun</h1>
-      <div className="grid w-full grid-cols-1 gap-5 py-6 md:grid-cols-2 xl:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, index) => (
-          <CardSkeleton key={index} />
-        ))}
+    <main className="flex h-screen w-full items-center justify-center ">
+      <div
+        className="text-surface inline-block size-10 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] text-primary motion-reduce:animate-[spin_1.5s_linear_infinite]"
+        role="status"
+      >
+        <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
+          Loading...
+        </span>
       </div>
-    </section>
+    </main>
   );
 }

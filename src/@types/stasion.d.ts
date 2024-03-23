@@ -1,4 +1,4 @@
-interface StationData {
+interface StationTableData {
   id: string;
   nama_stasiun: string;
   id_mesin: string;
@@ -13,7 +13,7 @@ interface StationResponse {
   success: boolean;
   statusCode?: number;
   data: {
-    values: StasionData[];
+    values: StationTableData[];
     total: number;
   };
 }

@@ -77,7 +77,7 @@ export const addUserList = async (
 };
 
 type EditUserRequest = {
-  id: string;
+  id: string | number;
   username: string;
   password: string;
   nama_dinas: string;
@@ -89,7 +89,6 @@ export const editUserList = async (
   data: EditUserRequest,
   accessToken: string,
 ): Promise<AddUserResponse> => {
-  console.log(data);
   try {
     const res: AxiosResponse<MutateDataResponse> = await axiosInstance.post(
       `/api/data/user/update`,
@@ -103,7 +102,6 @@ export const editUserList = async (
         },
       },
     );
-    console.log(res.data);
     return res.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -112,7 +110,10 @@ export const editUserList = async (
   }
 };
 
-export const DeleteUserList = async (id: string, accessToken: string) => {
+export const DeleteUserList = async (
+  id: string | number,
+  accessToken: string,
+) => {
   try {
     const res: AxiosResponse<MutateDataResponse> = await axiosInstance.post(
       `/api/data/user/remove`,

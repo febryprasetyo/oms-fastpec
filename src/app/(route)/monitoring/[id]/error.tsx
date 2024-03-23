@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useEffect } from "react";
 
-export default function GlobalError({
+export default function Error({
   error,
   reset,
 }: {
@@ -16,8 +16,8 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <html className="flex h-screen w-full items-center justify-center bg-white dark:bg-dark">
-      <body className="space-y-5 text-center">
+    <main className="flex h-screen w-full items-center justify-center bg-white dark:bg-dark">
+      <section className="space-y-5 text-center">
         <h2 className="text-2xl font-medium text-slate-700 dark:text-white">
           Terjadi kesalahan yang tidak terduga : {error.message}
         </h2>
@@ -34,7 +34,7 @@ export default function GlobalError({
             Reset
           </Button>
         </div>
-      </body>
-    </html>
+      </section>
+    </main>
   );
 }

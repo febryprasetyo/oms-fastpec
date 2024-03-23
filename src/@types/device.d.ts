@@ -1,5 +1,5 @@
 interface DeviceTableData {
-  id: string;
+  id: string | number;
   created_at: string;
   updated_at: string;
   id_mesin: string;

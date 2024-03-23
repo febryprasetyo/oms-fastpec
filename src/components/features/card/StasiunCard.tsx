@@ -26,6 +26,7 @@ export default function StasiunCard({
             alt="stasiun"
             className="object-cover"
             quality={60}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </div>
         <div className="space-y-1 p-5">

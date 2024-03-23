@@ -12,7 +12,7 @@ export default async function Station() {
   const session = await auth();
 
   await queryClient.prefetchQuery({
-    queryKey: ["mesin"],
+    queryKey: ["device"],
     queryFn: () => {
       return getDeviceTableList(session?.user.token.access_token as string);
     },

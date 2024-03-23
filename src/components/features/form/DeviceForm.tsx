@@ -26,25 +26,15 @@ const formSchema = z.object({
 type Props = {
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   action: "add" | "edit";
-  id?: string;
-  default_id_mesin?: string;
-  default_dinas_id?: string | number;
-  default_nama_stasiun?: string;
+  value?: DeviceTableData;
 };
-export default function DeviceForm({
-  setIsOpen,
-  default_dinas_id,
-  default_id_mesin,
-  default_nama_stasiun,
-  action,
-  id,
-}: Props) {
+export default function DeviceForm({ setIsOpen, value, action }: Props) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      id_mesin: default_id_mesin || undefined,
-      dinas_id: default_dinas_id?.toString() || undefined,
-      nama_stasiun: default_nama_stasiun || undefined,
+      id_mesin: value?.id_mesin,
+      dinas_id: value?.dinas_id?.toString(),
+      nama_stasiun: value?.nama_stasiun,
     },
   });
 
@@ -55,7 +45,11 @@ export default function DeviceForm({
   const DeviceMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
       if (action == "edit") {
-        const res = await editDeviceList(id, data, accessToken as string);
+        const res = await editDeviceList(
+          value?.id || "",
+          data,
+          accessToken as string,
+        );
         return res;
       } else if (action == "add") {
         const res = await addDeviceList(data, accessToken as string);
@@ -79,17 +73,13 @@ export default function DeviceForm({
         variant: "default",
       });
       form.reset();
-    },
-
-    onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: ["mesin"],
+        queryKey: ["device"],
       });
     },
   });
 
   const onsubmit = (data: z.infer<typeof formSchema>) => {
-    console.log(data.dinas_id);
     DeviceMutation.mutate(data);
     setIsOpen(false);
   };

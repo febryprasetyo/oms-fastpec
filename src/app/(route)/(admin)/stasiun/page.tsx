@@ -30,7 +30,7 @@ export default async function Station() {
   });
 
   await queryClient.prefetchQuery({
-    queryKey: ["device"],
+    queryKey: ["deviceList"],
     queryFn: () => {
       return getDeviceList(session?.user.token.access_token as string);
     },

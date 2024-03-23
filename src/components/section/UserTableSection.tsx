@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { getUserList } from "@/services/api/user";
 import UnAuthorizedModal from "../features/modal/UnAuthorizedModal";
-import UserModal from "../features/modal/UserModal";
+import UserModal from "../features/actionButton/ActionModal";
 import ReactPaginate from "react-paginate";
 import LimitPage from "../features/limitPage/LimitPage";
 
@@ -30,7 +30,7 @@ export default function UserTableSection({}: Props) {
     },
   });
 
-  const columns: ColumnDef<UserData>[] = [
+  const columns: ColumnDef<UserTableData>[] = [
     {
       accessorKey: "id",
       header: "ID",
@@ -71,7 +71,9 @@ export default function UserTableSection({}: Props) {
         <section className="space-y-5">
           <div className="flex w-full items-center justify-between">
             <h1 className="text-3xl font-semibold">User</h1>
-            {user?.success && !isError && <UserModal action="add" />}
+            {user?.success && !isError && (
+              <UserModal action="add" type="user" />
+            )}
           </div>
           {user?.success && !isError && (
             <div className="flex w-full justify-end">

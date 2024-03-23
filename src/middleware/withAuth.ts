@@ -7,7 +7,7 @@ import {
 } from "next/server";
 
 // Hanya Admin yang bisa mengakses halaman ini
-const onlyAdminPage = ["/mesin", "/stasiun", "/database", "/user"];
+const onlyAdminPage = ["/mesin", "/stasiun", "/user"];
 
 // Halaman untuk autentikasi
 const authPage = ["/login"];
@@ -18,7 +18,6 @@ export default function withAuth(
 ) {
   return async (req: NextRequest, next: NextFetchEvent) => {
     const pathname = req.nextUrl.pathname;
-
     if (requireAuth.includes(pathname)) {
       // Mendapatkan token dari cookie
       const token = await getToken({
@@ -41,8 +40,7 @@ export default function withAuth(
 
         // Jika role bukan Admin, redirect ke halaman utama
         if (
-          // @ts-ignore
-          token?.user_data?.role_name !== "Admin" &&
+          (token?.user_data as { role_name: string })?.role_name !== "Admin" &&
           onlyAdminPage.includes(pathname)
         ) {
           return NextResponse.redirect(new URL("/", req.url));

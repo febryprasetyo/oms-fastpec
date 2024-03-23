@@ -8,7 +8,6 @@ import ReactPaginate from "react-paginate";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -42,9 +41,8 @@ export default function DatabaseTableSection({}: Props) {
     refetchInterval: false,
   });
 
-  const currentItems = database?.data.slice(itemOffset, endOffset);
+  const currentItems = database?.data.toReversed().slice(itemOffset, endOffset);
   const pageCount = Math.ceil((database?.data.length ?? 0) / itemsPerPage);
-
   const handlePageClick = (event: any) => {
     const newOffset =
       (event.selected * itemsPerPage) % (database?.data.length ?? 0);
@@ -77,17 +75,13 @@ export default function DatabaseTableSection({}: Props) {
                       <TableHead className="min-w-[150px]">Tanggal</TableHead>
                       <TableHead>Jam</TableHead>
                       <TableHead className="min-w-[100px]">Suhu</TableHead>
-                      <TableHead>DHL</TableHead>
                       <TableHead>TDS</TableHead>
-                      <TableHead>Salinitas</TableHead>
                       <TableHead>DO</TableHead>
                       <TableHead>PH</TableHead>
                       <TableHead>Turbidity</TableHead>
                       <TableHead>Kedalaman</TableHead>
-                      <TableHead>SwSG</TableHead>
                       <TableHead>Nitrat</TableHead>
                       <TableHead>Amonia</TableHead>
-                      <TableHead>ORP</TableHead>
                       <TableHead>COD</TableHead>
                       <TableHead>BOD</TableHead>
                       <TableHead>TSS</TableHead>
@@ -114,13 +108,7 @@ export default function DatabaseTableSection({}: Props) {
                             {data.Suhu == undefined ? "-" : data.Suhu}
                           </TableCell>
                           <TableCell>
-                            {data.DHL == undefined ? "-" : data.DHL}
-                          </TableCell>
-                          <TableCell>
                             {data.TDS == undefined ? "-" : data.TDS}
-                          </TableCell>
-                          <TableCell>
-                            {data.Salinitas == undefined ? "-" : data.Salinitas}
                           </TableCell>
                           <TableCell>
                             {data.DO == undefined ? "-" : data.DO}
@@ -135,16 +123,10 @@ export default function DatabaseTableSection({}: Props) {
                             {data.Kedalaman == undefined ? "-" : data.Kedalaman}
                           </TableCell>
                           <TableCell>
-                            {data.SwSG == undefined ? "-" : data.SwSG}
-                          </TableCell>
-                          <TableCell>
                             {data.Nitrat == undefined ? "-" : data.Nitrat}
                           </TableCell>
                           <TableCell>
                             {data.Amonia ? data.Amonia : "-"}
-                          </TableCell>
-                          <TableCell>
-                            {data.ORP == undefined ? "-" : data.ORP}
                           </TableCell>
                           <TableCell>
                             {data.COD == undefined ? "-" : data.COD}

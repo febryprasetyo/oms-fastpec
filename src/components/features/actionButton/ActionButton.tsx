@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Pen, Trash } from "lucide-react";
+import { Trash } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,28 +14,32 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/use-toast";
 import { useSession } from "next-auth/react";
+import { DeleteStationList } from "@/services/api/station";
+import { DeleteUserList } from "@/services/api/user";
 import { DeleteDeviceList } from "@/services/api/device";
-import DeviceModal from "../modal/DeviceModal";
+import ActionModal from "./ActionModal";
 
-type Props = {
-  id: string;
-  default_id_mesin?: string;
-  default_dinas_id?: string;
-  default_nama_stasiun?: string;
+type props = {
+  action: "edit" | "add";
+  type: "user" | "device" | "station";
+  data: TableData;
 };
 
-export default function DeviceActionButton({
-  id,
-  default_dinas_id,
-  default_id_mesin,
-  default_nama_stasiun,
-}: Props) {
+export default function ActionButton({ action, data, type }: props) {
   const queryClient = useQueryClient();
   const session = useSession();
   const accessToken = session.data?.user.token.access_token;
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => {
-      return DeleteDeviceList(id, accessToken as string);
+    mutationFn: async (id: string | number): Promise<void> => {
+      if (type === "user") {
+        return DeleteUserList(id, accessToken as string);
+      }
+      if (type === "station") {
+        return DeleteStationList(id, accessToken as string);
+      }
+      if (type === "device") {
+        return DeleteDeviceList(id, accessToken as string);
+      }
     },
     onError: (error) => {
       toast({
@@ -50,33 +54,27 @@ export default function DeviceActionButton({
         description: "Data berhasil dihapus",
       });
       queryClient.invalidateQueries({
-        queryKey: ["mesin"],
+        queryKey: [type],
       });
     },
   });
 
   const handleDelete = () => {
-    deleteMutation.mutate(id);
+    deleteMutation.mutate(data.id);
   };
 
   return (
     <div className="flex gap-3">
-      <DeviceModal
-        action="edit"
-        id={id}
-        default_dinas_id={default_dinas_id}
-        default_id_mesin={default_id_mesin}
-        default_nama_stasiun={default_nama_stasiun}
-      />
+      <ActionModal action={action} data={data} type={type} />
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button size="icon" variant="destructive">
+          <Button size="icon" variant="destructive" aria-label="Delete Button">
             <Trash size={20} />
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="">
+            <AlertDialogTitle>
               Apakah anda yakin ingin menghapus data?
             </AlertDialogTitle>
             <AlertDialogDescription>

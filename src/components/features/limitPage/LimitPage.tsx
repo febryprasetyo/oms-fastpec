@@ -22,7 +22,7 @@ export default function LimitPage({ itemsPerPage, setItemPerPage }: Props) {
         setItemPerPage(value);
       }}
     >
-      <SelectTrigger className="w-[100px]">
+      <SelectTrigger className="w-[100px]" aria-label="Limit Per Page">
         <SelectValue placeholder={"10"} />
       </SelectTrigger>
       <SelectContent>

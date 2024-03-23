@@ -1,5 +1,5 @@
 import Image from "next/image";
-import FastpecLogo from "/public/logo.png";
+import FastpecLogo from "@/assets/img/logo.png";
 import LoginForm from "@/components/features/form/LoginForm";
 
 type Props = {

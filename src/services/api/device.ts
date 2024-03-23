@@ -75,7 +75,7 @@ export const addDeviceList = async (
   }
 };
 export const editDeviceList = async (
-  id: string | undefined,
+  id: string | number,
   data: AddDeviceRequest,
   accessToken: string,
 ): Promise<AddDeviceResponse> => {
@@ -101,7 +101,10 @@ export const editDeviceList = async (
   }
 };
 
-export const DeleteDeviceList = async (id: string, accessToken: string) => {
+export const DeleteDeviceList = async (
+  id: string | number,
+  accessToken: string,
+) => {
   try {
     const res: AxiosResponse<MutateDataResponse> = await axiosInstance.post(
       `/api/data/device/remove`,

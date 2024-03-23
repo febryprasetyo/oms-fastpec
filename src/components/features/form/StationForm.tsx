@@ -48,36 +48,18 @@ const formSchema = z.object({
 });
 type props = {
   action: "add" | "edit";
-  id?: string;
-  default_nama_stasiun?: string;
-  default_address?: string;
-  default_nama_dinas?: string;
-  default_device_id?: string;
-  default_province_id?: string;
-  default_city_id?: string;
   setIsOpen: Function;
+  value?: StationTableData;
 };
 
-export default function StationForm({
-  action,
-  setIsOpen,
-  id,
-  default_nama_stasiun,
-  default_address,
-  default_nama_dinas,
-  default_device_id,
-  default_province_id,
-  default_city_id,
-}: props) {
+export default function StationForm({ action, setIsOpen, value }: props) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nama_stasiun: default_nama_stasiun || undefined,
-      address: default_address || undefined,
-      nama_dinas: default_nama_dinas || undefined,
-      device_id: default_device_id || undefined,
-      province_id: default_province_id || undefined,
-      city_id: default_city_id || undefined,
+      nama_stasiun: value?.nama_stasiun,
+      address: value?.address,
+      province_id: value?.province_id,
+      city_id: value?.city_id,
     },
   });
 
@@ -103,7 +85,7 @@ export default function StationForm({
     isLoading: isDeviceLoading,
     isError: deviceError,
   } = useQuery({
-    queryKey: ["device"],
+    queryKey: ["deviceList"],
     queryFn: async () => {
       const res = await getDeviceList(accessToken as string);
       return res;
@@ -126,7 +108,7 @@ export default function StationForm({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
       if (action == "edit") {
         const res = await editStationList(
-          { id: id || "", ...data },
+          { id: value?.id || "", ...data },
           accessToken as string,
         );
         return res;
@@ -218,10 +200,7 @@ export default function StationForm({
           render={({ field }) => (
             <FormItem className="w-full">
               <FormLabel>Device</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={default_device_id}
-              >
+              <Select onValueChange={field.onChange}>
                 <FormControl>
                   <SelectTrigger className="dark:bg-dark">
                     <SelectValue />
@@ -265,7 +244,7 @@ export default function StationForm({
                 <FormLabel>Provinsi</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={`${default_province_id}`}
+                  defaultValue={`${value?.province_id}`}
                 >
                   <FormControl>
                     <SelectTrigger className="dark:bg-dark">
@@ -310,7 +289,7 @@ export default function StationForm({
                 <FormLabel>Kabupaten</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={`${default_city_id}`}
+                  defaultValue={`${value?.city_id}`}
                   disabled={!form.getValues("province_id")}
                 >
                   <FormControl>

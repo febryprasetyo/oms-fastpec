@@ -27,7 +27,12 @@ export default function TooltipComponents({
       <TooltipProvider>
         <Tooltip delayDuration={200}>
           <TooltipTrigger asChild>
-            <Link href={to} className="flex justify-center" prefetch={true}>
+            <Link
+              href={to}
+              className="flex justify-center"
+              prefetch={true}
+              aria-label="Navigation Link"
+            >
               <div
                 className={`p-2 hover:bg-primary dark:text-white ${
                   pathname == to ? "bg-primary text-white" : ""

@@ -6,9 +6,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { getDeviceTableList } from "@/services/api/device";
 import UnAuthorizedModal from "../features/modal/UnAuthorizedModal";
-import DeviceModal from "../features/modal/DeviceModal";
 import ReactPaginate from "react-paginate";
 import LimitPage from "../features/limitPage/LimitPage";
+import ActionModal from "../features/actionButton/ActionModal";
 
 type Props = {};
 
@@ -24,7 +24,7 @@ export default function DeviceTableSection({}: Props) {
     isError,
     error,
   } = useQuery({
-    queryKey: ["mesin"],
+    queryKey: ["device"],
     queryFn: () => {
       return getDeviceTableList(accessToken as string);
     },
@@ -72,7 +72,9 @@ export default function DeviceTableSection({}: Props) {
         <section className="space-y-5">
           <div className="flex w-full items-center justify-between">
             <h1 className="text-3xl font-semibold">Mesin</h1>
-            {device?.success && !isError && <DeviceModal action="add" />}
+            {device?.success && !isError && (
+              <ActionModal action="add" type="device" />
+            )}
           </div>
           {device?.success && !isError && (
             <div className="flex w-full justify-end">

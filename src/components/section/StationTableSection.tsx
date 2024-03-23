@@ -2,15 +2,13 @@
 import { useState } from "react";
 import { DataTable } from "../features/dataTable/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getStationList } from "@/services/api/station";
 import { useSession } from "next-auth/react";
 import UnAuthorizedModal from "../features/modal/UnAuthorizedModal";
-import StationModal from "../features/modal/StationModal";
 import LimitPage from "../features/limitPage/LimitPage";
-import { Button } from "../ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import ReactPaginate from "react-paginate";
+import ActionModal from "../features/actionButton/ActionModal";
 
 type Props = {};
 
@@ -32,7 +30,7 @@ export default function StationTableSection({}: Props) {
     },
   });
 
-  const columns: ColumnDef<StationData>[] = [
+  const columns: ColumnDef<StationTableData>[] = [
     {
       accessorKey: "id",
       header: "ID",
@@ -86,7 +84,9 @@ export default function StationTableSection({}: Props) {
         <section className="space-y-5">
           <div className="flex w-full items-center justify-between">
             <h1 className="text-3xl font-semibold">Stasiun</h1>
-            {station?.success && !stationError && <StationModal action="add" />}
+            {station?.success && !stationError && (
+              <ActionModal action="add" type="station" />
+            )}
           </div>
           {station?.success && !stationError && (
             <div className="flex w-full justify-end">

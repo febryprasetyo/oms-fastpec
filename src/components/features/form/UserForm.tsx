@@ -37,30 +37,18 @@ const formSchema = z.object({
 
 type props = {
   setIsOpen: Function;
-  id?: string;
   action: "edit" | "add";
-  default_username?: string;
-  default_nama_dinas?: string;
-  default_api_key?: string;
-  default_secret_key?: string;
+  value?: UserTableData;
 };
 
-export default function UserForm({
-  setIsOpen,
-  action,
-  id,
-  default_username,
-  default_nama_dinas,
-  default_api_key,
-  default_secret_key,
-}: props) {
+export default function UserForm({ setIsOpen, action, value }: props) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: default_username,
-      nama_dinas: default_nama_dinas,
-      api_key: default_api_key,
-      secret_key: default_secret_key,
+      username: value?.username,
+      nama_dinas: value?.nama_dinas,
+      api_key: value?.api_key,
+      secret_key: value?.secret_key,
     },
   });
 
@@ -72,7 +60,7 @@ export default function UserForm({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
       if (action === "edit") {
         return await editUserList(
-          { id: id || "", ...data },
+          { id: value?.id || "", ...data },
           accessToken as string,
         );
       } else if (action === "add") {
@@ -111,7 +99,6 @@ export default function UserForm({
     addStationMutation.mutate(values);
     setIsOpen(false);
   }
-  console.log(action);
   return (
     <Form {...form}>
       <form

@@ -34,7 +34,7 @@ export default async function DashboardSection({}: Props) {
           <h1 className="text-3xl font-semibold">List Stasiun</h1>
           <div className="grid w-full grid-cols-1 gap-5 py-6 md:grid-cols-2 xl:grid-cols-3">
             {stationData ? (
-              stationData?.data.values.map((station: StationData) => {
+              stationData?.data.values.map((station: StationTableData) => {
                 return (
                   <Suspense fallback={<CardSkeleton />} key={station.id}>
                     <StasiunCard

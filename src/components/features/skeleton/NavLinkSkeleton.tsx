@@ -9,7 +9,6 @@ export default function NavLinkSkeleton({}: Props) {
       <Skeleton className="aspect-square w-full rounded-md dark:!bg-dark_accent" />
       <Skeleton className="aspect-square w-full rounded-md dark:!bg-dark_accent" />
       <Skeleton className="aspect-square w-full rounded-md dark:!bg-dark_accent" />
-      <Skeleton className="aspect-square w-full rounded-md dark:!bg-dark_accent" />
     </div>
   );
 }
