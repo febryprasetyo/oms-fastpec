@@ -44,7 +44,6 @@ export default function LoginForm({ callBackUrl = "/" }: Props) {
     const login = await signIn("credentials", {
       username: data.username,
       password: data.password,
-      callbackUrl: callBackUrl,
       redirect: false,
     });
 
