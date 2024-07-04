@@ -1,7 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -15,10 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
-type Props = {
-  callBackUrl?: string;
-};
+import { useAuthStore } from "@/services/store";
 
 const formSchema = z.object({
   username: z.string(),
@@ -27,9 +23,8 @@ const formSchema = z.object({
 
 type formFields = z.infer<typeof formSchema>;
 
-export default function LoginForm({ callBackUrl = "/" }: Props) {
+export default function LoginForm() {
   const router = useRouter();
-  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -40,29 +35,11 @@ export default function LoginForm({ callBackUrl = "/" }: Props) {
   });
 
   const onSubmit: SubmitHandler<formFields> = async (data) => {
-    // Login menggunakan next-auth
-    const login = await signIn("credentials", {
-      username: data.username,
-      password: data.password,
-      redirect: false,
-    });
-
-    // Jika login berhasil, maka redirect ke callbackUrl dan tampilkan toast
-    if (login?.ok) {
-      router.push(callBackUrl);
-      toast({
-        title: "Login Berhasil",
-        description: "Selamat datang, Anda telah berhasil Login",
-      });
-    } else {
-      // Jika login gagal, maka tampilkan toast
-      form.resetField("username");
-      form.resetField("password");
-      toast({
-        title: "Login Gagal",
-        description: "Username atau password salah!",
-        variant: "destructive",
-      });
+    try {
+      await useAuthStore.getState().doLogin(data);
+      router.push("/dashboard");
+    } catch (error) {
+      console.log(error);
     }
   };
 

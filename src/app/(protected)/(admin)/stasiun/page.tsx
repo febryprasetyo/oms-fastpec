@@ -1,5 +1,4 @@
 import StationTableSection from "@/components/section/StationTableSection";
-import { auth } from "@/lib/auth";
 import {
   getDeviceList,
   getProvinceList,
@@ -10,35 +9,42 @@ import {
   QueryClient,
   dehydrate,
 } from "@tanstack/react-query";
+import { getCookie } from "cookies-next";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 export default async function Station() {
   const queryClient = new QueryClient();
-  const session = await auth();
+  const cookie = getCookie("token", { cookies });
+
+  if (!cookie) {
+    redirect("/login");
+  }
 
   await queryClient.prefetchQuery({
     queryKey: ["station"],
     queryFn: () => {
-      return getStationList(session?.user.token.access_token as string);
+      return getStationList(cookie);
     },
   });
 
   await queryClient.prefetchQuery({
     queryKey: ["province"],
     queryFn: () => {
-      return getProvinceList(session?.user.token.access_token as string);
+      return getProvinceList(cookie);
     },
   });
 
   await queryClient.prefetchQuery({
     queryKey: ["deviceList"],
     queryFn: () => {
-      return getDeviceList(session?.user.token.access_token as string);
+      return getDeviceList(cookie);
     },
   });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <StationTableSection />
+      <StationTableSection cookie={cookie} />
     </HydrationBoundary>
   );
 }

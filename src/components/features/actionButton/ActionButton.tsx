@@ -13,11 +13,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/use-toast";
-import { useSession } from "next-auth/react";
 import { DeleteStationList } from "@/services/api/station";
 import { DeleteUserList } from "@/services/api/user";
 import { DeleteDeviceList } from "@/services/api/device";
 import ActionModal from "./ActionModal";
+import { useAuthStore } from "@/services/store";
 
 type props = {
   action: "edit" | "add";
@@ -27,8 +27,7 @@ type props = {
 
 export default function ActionButton({ action, data, type }: props) {
   const queryClient = useQueryClient();
-  const session = useSession();
-  const accessToken = session.data?.user.token.access_token;
+  const accessToken = useAuthStore((state) => state?.user?.token?.access_token);
   const deleteMutation = useMutation({
     mutationFn: async (id: string | number): Promise<void> => {
       if (type === "user") {

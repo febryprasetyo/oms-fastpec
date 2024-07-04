@@ -28,7 +28,7 @@ import {
   getDeviceList,
   getProvinceList,
 } from "@/services/api/station";
-import { useSession } from "next-auth/react";
+import { useAuthStore } from "@/services/store";
 
 const formSchema = z.object({
   nama_stasiun: z.string({
@@ -63,14 +63,13 @@ export default function StationForm({ action, setIsOpen, value }: props) {
     },
   });
 
-  const session = useSession();
-  const accessToken = session.data?.user.token.access_token;
+  const accessToken = useAuthStore((state) => state?.user?.token?.access_token);
   const provinceData = form.watch("province_id");
   const queryClient = useQueryClient();
 
   const {
     data: province,
-    isLoading: provinceLoading,
+    isPending: provinceLoading,
     isError: provinceError,
   } = useQuery({
     queryKey: ["province"],
@@ -82,7 +81,7 @@ export default function StationForm({ action, setIsOpen, value }: props) {
 
   const {
     data: device,
-    isLoading: isDeviceLoading,
+    isPending: isDeviceLoading,
     isError: deviceError,
   } = useQuery({
     queryKey: ["deviceList"],
@@ -94,7 +93,7 @@ export default function StationForm({ action, setIsOpen, value }: props) {
 
   const {
     data: city,
-    isLoading: isCityLoading,
+    isPending: isCityLoading,
     isError: cityError,
   } = useQuery({
     queryKey: ["city", provinceData],
@@ -102,6 +101,7 @@ export default function StationForm({ action, setIsOpen, value }: props) {
       const res = await getCityList(accessToken as string, provinceData);
       return res;
     },
+    enabled: !!provinceData,
   });
 
   const StationMutation = useMutation({
@@ -290,7 +290,7 @@ export default function StationForm({ action, setIsOpen, value }: props) {
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={`${value?.city_id}`}
-                  disabled={!form.getValues("province_id")}
+                  disabled={!provinceData || provinceLoading}
                 >
                   <FormControl>
                     <SelectTrigger className="dark:bg-dark">
@@ -298,7 +298,7 @@ export default function StationForm({ action, setIsOpen, value }: props) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {city ? (
+                    {city && city?.data.length > 0 ? (
                       city?.data?.map((item) => {
                         const stringId = item.id.toString();
 
@@ -308,6 +308,10 @@ export default function StationForm({ action, setIsOpen, value }: props) {
                           </SelectItem>
                         );
                       })
+                    ) : city?.data.length == 0 ? (
+                      <div className="w-full py-5 text-center">
+                        <p>Tidak Ada Data</p>
+                      </div>
                     ) : (
                       <div className="w-full py-5 text-center">
                         <p>
@@ -315,7 +319,7 @@ export default function StationForm({ action, setIsOpen, value }: props) {
                             ? "Memuat Data"
                             : cityError
                               ? "Terjadi Kesalahan"
-                              : "Memuat Data"}
+                              : "Tidak Ada Data"}
                         </p>
                       </div>
                     )}

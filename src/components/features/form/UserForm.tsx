@@ -14,8 +14,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
 import { addUserList, editUserList } from "@/services/api/user";
+import { useAuthStore } from "@/services/store";
 
 const formSchema = z.object({
   username: z.string({
@@ -52,8 +52,8 @@ export default function UserForm({ setIsOpen, action, value }: props) {
     },
   });
 
-  const session = useSession();
-  const accessToken = session.data?.user.token.access_token;
+  const accessToken = useAuthStore((state) => state?.user?.token?.access_token);
+
   const queryClient = useQueryClient();
 
   const addStationMutation = useMutation({

@@ -1,18 +1,32 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import withAuth from "./middleware/withAuth";
+import { getCookie } from "cookies-next";
+import { DEFAULT_LOGIN_REDIRECT, apiAuthPrefix, authRoutes } from "@/routes";
+import { NextRequest, NextResponse } from "next/server";
 
-function mainMiddleware(request: NextRequest) {
+export function middleware(req: NextRequest) {
+  const { nextUrl } = req;
   const res = NextResponse.next();
-  return res;
+  const isAuthRoute = authRoutes.includes(nextUrl.pathname);
+  const isApiRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
+  const cookie = getCookie("token", { res, req });
+
+  if (isApiRoute) {
+    return NextResponse.next();
+  }
+
+  if (isAuthRoute) {
+    if (cookie) {
+      return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
+    }
+    return;
+  }
+
+  if (cookie === undefined) {
+    return Response.redirect(new URL("/login", nextUrl));
+  }
+
+  return;
 }
 
-// Route yang memerlukan autentikasi
-export default withAuth(mainMiddleware, [
-  "/",
-  "/login",
-  "/mesin",
-  "/stasiun",
-  "/database",
-  "/user",
-]);
+export const config = {
+  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+};

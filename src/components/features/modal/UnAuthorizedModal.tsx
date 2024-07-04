@@ -9,14 +9,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 
 type Props = {};
 
 export default function UnAuthorizedModal({}: Props) {
-  const pathname = usePathname();
-
   return (
     <AlertDialog open={true}>
       <AlertDialogContent>
@@ -28,15 +25,7 @@ export default function UnAuthorizedModal({}: Props) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogAction
-            onClick={() => {
-              signOut({
-                callbackUrl: pathname,
-              });
-            }}
-          >
-            Login
-          </AlertDialogAction>
+          <AlertDialogAction>Login</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

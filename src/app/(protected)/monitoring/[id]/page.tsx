@@ -3,8 +3,10 @@ import Image from "next/image";
 import Logo from "@/assets/img/logo.png";
 import Link from "next/link";
 import MonitoringSection from "@/components/section/MonitoringSection";
-import { auth } from "@/lib/auth";
 import { getStationList } from "@/services/api/station";
+import { getCookie } from "cookies-next";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 type Props = {
   params: {
@@ -13,10 +15,11 @@ type Props = {
 };
 
 export default async function page({ params: { id } }: Props) {
-  const session = await auth();
-  const station = await getStationList(
-    session?.user.token.access_token as string,
-  );
+  const cookie = getCookie("token", { cookies });
+  if (!cookie) {
+    redirect("/login");
+  }
+  const station = await getStationList(cookie);
 
   return (
     <>
@@ -35,7 +38,7 @@ export default async function page({ params: { id } }: Props) {
         </h1>
         <div className="flex items-center gap-5">
           <p className="hidden text-slate-700 sm:block">
-            {session && station.success
+            { station?.success
               ? station.data.values.filter((item) => item.id_mesin === id)[0]
                   .nama_stasiun
               : id}

@@ -14,8 +14,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
 import { addDeviceList, editDeviceList } from "@/services/api/device";
+import { useAuthStore } from "@/services/store";
 
 const formSchema = z.object({
   id_mesin: z.string({ required_error: "ID Mesin harus diisi" }),
@@ -38,8 +38,7 @@ export default function DeviceForm({ setIsOpen, value, action }: Props) {
     },
   });
 
-  const session = useSession();
-  const accessToken = session.data?.user.token.access_token;
+  const accessToken = useAuthStore((state) => state?.user?.token?.access_token);
   const queryClient = useQueryClient();
 
   const DeviceMutation = useMutation({

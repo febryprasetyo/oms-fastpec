@@ -1,26 +1,31 @@
 import DatabaseTableSection from "@/components/section/DatabaseTableSection";
-import { auth } from "@/lib/auth";
 import { getDatabaseList } from "@/services/api/database";
 import {
   HydrationBoundary,
   QueryClient,
   dehydrate,
 } from "@tanstack/react-query";
+import { getCookie } from "cookies-next";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export default async function User() {
   const queryClient = new QueryClient();
-  const session = await auth();
+  const cookie = getCookie("token", { cookies });
+  if (!cookie) {
+    redirect("/login");
+  }
 
   await queryClient.prefetchQuery({
     queryKey: ["database"],
     queryFn: () => {
-      return getDatabaseList(session?.user.token.access_token as string);
+      return getDatabaseList(cookie);
     },
   });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <DatabaseTableSection />
+      <DatabaseTableSection cookie={cookie} />
     </HydrationBoundary>
   );
 }

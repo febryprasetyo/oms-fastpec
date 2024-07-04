@@ -2,11 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { NextThemesProvider } from "@/services/providers/NextThemeProvider";
-import AuthProvider from "@/services/providers/AuthProvider";
 import { Toaster } from "@/components/ui/toaster";
-import Sidebar from "@/components/layout/Sidebar";
-import Header from "@/components/layout/Header";
-import MainContainer from "@/components/layout/MainContainer";
 import QueryProvider from "@/services/providers/QueryProvider";
 
 const poppins = Poppins({
@@ -35,13 +31,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <QueryProvider>
-              <Sidebar />
-              <Header />
-              <MainContainer>{children}</MainContainer>
-            </QueryProvider>
-          </AuthProvider>
+          <QueryProvider>{children}</QueryProvider>
         </NextThemesProvider>
         <Toaster />
       </body>

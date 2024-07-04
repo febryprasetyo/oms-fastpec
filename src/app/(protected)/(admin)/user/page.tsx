@@ -1,26 +1,32 @@
 import UserTableSection from "@/components/section/UserTableSection";
-import { auth } from "@/lib/auth";
 import { getUserList } from "@/services/api/user";
 import {
   HydrationBoundary,
   QueryClient,
   dehydrate,
 } from "@tanstack/react-query";
+import { getCookie } from "cookies-next";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export default async function User() {
   const queryClient = new QueryClient();
-  const session = await auth();
+  const cookie = getCookie("token", { cookies });
+
+  if (!cookie) {
+    redirect("/login");
+  }
 
   await queryClient.prefetchQuery({
     queryKey: ["user"],
     queryFn: () => {
-      return getUserList(session?.user.token.access_token as string);
+      return getUserList(cookie);
     },
   });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <UserTableSection />
+      <UserTableSection cookie={cookie} />
     </HydrationBoundary>
   );
 }

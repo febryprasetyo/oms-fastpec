@@ -10,6 +10,26 @@ const nextConfig = {
       },
     ],
   },
+  env: {
+    API_SOURCE: process.env.NEXT_PUBLIC_API_URL,
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/fastpec/:path*",
+        destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
+      },
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: "/",
+        destination: "/dashboard",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
