@@ -1,29 +1,28 @@
+"use client";
 import { getStationList } from "@/services/api/station";
 import React, { Suspense } from "react";
 import StasiunCard from "../features/card/StasiunCard";
 import CardSkeleton from "../features/skeleton/CardSkeleton";
-import { getCookie } from "cookies-next";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 
-type Props = {};
-// Metode caching next js bisa diatur sesuai kebutuhan
-export const fetchCache = "force-cache";
-export const revalidate = 30; // Revalidate data page ini setiap 30 detik bisa diganti sesuai kebutuhan
+type Props = {
+  cookie: string;
+};
 
-export default async function DashboardSection({}: Props) {
-  const cookie = getCookie("token", { cookies });
-  if (!cookie) {
-    redirect("/login");
-  }
-  const stationData = await getStationList(cookie);
+export default function DashboardSection({ cookie }: Props) {
+  const stationQuery = useQuery({
+    queryKey: ["station"],
+    queryFn: () => {
+      return getStationList(cookie);
+    },
+  });
 
   return (
     <section>
       <h1 className="text-3xl font-semibold">List Stasiun</h1>
       <div className="grid w-full grid-cols-1 gap-5 py-6 md:grid-cols-2 xl:grid-cols-3">
-        {stationData?.data?.values ? (
-          stationData.data.values.map((station: StationTableData) => {
+        {stationQuery?.data?.data?.values ? (
+          stationQuery?.data.data.values.map((station: StationTableData) => {
             return (
               <Suspense fallback={<CardSkeleton />} key={station.id}>
                 <StasiunCard

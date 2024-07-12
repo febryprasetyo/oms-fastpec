@@ -37,7 +37,7 @@ export default function MonitoringSection({ id }: Props) {
   const topic = "mqtt_ccb3aad79fe5";
 
   useEffect(() => {
-    const client = mqtt.connect("ws://103.84.206.53:9001");
+    const client = mqtt.connect(process.env.NEXT_PUBLIC_WS_URL as string);
     client.subscribe(topic);
 
     client.on("message", (_topic, message) => {
@@ -53,6 +53,7 @@ export default function MonitoringSection({ id }: Props) {
       setIsLoaded(false);
     };
   }, [id]);
+
   return (
     <section>
       {isLoaded && (

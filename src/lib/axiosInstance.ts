@@ -2,7 +2,7 @@ import { toast } from "@/components/ui/use-toast";
 import { useAuthStore } from "@/services/store";
 import { isServer } from "@tanstack/react-query";
 import axios, { AxiosError, AxiosInstance } from "axios";
-import { redirect } from "next/navigation";
+import { deleteCookie } from "cookies-next";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -23,6 +23,8 @@ axiosInstance.interceptors.response.use(
         error?.response?.data?.message == "Access token expired or invalid"
       ) {
         useAuthStore.getState().doLogout();
+        deleteCookie("token");
+
         toast({
           title: "Unauthorized",
           variant: "destructive",
@@ -31,13 +33,13 @@ axiosInstance.interceptors.response.use(
 
         return;
       }
-      toast({
-        title: "Error",
-        variant: "destructive",
-        description: error?.response?.data?.message || "Terjadi Kesalahan",
-      });
-
-      return Promise.reject(error);
     }
+
+    toast({
+      title: "Error",
+      variant: "destructive",
+      description: error?.response?.data?.message || "Terjadi Kesalahan",
+    });
+    return Promise.reject(error);
   },
 );

@@ -1,10 +1,20 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, PersistStorage } from "zustand/middleware";
 import { TAuthStore } from "./type";
 import { login } from "../api/login";
 import { deleteCookie, setCookie } from "cookies-next";
 import { toast } from "@/components/ui/use-toast";
-import { useStoreCSR } from "@/lib/useStoreCSR";
+
+// Custom storage object that implements PersistStorage<TAuthStore>
+const customStorage: PersistStorage<TAuthStore> = {
+  getItem: (key) =>
+    Promise.resolve(
+      localStorage.getItem(key) ? JSON.parse(localStorage.getItem(key)!) : null,
+    ),
+  setItem: (key, value) =>
+    Promise.resolve(localStorage.setItem(key, JSON.stringify(value))),
+  removeItem: (key) => Promise.resolve(localStorage.removeItem(key)),
+};
 
 export const useAuthStore = create<TAuthStore>()(
   persist(
@@ -33,12 +43,9 @@ export const useAuthStore = create<TAuthStore>()(
         deleteCookie("token");
       },
     }),
-    { name: "auth-storage" },
+    { name: "auth-storage", storage: customStorage },
   ),
 );
-
-export const useAuthStoreCSR = () =>
-  useStoreCSR(useAuthStore, (state) => state);
 
 export const useExpandedStore = create<Expanded>((set) => ({
   isExpanded: true,
