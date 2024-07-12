@@ -39,7 +39,7 @@ export default function LoginForm() {
       await useAuthStore.getState().doLogin(data);
       router.push("/dashboard");
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 

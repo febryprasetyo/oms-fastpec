@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getDatabaseList } from "@/services/api/database";
 import ReactPaginate from "react-paginate";
@@ -12,7 +12,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import LimitPage from "../features/limitPage/LimitPage";
+import LimitPage from "@/components/features/limitPage/LimitPage";
+import { DatePickerWithRange } from "@/components/features/form/DatePickerWithRange";
+import { TimePicker } from "../features/form/TimePicker";
+// @ts-ignore
+import { DateRange } from "react-day-picker";
 
 type Props = {
   cookie: string;
@@ -21,12 +25,19 @@ type Props = {
 export default function DatabaseTableSection({ cookie }: Props) {
   const [itemOffset, setItemOffset] = useState<number>(0);
   const [itemsPerPage, setItemPerPage] = useState<number>(10);
+  const [startHour, setStartHour] = useState<Date | undefined>();
+  const [endHOur, setEndHour] = useState<Date | undefined>();
+  const [date, setDate] = useState<DateRange | undefined>(undefined);
   const endOffset = itemOffset + itemsPerPage;
 
+  const dateQueryKey = date?.from && date?.to ? date : null;
+  const hourQueryKey =
+    dateQueryKey && startHour && endHOur ? { startHour, endHOur } : null;
+
   const dbQuery = useQuery({
-    queryKey: ["database"],
+    queryKey: ["database", dateQueryKey, hourQueryKey],
     queryFn: () => {
-      return getDatabaseList(cookie);
+      return getDatabaseList(cookie, date, startHour, endHOur);
     },
     refetchInterval: false,
   });
@@ -43,12 +54,19 @@ export default function DatabaseTableSection({ cookie }: Props) {
 
   return (
     <section className="space-y-5">
-      <div className="flex w-full items-center justify-between">
+      <div className="flex w-full items-start justify-between">
         <h1 className="text-3xl font-semibold">Database</h1>
-        <LimitPage
-          itemsPerPage={itemsPerPage}
-          setItemPerPage={setItemPerPage}
-        />
+        <div className="flex w-full flex-wrap-reverse items-end justify-end gap-5">
+          <LimitPage
+            itemsPerPage={itemsPerPage}
+            setItemPerPage={setItemPerPage}
+          />
+        </div>
+      </div>
+      <div className="flex flex-wrap justify-end gap-5">
+        <DatePickerWithRange date={date} setDate={setDate} />
+        <TimePicker date={startHour} setDate={setStartHour} label="From :" />
+        <TimePicker date={endHOur} setDate={setEndHour} label="To :" />
       </div>
       <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
         {dbQuery?.data?.success && (

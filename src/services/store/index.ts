@@ -1,20 +1,10 @@
 import { create } from "zustand";
-import { persist, PersistStorage } from "zustand/middleware";
+import { persist, StorageValue } from "zustand/middleware";
 import { TAuthStore } from "./type";
 import { login } from "../api/login";
 import { deleteCookie, setCookie } from "cookies-next";
 import { toast } from "@/components/ui/use-toast";
-
-// Custom storage object that implements PersistStorage<TAuthStore>
-const customStorage: PersistStorage<TAuthStore> = {
-  getItem: (key) =>
-    Promise.resolve(
-      localStorage.getItem(key) ? JSON.parse(localStorage.getItem(key)!) : null,
-    ),
-  setItem: (key, value) =>
-    Promise.resolve(localStorage.setItem(key, JSON.stringify(value))),
-  removeItem: (key) => Promise.resolve(localStorage.removeItem(key)),
-};
+import { AxiosError } from "axios";
 
 export const useAuthStore = create<TAuthStore>()(
   persist(
@@ -33,7 +23,14 @@ export const useAuthStore = create<TAuthStore>()(
             });
           }
         } catch (error) {
-          throw error;
+          if (error instanceof AxiosError) {
+            toast({
+              title: "Error",
+              description: error?.response?.data?.message,
+              duration: 3000,
+              variant: "destructive",
+            });
+          }
         }
 
         return;
@@ -43,7 +40,19 @@ export const useAuthStore = create<TAuthStore>()(
         deleteCookie("token");
       },
     }),
-    { name: "auth-storage", storage: customStorage },
+
+    {
+      name: "auth-storage",
+      storage: {
+        getItem: (name: string) => {
+          const value = localStorage.getItem(name);
+          return value ? JSON.parse(value) : null;
+        },
+        setItem: (key: string, value: StorageValue<TAuthStore>) =>
+          localStorage.setItem(key, JSON.stringify(value)),
+        removeItem: (key: string) => localStorage.removeItem(key),
+      },
+    },
   ),
 );
 

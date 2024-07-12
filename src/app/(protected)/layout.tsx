@@ -1,4 +1,5 @@
 import dynamic from "next/dynamic";
+
 const Sidebar = dynamic(() => import("@/components/layout/Sidebar"), {
   ssr: false,
 });

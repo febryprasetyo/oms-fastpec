@@ -14,11 +14,8 @@ export default function MainContainer({ children }: Props) {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
 
-  console.log(user);
-
   useEffect(() => {
     if (user === null) {
-      console.log("redirect");
       router.push("/login");
       router.refresh();
     }

@@ -17,7 +17,7 @@ export default async function User() {
   }
 
   await queryClient.prefetchQuery({
-    queryKey: ["database"],
+    queryKey: ["database", null, null],
     queryFn: () => {
       return getDatabaseList(cookie);
     },
