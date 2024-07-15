@@ -30,3 +30,5 @@ interface DatabaseResponse {
   statusCode?: number;
   data: DatabaseData[] | [];
 }
+
+type DatabaseExport = BlobPart;

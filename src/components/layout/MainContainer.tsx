@@ -1,5 +1,6 @@
 "use client";
 import { useAuthStore, useExpandedStore } from "@/services/store";
+import { deleteCookie } from "cookies-next";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -16,8 +17,8 @@ export default function MainContainer({ children }: Props) {
 
   useEffect(() => {
     if (user === null) {
+      deleteCookie("token");
       router.push("/login");
-      router.refresh();
     }
   }, [user, router]);
 

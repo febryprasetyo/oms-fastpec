@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getDatabaseList } from "@/services/api/database";
+import { exportDatabase, getDatabaseList } from "@/services/api/database";
 import ReactPaginate from "react-paginate";
-
+import { saveAs } from "file-saver";
 import {
   Table,
   TableBody,
@@ -13,43 +13,101 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import LimitPage from "@/components/features/limitPage/LimitPage";
-import { DatePickerWithRange } from "@/components/features/form/DatePickerWithRange";
 import { TimePicker } from "../features/form/TimePicker";
-// @ts-ignore
-import { DateRange } from "react-day-picker";
+import { DatePicker } from "../features/form/DatePicker";
+import { format, parseISO, subMonths } from "date-fns";
+import { Button } from "../ui/button";
+import { Download, Trash } from "lucide-react";
+import { toast } from "../ui/use-toast";
 
 type Props = {
   cookie: string;
 };
 
 export default function DatabaseTableSection({ cookie }: Props) {
+  const today = new Date();
+  const threeMonthsAgo = subMonths(today, 3);
   const [itemOffset, setItemOffset] = useState<number>(0);
   const [itemsPerPage, setItemPerPage] = useState<number>(10);
+  const [startDate, setStartDate] = useState<Date>(threeMonthsAgo);
+  const [endDate, setEndDate] = useState<Date>(today);
   const [startHour, setStartHour] = useState<Date | undefined>();
-  const [endHOur, setEndHour] = useState<Date | undefined>();
-  const [date, setDate] = useState<DateRange | undefined>(undefined);
+  const [endHour, setEndHour] = useState<Date | undefined>();
   const endOffset = itemOffset + itemsPerPage;
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const dateQueryKey = date?.from && date?.to ? date : null;
+  const dateQueryKey =
+    startDate && endDate
+      ? {
+          startDate: format(parseISO(startDate.toISOString()), "yyyy-MM-dd"),
+          endDate: format(parseISO(endDate.toISOString()), "yyyy-MM-dd"),
+        }
+      : null;
   const hourQueryKey =
-    dateQueryKey && startHour && endHOur ? { startHour, endHOur } : null;
+    dateQueryKey && startHour && endHour ? { startHour, endHour } : null;
 
   const dbQuery = useQuery({
     queryKey: ["database", dateQueryKey, hourQueryKey],
     queryFn: () => {
-      return getDatabaseList(cookie, date, startHour, endHOur);
+      return getDatabaseList({
+        cookie,
+        startHour,
+        endHour,
+        startDate,
+        endDate,
+      });
     },
     refetchInterval: false,
   });
 
-  const currentItems = dbQuery?.data?.data
-    .toReversed()
-    .slice(itemOffset, endOffset);
+  const currentItems = dbQuery?.data?.data.slice(itemOffset, endOffset);
   const pageCount = Math.ceil((dbQuery?.data?.data.length ?? 0) / itemsPerPage);
   const handlePageClick = (event: any) => {
     const newOffset =
       (event.selected * itemsPerPage) % (dbQuery?.data?.data.length ?? 0);
     setItemOffset(newOffset);
+  };
+
+  const handleResetFilter = () => {
+    setStartDate(threeMonthsAgo);
+    setEndDate(today);
+    setStartHour(undefined);
+    setEndHour(undefined);
+  };
+
+  const handleExport = async () => {
+    setLoading(true);
+    try {
+      const res = await exportDatabase({
+        cookie,
+        startDate,
+        endDate,
+        startHour,
+        endHour,
+      });
+      const contentDisposition = res.headers["content-disposition"];
+      const fileName = contentDisposition
+        ? contentDisposition.split("filename=")[1].replace(/"/g, "")
+        : "data.xlsx";
+
+      const blob = new Blob([res?.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      saveAs(blob, fileName);
+      toast({
+        title: "Export Sukses",
+        description: "Data Berhasil Diexport",
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        toast({
+          title: "Export Gagal",
+          description: error.message,
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -61,12 +119,44 @@ export default function DatabaseTableSection({ cookie }: Props) {
             itemsPerPage={itemsPerPage}
             setItemPerPage={setItemPerPage}
           />
+          <Button onClick={handleExport} disabled={loading}>
+            {loading ? (
+              <div
+                className="text-surface mr-2 inline-block size-[14px] animate-spin rounded-full border-2 border-solid border-current border-e-transparent align-[-0.125em] text-white motion-reduce:animate-[spin_1.5s_linear_infinite]"
+                role="status"
+              >
+                <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
+                  Loading...
+                </span>
+              </div>
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
+            Export
+          </Button>
         </div>
       </div>
       <div className="flex flex-wrap justify-end gap-5">
-        <DatePickerWithRange date={date} setDate={setDate} />
-        <TimePicker date={startHour} setDate={setStartHour} label="From :" />
-        <TimePicker date={endHOur} setDate={setEndHour} label="To :" />
+        <div className="flex items-end">
+          <Button variant="destructive" size="sm" onClick={handleResetFilter}>
+            <Trash className="mr-2 h-4 w-4" />
+            Clear Filter
+          </Button>
+        </div>
+        <DatePicker
+          date={startDate}
+          setDate={setStartDate}
+          placeholder="Tanggal Awal"
+          label="Dari :"
+        />
+        <DatePicker
+          date={endDate}
+          setDate={setEndDate}
+          placeholder="Tanggal Akhir"
+          label="Sampai :"
+        />
+        <TimePicker date={startHour} setDate={setStartHour} label="Dari :" />
+        <TimePicker date={endHour} setDate={setEndHour} label="Sampai :" />
       </div>
       <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
         {dbQuery?.data?.success && (
