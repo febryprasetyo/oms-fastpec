@@ -7,6 +7,7 @@ import {
   Settings,
   User,
   Wrench,
+  History,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import TooltipComponents from "../features/tooltip/TooltipComponent";
@@ -72,6 +73,12 @@ export default function Sidebar() {
                 to="/database"
                 pathname={pathname}
                 Icon={Database}
+              />
+              <TooltipComponents
+                content="History"
+                to="/history"
+                pathname={pathname}
+                Icon={History}
               />
             </div>
             {/* Link Client Hanya Akan di Render Ketika role = Admin */}

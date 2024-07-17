@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { exportDatabase, getDatabaseList } from "@/services/api/database";
+import { exportDatabase } from "@/services/api/database";
 import ReactPaginate from "react-paginate";
 import { saveAs } from "file-saver";
 import {
@@ -13,7 +13,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import LimitPage from "@/components/features/limitPage/LimitPage";
-import { TimePicker } from "../features/form/TimePicker";
 import { DatePicker } from "../features/form/DatePicker";
 import { format, parseISO, subMonths } from "date-fns";
 import { Button } from "../ui/button";
@@ -28,12 +27,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { getHistoryList } from "@/services/api/history";
 
 type Props = {
   cookie: string;
 };
 
-export default function DatabaseTableSection({ cookie }: Props) {
+export default function HistorySection({ cookie }: Props) {
   const today = new Date();
   const threeMonthsAgo = subMonths(today, 3);
   const [itemOffset, setItemOffset] = useState<number>(0);
@@ -59,9 +59,9 @@ export default function DatabaseTableSection({ cookie }: Props) {
   const stationKey = stationFilter ? { stationFilter } : null;
 
   const dbQuery = useQuery({
-    queryKey: ["database", dateQueryKey, hourQueryKey, stationKey],
+    queryKey: ["history", dateQueryKey, hourQueryKey, stationKey],
     queryFn: () => {
-      return getDatabaseList({
+      return getHistoryList({
         cookie,
         startHour,
         endHour,
@@ -134,7 +134,7 @@ export default function DatabaseTableSection({ cookie }: Props) {
   return (
     <section className="space-y-5">
       <div className="flex w-full items-start justify-between">
-        <h1 className="text-3xl font-semibold">Integrasi Data Onlimo</h1>
+        <h1 className="text-3xl font-semibold">History</h1>
         <div className="flex w-full flex-wrap-reverse items-end justify-end gap-5">
           <LimitPage
             itemsPerPage={itemsPerPage}
@@ -211,71 +211,50 @@ export default function DatabaseTableSection({ cookie }: Props) {
               <TableHeader>
                 <TableRow>
                   <TableHead>No</TableHead>
-                  <TableHead className="min-w-[180px]">ID Stasiun</TableHead>
+                  <TableHead className="min-w-[180px]">Nama Stasiun</TableHead>
                   <TableHead className="min-w-[150px]">Tanggal</TableHead>
                   <TableHead>Jam</TableHead>
                   <TableHead className="min-w-[100px]">Suhu</TableHead>
-                  <TableHead>TDS</TableHead>
                   <TableHead>DO</TableHead>
+                  <TableHead>Tur</TableHead>
+                  <TableHead>CT</TableHead>
                   <TableHead>PH</TableHead>
-                  <TableHead>Turbidity</TableHead>
-                  <TableHead>Kedalaman</TableHead>
-                  <TableHead>Nitrat</TableHead>
-                  <TableHead>Amonia</TableHead>
-                  <TableHead>COD</TableHead>
+                  <TableHead>ORP</TableHead>
                   <TableHead>BOD</TableHead>
+                  <TableHead>COD</TableHead>
                   <TableHead>TSS</TableHead>
+                  <TableHead>N</TableHead>
+                  <TableHead>NO3 3</TableHead>
+                  <TableHead>NO2</TableHead>
+                  <TableHead>Depth</TableHead>
+                  <TableHead>Lgnh4+</TableHead>
+                  <TableHead>Liquid</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentItems?.map((item, index) => {
-                  const { data }: { data: payload } = JSON.parse(item?.payload);
-                  return (
-                    <TableRow key={index}>
-                      <TableCell>{itemOffset + index + 1}</TableCell>
-                      <TableCell className="w-[200px]">
-                        {data.IDStasiun == undefined ? "-" : data.IDStasiun}
-                      </TableCell>
-                      <TableCell>
-                        {data.Tanggal == undefined ? "-" : data.Tanggal}
-                      </TableCell>
-                      <TableCell>
-                        {data.Jam == undefined ? "-" : data.Jam}
-                      </TableCell>
-                      <TableCell>
-                        {data.Suhu == undefined ? "-" : data.Suhu}
-                      </TableCell>
-                      <TableCell>
-                        {data.TDS == undefined ? "-" : data.TDS}
-                      </TableCell>
-                      <TableCell>
-                        {data.DO == undefined ? "-" : data.DO}
-                      </TableCell>
-                      <TableCell>
-                        {data.PH == undefined ? "-" : data.PH}
-                      </TableCell>
-                      <TableCell>
-                        {data.Turbidity == undefined ? "-" : data.Turbidity}
-                      </TableCell>
-                      <TableCell>
-                        {data.Kedalaman == undefined ? "-" : data.Kedalaman}
-                      </TableCell>
-                      <TableCell>
-                        {data.Nitrat == undefined ? "-" : data.Nitrat}
-                      </TableCell>
-                      <TableCell>{data.Amonia ? data.Amonia : "-"}</TableCell>
-                      <TableCell>
-                        {data.COD == undefined ? "-" : data.COD}
-                      </TableCell>
-                      <TableCell>
-                        {data.BOD == undefined ? "-" : data.BOD}
-                      </TableCell>
-                      <TableCell>
-                        {data.TSS == undefined ? "-" : data.TSS}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {currentItems?.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{item.nama_stasiun}</TableCell>
+                    <TableCell>{format(item.time, "yyyy-MM-dd")}</TableCell>
+                    <TableCell>{format(item.time, "HH:mm")}</TableCell>
+                    <TableCell>{item.temperature}</TableCell>
+                    <TableCell>{item.do_}</TableCell>
+                    <TableCell>{item.tur}</TableCell>
+                    <TableCell>{item.ct}</TableCell>
+                    <TableCell>{item.ph}</TableCell>
+                    <TableCell>{item.orp}</TableCell>
+                    <TableCell>{item.bod}</TableCell>
+                    <TableCell>{item.cod}</TableCell>
+                    <TableCell>{item.tss}</TableCell>
+                    <TableCell>{item.n}</TableCell>
+                    <TableCell>{item.no3_3}</TableCell>
+                    <TableCell>{item.no2}</TableCell>
+                    <TableCell>{item.depth}</TableCell>
+                    <TableCell>{item.lgnh4_plus || "-"}</TableCell>
+                    <TableCell>{item.liquid || "-"}</TableCell>
+                  </TableRow>
+                )) ?? <></>}
               </TableBody>
             </Table>
             <div className="overflow-auto " id="pagination">

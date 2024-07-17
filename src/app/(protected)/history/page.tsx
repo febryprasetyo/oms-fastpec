@@ -1,5 +1,7 @@
 import DatabaseTableSection from "@/components/section/DatabaseTableSection";
+import HistorySection from "@/components/section/HistorySection";
 import { getDatabaseList } from "@/services/api/database";
+import { getHistoryList } from "@/services/api/history";
 import { getStationList } from "@/services/api/station";
 import {
   HydrationBoundary,
@@ -30,7 +32,7 @@ export default async function User() {
 
   await queryClient.prefetchQuery({
     queryKey: [
-      "database",
+      "history",
       dateKey,
       null,
       {
@@ -38,7 +40,7 @@ export default async function User() {
       },
     ],
     queryFn: () => {
-      return getDatabaseList({
+      return getHistoryList({
         cookie,
         startDate: threeMonthsAgo,
         endDate: today,
@@ -55,7 +57,7 @@ export default async function User() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <DatabaseTableSection cookie={cookie} />
+      <HistorySection cookie={cookie} />
     </HydrationBoundary>
   );
 }

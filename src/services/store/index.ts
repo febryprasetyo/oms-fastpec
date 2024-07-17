@@ -15,7 +15,9 @@ export const useAuthStore = create<TAuthStore>()(
           const res = await login({ username, password });
           if (res?.data?.success) {
             set(() => ({ user: res.data }));
-            setCookie("token", res?.data?.token?.access_token);
+            setCookie("token", res?.data?.token?.access_token, {
+              expires: new Date(new Date().getTime() + 60 * 60 * 1000),
+            });
             toast({
               title: "Success",
               description: "Login Berhasil",

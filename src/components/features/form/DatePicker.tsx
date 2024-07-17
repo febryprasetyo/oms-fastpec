@@ -12,15 +12,25 @@ import {
 } from "@/components/ui/popover";
 import { Dispatch } from "react";
 import { Label } from "@radix-ui/react-label";
+import { TimePicker } from "./TimePicker";
 
 type Props = {
   date: Date;
   setDate: Dispatch<Date>;
   label: string;
   placeholder: string;
+  hour: Date | undefined;
+  setHour: Dispatch<Date | undefined>;
 };
 
-export function DatePicker({ date, setDate, label, placeholder }: Props) {
+export function DatePicker({
+  date,
+  setDate,
+  label,
+  placeholder,
+  hour,
+  setHour,
+}: Props) {
   return (
     <Popover>
       <div className="flex flex-col gap-2">
@@ -44,6 +54,10 @@ export function DatePicker({ date, setDate, label, placeholder }: Props) {
           onSelect={(day) => day && setDate(day)}
           initialFocus
         />
+        <hr />
+        <div className="p-3">
+          <TimePicker date={hour} setDate={setHour} />
+        </div>
       </PopoverContent>
     </Popover>
   );

@@ -10,7 +10,7 @@ type Props = {
   stationFilter?: string;
 };
 
-export const getDatabaseList = async ({
+export const getHistoryList = async ({
   cookie,
   startDate,
   endDate,
@@ -48,8 +48,8 @@ export const getDatabaseList = async ({
     .map(([key, value]) => `${key}=${value}`)
     .join("&");
 
-  const res = await axiosInstance.get<DatabaseResponse>(
-    `/api/data/klhk/list?${queryString}&limit=10000`,
+  const res = await axiosInstance.get<HistoryResponse>(
+    `/api/data/mqtt/list?${queryString}&limit=10000`,
     {
       headers: {
         Authorization: `Bearer ${cookie}`,
