@@ -8,6 +8,8 @@ type Props = {
   startHour?: Date;
   endHour?: Date;
   stationFilter?: string;
+  page?: string;
+  limit?: string;
 };
 
 export const getDatabaseList = async ({
@@ -17,8 +19,10 @@ export const getDatabaseList = async ({
   startHour,
   endHour,
   stationFilter,
+  page = "1",
+  limit = "10",
 }: Props) => {
-  const params: { [key: string]: string } = {};
+  const params = new URLSearchParams();
 
   if (startDate && endDate) {
     const formattedFromDate = format(
@@ -29,27 +33,27 @@ export const getDatabaseList = async ({
       parseISO(endDate.toISOString()),
       "yyyy-MM-dd",
     );
-    params["startDate"] = formattedFromDate;
-    params["endDate"] = formattedToDate;
+    params.append("startDate", formattedFromDate);
+    params.append("endDate", formattedToDate);
   }
 
   if (startHour && endHour) {
     const formattedStartHour = format(startHour, "HH:mm:ss");
     const formattedEndHour = format(endHour, "HH:mm:ss");
-    params["startHour"] = formattedStartHour;
-    params["endHour"] = formattedEndHour;
+    params.append("startHour", formattedStartHour);
+    params.append("endHour", formattedEndHour);
   }
 
   if (stationFilter && stationFilter !== "all") {
-    params["namaStasiun"] = stationFilter;
+    params.append("namaStasiun", stationFilter);
   }
 
-  const queryString = Object.entries(params)
-    .map(([key, value]) => `${key}=${value}`)
-    .join("&");
+  params.append("limit", limit);
+  const offset = (parseInt(page) - 1) * parseInt(limit);
+  params.append("offset", offset.toString());
 
   const res = await axiosInstance.get<DatabaseResponse>(
-    `/api/data/klhk/list?${queryString}&limit=10000`,
+    `/api/data/klhk/list?${params.toString()}`,
     {
       headers: {
         Authorization: `Bearer ${cookie}`,

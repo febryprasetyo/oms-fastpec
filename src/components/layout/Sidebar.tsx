@@ -116,7 +116,7 @@ export default function Sidebar() {
               <AlertDialogTrigger asChild>
                 <Button
                   className="rounded-lg bg-transparent p-2 text-slate-700 hover:bg-danger hover:text-white dark:text-white"
-                  aria-label="Logout button"
+                  aria-label="logout-trigger"
                 >
                   <LogOut size={25} />
                 </Button>
@@ -133,6 +133,7 @@ export default function Sidebar() {
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
+                    aria-label="logout-action"
                     className="bg-danger hover:bg-red-800"
                     onClick={() => {
                       useAuthStore.getState().doLogout();

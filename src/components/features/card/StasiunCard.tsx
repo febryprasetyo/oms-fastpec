@@ -17,7 +17,7 @@ export default function StasiunCard({
   province,
 }: Props) {
   return (
-    <Link href={`/monitoring/${id}`}>
+    <Link href={`/monitoring/${id}`} data-testid="station-card">
       <div className="h-full w-full overflow-hidden rounded-lg bg-white shadow dark:bg-darkSecondary">
         <div className="relative aspect-video w-full">
           <Image

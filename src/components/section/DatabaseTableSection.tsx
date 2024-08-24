@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { exportDatabase, getDatabaseList } from "@/services/api/database";
-import ReactPaginate from "react-paginate";
 import { saveAs } from "file-saver";
 import {
   Table,
@@ -13,7 +12,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import LimitPage from "@/components/features/limitPage/LimitPage";
-import { TimePicker } from "../features/form/TimePicker";
 import { DatePicker } from "../features/form/DatePicker";
 import { format, parseISO, subMonths } from "date-fns";
 import { Button } from "../ui/button";
@@ -28,21 +26,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { ReusablePagination } from "../features/pagination";
 
 type Props = {
   cookie: string;
+  limit: string;
+  page: string;
 };
 
-export default function DatabaseTableSection({ cookie }: Props) {
+export default function DatabaseTableSection({ cookie, limit, page }: Props) {
   const today = new Date();
   const threeMonthsAgo = subMonths(today, 3);
-  const [itemOffset, setItemOffset] = useState<number>(0);
-  const [itemsPerPage, setItemPerPage] = useState<number>(10);
   const [startDate, setStartDate] = useState<Date>(threeMonthsAgo);
   const [endDate, setEndDate] = useState<Date>(today);
   const [startHour, setStartHour] = useState<Date | undefined>();
   const [endHour, setEndHour] = useState<Date | undefined>();
-  const endOffset = itemOffset + itemsPerPage;
   const [loading, setLoading] = useState<boolean>(false);
   const [stationFilter, setStationFilter] = useState<string>("all");
 
@@ -56,10 +54,19 @@ export default function DatabaseTableSection({ cookie }: Props) {
   const hourQueryKey =
     dateQueryKey && startHour && endHour ? { startHour, endHour } : null;
 
-  const stationKey = stationFilter ? { stationFilter } : null;
-
   const dbQuery = useQuery({
-    queryKey: ["database", dateQueryKey, hourQueryKey, stationKey],
+    queryKey: [
+      "database",
+      {
+        startDate: dateQueryKey?.startDate || null,
+        endDate: dateQueryKey?.endDate || null,
+        startHour: hourQueryKey?.startHour || null,
+        endHour: hourQueryKey?.endHour || null,
+        stationFilter,
+        page,
+        limit,
+      },
+    ],
     queryFn: () => {
       return getDatabaseList({
         cookie,
@@ -68,6 +75,8 @@ export default function DatabaseTableSection({ cookie }: Props) {
         startDate,
         endDate,
         stationFilter,
+        page,
+        limit,
       });
     },
     refetchInterval: false,
@@ -79,14 +88,6 @@ export default function DatabaseTableSection({ cookie }: Props) {
       return getStationList(cookie);
     },
   });
-
-  const currentItems = dbQuery?.data?.data.slice(itemOffset, endOffset);
-  const pageCount = Math.ceil((dbQuery?.data?.data.length ?? 0) / itemsPerPage);
-  const handlePageClick = (event: any) => {
-    const newOffset =
-      (event.selected * itemsPerPage) % (dbQuery?.data?.data.length ?? 0);
-    setItemOffset(newOffset);
-  };
 
   const handleResetFilter = () => {
     setStartDate(threeMonthsAgo);
@@ -106,6 +107,7 @@ export default function DatabaseTableSection({ cookie }: Props) {
         startHour,
         endHour,
       });
+
       const contentDisposition = res.headers["content-disposition"];
       const fileName = contentDisposition
         ? contentDisposition.split("filename=")[1].replace(/"/g, "")
@@ -136,10 +138,7 @@ export default function DatabaseTableSection({ cookie }: Props) {
       <div className="flex w-full items-start justify-between">
         <h1 className="text-3xl font-semibold">Integrasi Data Onlimo</h1>
         <div className="flex w-full flex-wrap-reverse items-end justify-end gap-5">
-          <LimitPage
-            itemsPerPage={itemsPerPage}
-            setItemPerPage={setItemPerPage}
-          />
+          <LimitPage />
           <Select
             value={stationFilter}
             onValueChange={(value: string) => {
@@ -147,7 +146,7 @@ export default function DatabaseTableSection({ cookie }: Props) {
             }}
             defaultValue="all"
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px]" data-testid="station-filter">
               <SelectValue placeholder="Pilih Stasiun" />
             </SelectTrigger>
             <SelectContent>
@@ -156,18 +155,28 @@ export default function DatabaseTableSection({ cookie }: Props) {
                   Semua Stasiun
                 </SelectItem>
                 {stationQuery?.data?.data?.values.map((item, index) => (
-                  <SelectItem key={index} value={item.nama_stasiun}>
+                  <SelectItem
+                    key={index}
+                    value={item.nama_stasiun}
+                    data-testid={`station-filter-${item.nama_stasiun}`}
+                  >
                     {item.nama_stasiun}
                   </SelectItem>
                 ))}
               </SelectGroup>
             </SelectContent>
           </Select>
-          <Button onClick={handleExport} disabled={loading}>
+          <Button
+            onClick={handleExport}
+            disabled={loading}
+            data-testid="export-excel"
+            className="text-slate-50 dark:text-slate-50"
+          >
             {loading ? (
               <div
                 className="text-surface mr-2 inline-block size-[14px] animate-spin rounded-full border-2 border-solid border-current border-e-transparent align-[-0.125em] text-white motion-reduce:animate-[spin_1.5s_linear_infinite]"
                 role="status"
+                data-testid="loading-icon"
               >
                 <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
                   Loading...
@@ -182,7 +191,12 @@ export default function DatabaseTableSection({ cookie }: Props) {
       </div>
       <div className="flex flex-wrap justify-end gap-5">
         <div className="flex items-end">
-          <Button variant="destructive" size="sm" onClick={handleResetFilter}>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleResetFilter}
+            data-testid="reset-filter"
+          >
             <Trash className="mr-2 h-4 w-4" />
             Clear Filter
           </Button>
@@ -228,11 +242,16 @@ export default function DatabaseTableSection({ cookie }: Props) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentItems?.map((item, index) => {
+                {dbQuery?.data?.data?.map((item, index) => {
                   const { data }: { data: payload } = JSON.parse(item?.payload);
                   return (
-                    <TableRow key={index}>
-                      <TableCell>{itemOffset + index + 1}</TableCell>
+                    <TableRow key={index} data-testid="data-table">
+                      <TableCell>
+                        {page == "1"
+                          ? index + 1
+                          : (parseInt(page) - 1) * parseInt(limit) +
+                            (index + 1)}
+                      </TableCell>
                       <TableCell className="w-[200px]">
                         {data.IDStasiun == undefined ? "-" : data.IDStasiun}
                       </TableCell>
@@ -278,22 +297,12 @@ export default function DatabaseTableSection({ cookie }: Props) {
                 })}
               </TableBody>
             </Table>
-            <div className="overflow-auto " id="pagination">
-              <ReactPaginate
-                breakLabel="..."
-                nextLabel=" >"
-                onPageChange={handlePageClick}
-                pageRangeDisplayed={3}
-                pageCount={pageCount}
-                previousLabel="<"
-                renderOnZeroPageCount={null}
-                breakClassName="text-xl"
-                className=" mt-5 flex items-center justify-center gap-3 py-2"
-                activeClassName="bg-primary text-white dark:bg-primary dark:text-white flex items-center justify-center rounded-lg text-lg"
-                pageLinkClassName="hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white size-10 flex items-center justify-center rounded-lg text-lg border dark:border-dark_accent"
-                nextLinkClassName="hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white size-10 flex items-center justify-center rounded-lg text-lg border dark:border-dark_accent"
-                previousLinkClassName="hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white size-10 flex items-center justify-center rounded-lg text-lg border dark:border-dark_accent"
-                disabledLinkClassName="text-gray-400 dark:text-gray-400 size-10 flex items-center justify-center rounded-lg text-lg border dark:border-dark_accent cursor-not-allowed hover:bg-transparent hover:text-gray-400 dark:hover:text-gray-400 dark:hover:bg-transparent"
+
+            <div className="mt-5">
+              <ReusablePagination
+                currentPage={parseInt(page)}
+                totalData={Number(dbQuery?.data?.totalData)}
+                limit={parseInt(limit)}
               />
             </div>
           </>

@@ -8,6 +8,8 @@ type Props = {
   startHour?: Date;
   endHour?: Date;
   stationFilter?: string;
+  limit?: string;
+  page?: string;
 };
 
 export const getHistoryList = async ({
@@ -17,8 +19,10 @@ export const getHistoryList = async ({
   startHour,
   endHour,
   stationFilter,
+  limit = "10",
+  page = "1",
 }: Props) => {
-  const params: { [key: string]: string } = {};
+  const params = new URLSearchParams();
 
   if (startDate && endDate) {
     const formattedFromDate = format(
@@ -29,27 +33,26 @@ export const getHistoryList = async ({
       parseISO(endDate.toISOString()),
       "yyyy-MM-dd",
     );
-    params["startDate"] = formattedFromDate;
-    params["endDate"] = formattedToDate;
+    params.set("startDate", formattedFromDate);
+    params.set("endDate", formattedToDate);
   }
 
   if (startHour && endHour) {
     const formattedStartHour = format(startHour, "HH:mm:ss");
     const formattedEndHour = format(endHour, "HH:mm:ss");
-    params["startHour"] = formattedStartHour;
-    params["endHour"] = formattedEndHour;
+    params.set("startHour", formattedStartHour);
+    params.set("endHour", formattedEndHour);
   }
 
   if (stationFilter && stationFilter !== "all") {
-    params["namaStasiun"] = stationFilter;
+    params.set("namaStasiun", stationFilter);
   }
 
-  const queryString = Object.entries(params)
-    .map(([key, value]) => `${key}=${value}`)
-    .join("&");
-
+  params.set("limit", limit);
+  const offset = (parseInt(page) - 1) * parseInt(limit);
+  params.set("offset", offset.toString());
   const res = await axiosInstance.get<HistoryResponse>(
-    `/api/data/mqtt/list?${queryString}&limit=10000`,
+    `/api/data/mqtt/list?${params.toString()}`,
     {
       headers: {
         Authorization: `Bearer ${cookie}`,
@@ -60,7 +63,7 @@ export const getHistoryList = async ({
   return res.data;
 };
 
-export const exportDatabase = async ({
+export const exportHistory = async ({
   cookie,
   startDate,
   endDate,
@@ -94,7 +97,7 @@ export const exportDatabase = async ({
     .join("&");
 
   return await axiosInstance.get<DatabaseExport>(
-    `/api/data/klhk/export?${queryString}`,
+    `/api/data/mqtt/export?${queryString}`,
     {
       headers: {
         Authorization: `Bearer ${cookie}`,

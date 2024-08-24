@@ -14,7 +14,7 @@ export default function ThemeToogle({}: Props) {
     <Button
       aria-label="Toggle Theme"
       size="icon"
-      className="aspect-square h-8 w-8 bg-primary text-white"
+      className="aspect-square h-8 w-8 bg-primary text-white dark:text-white"
       onClick={handleClick}
     >
       <Moon size={20} />

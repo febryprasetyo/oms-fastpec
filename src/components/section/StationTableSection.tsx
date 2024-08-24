@@ -4,9 +4,9 @@ import { DataTable } from "../features/dataTable/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { useQuery } from "@tanstack/react-query";
 import { getStationList } from "@/services/api/station";
-import LimitPage from "../features/limitPage/LimitPage";
 import ReactPaginate from "react-paginate";
 import ActionModal from "../features/actionButton/ActionModal";
+import LimitPageCSR from "../features/limitPage/LimitPageCSR";
 
 type Props = {
   cookie: string;
@@ -84,10 +84,7 @@ export default function StationTableSection({ cookie }: Props) {
       {stationQuery?.data?.success && !stationQuery?.isError && (
         <div className="flex w-full justify-end">
           <div className="flex gap-3">
-            <LimitPage
-              itemsPerPage={itemsPerPage}
-              setItemPerPage={setItemsPerPage}
-            />
+            <LimitPageCSR limit={itemsPerPage} setLimit={setItemsPerPage} />
           </div>
         </div>
       )}

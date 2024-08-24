@@ -1,5 +1,4 @@
 import DatabaseTableSection from "@/components/section/DatabaseTableSection";
-import { getDatabaseList } from "@/services/api/database";
 import { getStationList } from "@/services/api/station";
 import {
   HydrationBoundary,
@@ -7,44 +6,24 @@ import {
   dehydrate,
 } from "@tanstack/react-query";
 import { getCookie } from "cookies-next";
-import { format, parseISO, subMonths } from "date-fns";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-export default async function User() {
+type Props = {
+  searchParams: {
+    page: string | null;
+    limit: string | null;
+  };
+};
+
+export default async function User({ searchParams }: Props) {
   const queryClient = new QueryClient();
   const cookie = getCookie("token", { cookies });
   if (!cookie) {
     redirect("/login");
   }
-
-  const today = new Date();
-  const threeMonthsAgo = subMonths(today, 3);
-  const formatedToday = format(parseISO(today.toISOString()), "yyyy-MM-dd");
-  const formatedThreeMonthsAgo = format(
-    parseISO(threeMonthsAgo.toISOString()),
-    "yyyy-MM-dd",
-  );
-
-  const dateKey = { startDate: formatedThreeMonthsAgo, endDate: formatedToday };
-
-  await queryClient.prefetchQuery({
-    queryKey: [
-      "database",
-      dateKey,
-      null,
-      {
-        stationFilter: "all",
-      },
-    ],
-    queryFn: () => {
-      return getDatabaseList({
-        cookie,
-        startDate: threeMonthsAgo,
-        endDate: today,
-      });
-    },
-  });
+  const page = searchParams?.page || "1";
+  const limit = searchParams?.limit || "10";
 
   await queryClient.prefetchQuery({
     queryKey: ["station"],
@@ -55,7 +34,7 @@ export default async function User() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <DatabaseTableSection cookie={cookie} />
+      <DatabaseTableSection cookie={cookie} limit={limit} page={page} />
     </HydrationBoundary>
   );
 }

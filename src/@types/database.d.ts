@@ -28,6 +28,7 @@ interface DatabaseData {
 interface DatabaseResponse {
   success: boolean;
   statusCode?: number;
+  totalData: string;
   data: DatabaseData[] | [];
 }
 

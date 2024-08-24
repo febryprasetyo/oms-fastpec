@@ -1,8 +1,6 @@
 "use client";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { exportDatabase } from "@/services/api/database";
-import ReactPaginate from "react-paginate";
 import { saveAs } from "file-saver";
 import {
   Table,
@@ -27,24 +25,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { getHistoryList } from "@/services/api/history";
+import { exportHistory, getHistoryList } from "@/services/api/history";
+import { ReusablePagination } from "../features/pagination";
 
 type Props = {
   cookie: string;
+  searchParams: {
+    page?: string;
+    limit?: string;
+  };
 };
 
-export default function HistorySection({ cookie }: Props) {
+export default function HistorySection({ cookie, searchParams }: Props) {
   const today = new Date();
   const threeMonthsAgo = subMonths(today, 3);
-  const [itemOffset, setItemOffset] = useState<number>(0);
-  const [itemsPerPage, setItemPerPage] = useState<number>(10);
   const [startDate, setStartDate] = useState<Date>(threeMonthsAgo);
   const [endDate, setEndDate] = useState<Date>(today);
   const [startHour, setStartHour] = useState<Date | undefined>();
   const [endHour, setEndHour] = useState<Date | undefined>();
-  const endOffset = itemOffset + itemsPerPage;
   const [loading, setLoading] = useState<boolean>(false);
   const [stationFilter, setStationFilter] = useState<string>("all");
+  const page = searchParams?.page || "1";
+  const limit = searchParams?.limit || "10";
 
   const dateQueryKey =
     startDate && endDate
@@ -56,10 +58,19 @@ export default function HistorySection({ cookie }: Props) {
   const hourQueryKey =
     dateQueryKey && startHour && endHour ? { startHour, endHour } : null;
 
-  const stationKey = stationFilter ? { stationFilter } : null;
-
   const dbQuery = useQuery({
-    queryKey: ["history", dateQueryKey, hourQueryKey, stationKey],
+    queryKey: [
+      "history",
+      {
+        startDate: dateQueryKey?.startDate || null,
+        endDate: dateQueryKey?.endDate || null,
+        startHour: hourQueryKey?.startHour || null,
+        endHour: hourQueryKey?.endHour || null,
+        stationFilter,
+        page,
+        limit,
+      },
+    ],
     queryFn: () => {
       return getHistoryList({
         cookie,
@@ -68,6 +79,8 @@ export default function HistorySection({ cookie }: Props) {
         startDate,
         endDate,
         stationFilter,
+        page,
+        limit,
       });
     },
     refetchInterval: false,
@@ -80,14 +93,6 @@ export default function HistorySection({ cookie }: Props) {
     },
   });
 
-  const currentItems = dbQuery?.data?.data.slice(itemOffset, endOffset);
-  const pageCount = Math.ceil((dbQuery?.data?.data.length ?? 0) / itemsPerPage);
-  const handlePageClick = (event: any) => {
-    const newOffset =
-      (event.selected * itemsPerPage) % (dbQuery?.data?.data.length ?? 0);
-    setItemOffset(newOffset);
-  };
-
   const handleResetFilter = () => {
     setStartDate(threeMonthsAgo);
     setEndDate(today);
@@ -99,13 +104,14 @@ export default function HistorySection({ cookie }: Props) {
   const handleExport = async () => {
     setLoading(true);
     try {
-      const res = await exportDatabase({
+      const res = await exportHistory({
         cookie,
         startDate,
         endDate,
         startHour,
         endHour,
       });
+
       const contentDisposition = res.headers["content-disposition"];
       const fileName = contentDisposition
         ? contentDisposition.split("filename=")[1].replace(/"/g, "")
@@ -136,10 +142,7 @@ export default function HistorySection({ cookie }: Props) {
       <div className="flex w-full items-start justify-between">
         <h1 className="text-3xl font-semibold">History</h1>
         <div className="flex w-full flex-wrap-reverse items-end justify-end gap-5">
-          <LimitPage
-            itemsPerPage={itemsPerPage}
-            setItemPerPage={setItemPerPage}
-          />
+          <LimitPage />
           <Select
             value={stationFilter}
             onValueChange={(value: string) => {
@@ -232,9 +235,14 @@ export default function HistorySection({ cookie }: Props) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentItems?.map((item, index) => (
+                {dbQuery?.data?.data?.map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>
+                      {" "}
+                      {page == "1"
+                        ? index + 1
+                        : (parseInt(page) - 1) * parseInt(limit) + (index + 1)}
+                    </TableCell>
                     <TableCell>{item.nama_stasiun}</TableCell>
                     <TableCell>{format(item.time, "yyyy-MM-dd")}</TableCell>
                     <TableCell>{format(item.time, "HH:mm")}</TableCell>
@@ -258,21 +266,10 @@ export default function HistorySection({ cookie }: Props) {
               </TableBody>
             </Table>
             <div className="overflow-auto " id="pagination">
-              <ReactPaginate
-                breakLabel="..."
-                nextLabel=" >"
-                onPageChange={handlePageClick}
-                pageRangeDisplayed={3}
-                pageCount={pageCount}
-                previousLabel="<"
-                renderOnZeroPageCount={null}
-                breakClassName="text-xl"
-                className=" mt-5 flex items-center justify-center gap-3 py-2"
-                activeClassName="bg-primary text-white dark:bg-primary dark:text-white flex items-center justify-center rounded-lg text-lg"
-                pageLinkClassName="hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white size-10 flex items-center justify-center rounded-lg text-lg border dark:border-dark_accent"
-                nextLinkClassName="hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white size-10 flex items-center justify-center rounded-lg text-lg border dark:border-dark_accent"
-                previousLinkClassName="hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white size-10 flex items-center justify-center rounded-lg text-lg border dark:border-dark_accent"
-                disabledLinkClassName="text-gray-400 dark:text-gray-400 size-10 flex items-center justify-center rounded-lg text-lg border dark:border-dark_accent cursor-not-allowed hover:bg-transparent hover:text-gray-400 dark:hover:text-gray-400 dark:hover:bg-transparent"
+              <ReusablePagination
+                currentPage={parseInt(page)}
+                limit={parseInt(limit)}
+                totalData={parseInt(dbQuery?.data?.totalData)}
               />
             </div>
           </>

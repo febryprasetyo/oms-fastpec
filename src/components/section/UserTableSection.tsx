@@ -4,10 +4,9 @@ import { DataTable } from "../features/dataTable/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { useQuery } from "@tanstack/react-query";
 import { getUserList } from "@/services/api/user";
-import UnAuthorizedModal from "../features/modal/UnAuthorizedModal";
 import UserModal from "../features/actionButton/ActionModal";
 import ReactPaginate from "react-paginate";
-import LimitPage from "../features/limitPage/LimitPage";
+import LimitPageCSR from "../features/limitPage/LimitPageCSR";
 
 type Props = {
   cookie: string;
@@ -74,10 +73,7 @@ export default function UserTableSection({ cookie }: Props) {
       {userQuery?.data?.success && !userQuery?.isError && (
         <div className="flex w-full justify-end">
           <div className="flex gap-3">
-            <LimitPage
-              itemsPerPage={itemsPerPage}
-              setItemPerPage={setItemsPerPage}
-            />
+            <LimitPageCSR limit={itemsPerPage} setLimit={setItemsPerPage} />
           </div>
         </div>
       )}

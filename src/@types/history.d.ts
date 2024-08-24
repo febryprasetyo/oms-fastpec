@@ -1,6 +1,7 @@
 interface HistoryResponse {
   success: boolean;
   data: Payload[];
+  totalData: string;
 }
 
 type Payload = {
