@@ -27,6 +27,17 @@ import {
 } from "../ui/select";
 import { exportHistory, getHistoryList } from "@/services/api/history";
 import { ReusablePagination } from "../features/pagination";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
 
 type Props = {
   cookie: string;
@@ -45,6 +56,7 @@ export default function HistorySection({ cookie, searchParams }: Props) {
   const [endHour, setEndHour] = useState<Date | undefined>();
   const [loading, setLoading] = useState<boolean>(false);
   const [stationFilter, setStationFilter] = useState<string>("all");
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const page = searchParams?.page || "1";
   const limit = searchParams?.limit || "10";
 
@@ -128,12 +140,14 @@ export default function HistorySection({ cookie, searchParams }: Props) {
     } catch (error) {
       if (error instanceof Error) {
         toast({
+          variant: "destructive",
           title: "Export Gagal",
           description: error.message,
         });
       }
     } finally {
       setLoading(false);
+      setIsOpen(false);
     }
   };
 
@@ -166,21 +180,66 @@ export default function HistorySection({ cookie, searchParams }: Props) {
               </SelectGroup>
             </SelectContent>
           </Select>
-          <Button onClick={handleExport} disabled={loading}>
-            {loading ? (
-              <div
-                className="text-surface mr-2 inline-block size-[14px] animate-spin rounded-full border-2 border-solid border-current border-e-transparent align-[-0.125em] text-white motion-reduce:animate-[spin_1.5s_linear_infinite]"
-                role="status"
+          <AlertDialog open={isOpen}>
+            <AlertDialogTrigger asChild>
+              <Button
+                data-testid="export-excel"
+                className="text-slate-50 dark:text-slate-50"
+                onClick={() => setIsOpen(true)}
               >
-                <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
-                  Loading...
-                </span>
-              </div>
-            ) : (
-              <Download className="mr-2 h-4 w-4" />
-            )}
-            Export
-          </Button>
+                {loading ? (
+                  <div
+                    className="text-surface mr-2 inline-block size-[14px] animate-spin rounded-full border-2 border-solid border-current border-e-transparent align-[-0.125em] text-white motion-reduce:animate-[spin_1.5s_linear_infinite]"
+                    role="status"
+                    data-testid="loading-icon"
+                  >
+                    <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
+                      Loading...
+                    </span>
+                  </div>
+                ) : (
+                  <Download className="mr-2 h-4 w-4" />
+                )}
+                Export
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Export Data</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Anda yakin ingin mengekspor data dari{" "}
+                  {format(startDate, "dd MMMM yyyy")} hingga{" "}
+                  {format(endDate, "dd MMMM yyyy")}?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel
+                  disabled={loading}
+                  onClick={() => {
+                    setIsOpen(false);
+                  }}
+                >
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction onClick={handleExport} disabled={loading}>
+                  {loading ? (
+                    <div
+                      className="text-surface mr-2 inline-block size-[14px] animate-spin rounded-full border-2 border-solid border-current border-e-transparent align-[-0.125em] text-white motion-reduce:animate-[spin_1.5s_linear_infinite]"
+                      role="status"
+                      data-testid="loading-icon"
+                    >
+                      <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
+                        Loading...
+                      </span>
+                    </div>
+                  ) : (
+                    <Download className="mr-2 h-4 w-4" />
+                  )}
+                  Export
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
       <div className="flex flex-wrap justify-end gap-5">

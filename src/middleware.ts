@@ -1,5 +1,10 @@
 import { getCookie } from "cookies-next";
-import { DEFAULT_LOGIN_REDIRECT, apiAuthPrefix, authRoutes } from "@/routes";
+import {
+  DEFAULT_LOGIN_REDIRECT,
+  apiAuthPrefix,
+  authRoutes,
+  unprotectedRoutes,
+} from "@/routes";
 import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(req: NextRequest) {
@@ -8,8 +13,13 @@ export function middleware(req: NextRequest) {
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
   const isApiRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
   const cookie = getCookie("token", { res, req });
+  const pathname = nextUrl.pathname.split("/")[1];
 
   if (isApiRoute) {
+    return NextResponse.next();
+  }
+
+  if (unprotectedRoutes.includes(pathname)) {
     return NextResponse.next();
   }
 

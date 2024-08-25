@@ -3,10 +3,6 @@ import Image from "next/image";
 import Logo from "@/assets/img/logo.png";
 import Link from "next/link";
 import MonitoringSection from "@/components/section/MonitoringSection";
-import { getStationList } from "@/services/api/station";
-import { getCookie } from "cookies-next";
-import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 
 type Props = {
   params: {
@@ -15,12 +11,6 @@ type Props = {
 };
 
 export default async function page({ params: { id } }: Props) {
-  const cookie = getCookie("token", { cookies });
-  if (!cookie) {
-    redirect("/login");
-  }
-  const station = await getStationList(cookie);
-
   return (
     <>
       <header className="grid w-full grid-cols-2 place-items-end bg-white px-5 py-3 shadow-sm dark:bg-darkSecondary sm:px-10 lg:grid-cols-3">
@@ -37,12 +27,6 @@ export default async function page({ params: { id } }: Props) {
           Online Monitoring System
         </h1>
         <div className="flex items-center gap-5">
-          <p className="hidden text-slate-700 sm:block">
-            { station?.success
-              ? station.data.values.filter((item) => item.id_mesin === id)[0]
-                  .nama_stasiun
-              : id}
-          </p>
           <ThemeToogle />
         </div>
       </header>

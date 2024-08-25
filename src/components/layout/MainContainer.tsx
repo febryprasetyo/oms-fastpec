@@ -4,6 +4,8 @@ import { deleteCookie } from "cookies-next";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { setDefaultOptions } from "date-fns";
+import { id } from "date-fns/locale";
 
 type Props = {
   children: React.ReactNode;
@@ -14,6 +16,7 @@ export default function MainContainer({ children }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
+  setDefaultOptions({ locale: id });
 
   useEffect(() => {
     if (user === null) {
