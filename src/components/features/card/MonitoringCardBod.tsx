@@ -3,17 +3,19 @@ import { Radio, RefreshCwOff } from "lucide-react";
 type Props = {
   title: string;
   value: string | number;
+  cod: string | number;
   date: string | undefined;
   time: string | undefined;
   unit: string;
 };
 
-export default function MonitoringCard({
+export default function MonitoringCardBod({
   title,
   value,
   date,
   time,
   unit,
+  cod,
 }: Props) {
   return (
     <div className="flex w-full flex-col items-center justify-between overflow-hidden rounded-xl bg-white shadow dark:bg-darkSecondary">
@@ -38,7 +40,7 @@ export default function MonitoringCard({
         />
         <RefreshCwOff
           size={35}
-          className={value == 0 ? "text-danger" : "text-slate-500"}
+          className={cod == 0 ? "text-danger" : "text-slate-500"}
         />
       </div>
     </div>
