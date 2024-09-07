@@ -1,6 +1,6 @@
 "use client";
 import { getStationList } from "@/services/api/station";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 import StasiunCard from "../features/card/StasiunCard";
 import CardSkeleton from "../features/skeleton/CardSkeleton";
 import { useQuery } from "@tanstack/react-query";

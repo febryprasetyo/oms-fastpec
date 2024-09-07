@@ -108,12 +108,26 @@ export default function StationForm({ action, setIsOpen, value }: props) {
     mutationFn: async (data: z.infer<typeof formSchema>) => {
       if (action == "edit") {
         const res = await editStationList(
-          { id: value?.id || "", ...data },
+          {
+            id: value?.id || "",
+            ...data,
+            city_id: Number(data.city_id),
+            province_id: Number(data.province_id),
+            device_id: Number(data.device_id),
+          },
           accessToken as string,
         );
         return res;
       } else if (action == "add") {
-        const res = await addStationList(data, accessToken as string);
+        const res = await addStationList(
+          {
+            ...data,
+            city_id: Number(data.city_id),
+            province_id: Number(data.province_id),
+            device_id: Number(data.device_id),
+          },
+          accessToken as string,
+        );
         return res;
       }
     },
@@ -161,7 +175,7 @@ export default function StationForm({ action, setIsOpen, value }: props) {
             <FormItem className="w-full">
               <FormLabel>Nama Stasiun</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} placeholder="Masukan Nama Stasiun..." />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -174,7 +188,7 @@ export default function StationForm({ action, setIsOpen, value }: props) {
             <FormItem className="w-full">
               <FormLabel>Alamat</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} placeholder="Masukan Alamat..." />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -187,7 +201,7 @@ export default function StationForm({ action, setIsOpen, value }: props) {
             <FormItem className="w-full">
               <FormLabel>Nama Dinas</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} placeholder="Masukan Nama Dinas..." />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -203,7 +217,7 @@ export default function StationForm({ action, setIsOpen, value }: props) {
               <Select onValueChange={field.onChange}>
                 <FormControl>
                   <SelectTrigger className="dark:bg-dark">
-                    <SelectValue />
+                    <SelectValue placeholder="Pilih Device" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent className="w-full py-2" side="top">
@@ -248,7 +262,7 @@ export default function StationForm({ action, setIsOpen, value }: props) {
                 >
                   <FormControl>
                     <SelectTrigger className="dark:bg-dark">
-                      <SelectValue placeholder="Provinsi" />
+                      <SelectValue />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent className="w-full" side="top">
@@ -294,7 +308,7 @@ export default function StationForm({ action, setIsOpen, value }: props) {
                 >
                   <FormControl>
                     <SelectTrigger className="dark:bg-dark">
-                      <SelectValue placeholder="Kabupaten" />
+                      <SelectValue placeholder="Pilih Kabupaten" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -331,9 +345,19 @@ export default function StationForm({ action, setIsOpen, value }: props) {
             )}
           />
         </div>
-        <Button type="submit" className="w-full">
-          {action === "edit" ? "Edit Data" : "Tambah Data"}
-        </Button>
+        <div className="flex gap-3 pt-5">
+          <Button
+            className="w-44"
+            variant="destructive"
+            onClick={() => setIsOpen(false)}
+          >
+            Batal
+          </Button>
+
+          <Button type="submit" className="w-44">
+            {action == "add" ? "Tambah Data" : "Edit Data"}
+          </Button>
+        </div>
       </form>
     </Form>
   );

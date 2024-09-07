@@ -50,8 +50,8 @@ export default function DatabaseTableSection({ cookie, limit, page }: Props) {
   const threeMonthsAgo = subMonths(today, 3);
   const [startDate, setStartDate] = useState<Date>(threeMonthsAgo);
   const [endDate, setEndDate] = useState<Date>(today);
-  const [startHour, setStartHour] = useState<Date | undefined>();
-  const [endHour, setEndHour] = useState<Date | undefined>();
+  const [startHour, setStartHour] = useState<Date | undefined>(today);
+  const [endHour, setEndHour] = useState<Date | undefined>(today);
   const [loading, setLoading] = useState<boolean>(false);
   const [stationFilter, setStationFilter] = useState<string>("all");
   const [isOpen, setIsOpen] = useState<boolean>(false);

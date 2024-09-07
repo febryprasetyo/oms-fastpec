@@ -50,11 +50,11 @@ export default function ActionModal({ action, data, type }: props) {
               <X />
             </Button>
           </div>
-          <DialogTitle>
-            {action === "edit" ? "Edit Data Stasiun" : "Tambah Data Stasiun"}
+          <DialogTitle className="capitalize">
+            {action === "edit" ? `Edit Data ${type}` : `Tambah Data ${type}`}
           </DialogTitle>
-          <DialogDescription>
-            {action === "edit" ? "Edit Data Stasiun" : "Tambah Data Stasiun"}
+          <DialogDescription className="capitalize">
+            {action === "edit" ? `Edit Data ${type}` : `Tambah Data ${type}`}
           </DialogDescription>
         </DialogHeader>
         {type === "user" ? (

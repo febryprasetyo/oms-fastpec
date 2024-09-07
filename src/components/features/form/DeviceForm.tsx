@@ -46,12 +46,18 @@ export default function DeviceForm({ setIsOpen, value, action }: Props) {
       if (action == "edit") {
         const res = await editDeviceList(
           value?.id || "",
-          data,
+          {
+            ...data,
+            dinas_id: Number(data.dinas_id),
+          },
           accessToken as string,
         );
         return res;
       } else if (action == "add") {
-        const res = await addDeviceList(data, accessToken as string);
+        const res = await addDeviceList(
+          { ...data, dinas_id: Number(data.dinas_id) },
+          accessToken as string,
+        );
         return res;
       }
     },
@@ -130,9 +136,19 @@ export default function DeviceForm({ setIsOpen, value, action }: Props) {
             )}
           />
         </div>
-        <Button type="submit" className="w-full">
-          Tambah Data
-        </Button>
+        <div className="flex gap-3 pt-5">
+          <Button
+            className="w-44"
+            variant="destructive"
+            onClick={() => setIsOpen(false)}
+          >
+            Batal
+          </Button>
+
+          <Button type="submit" className="w-44">
+            {action == "add" ? "Tambah Data" : "Edit Data"}
+          </Button>
+        </div>
       </form>
     </Form>
   );

@@ -21,7 +21,7 @@ export const getDeviceTableList = async (accessToken: string) => {
 
 type AddDeviceRequest = {
   id_mesin: string;
-  dinas_id: string;
+  dinas_id: number;
   nama_stasiun: string;
 };
 

@@ -3,7 +3,7 @@ import axios, { AxiosResponse } from "axios";
 
 type EditStationRequest = {
   id: string;
-  device_id: string;
+  device_id: number | string;
   nama_stasiun: string;
   address: string;
   province_id: string | number;
@@ -11,7 +11,7 @@ type EditStationRequest = {
   nama_dinas: string;
 };
 type AddStationRequest = {
-  device_id: string;
+  device_id: string | number;
   nama_stasiun: string;
   address: string;
   province_id: string | number;

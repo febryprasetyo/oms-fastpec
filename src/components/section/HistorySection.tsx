@@ -52,8 +52,8 @@ export default function HistorySection({ cookie, searchParams }: Props) {
   const threeMonthsAgo = subMonths(today, 3);
   const [startDate, setStartDate] = useState<Date>(threeMonthsAgo);
   const [endDate, setEndDate] = useState<Date>(today);
-  const [startHour, setStartHour] = useState<Date | undefined>();
-  const [endHour, setEndHour] = useState<Date | undefined>();
+  const [startHour, setStartHour] = useState<Date | undefined>(today);
+  const [endHour, setEndHour] = useState<Date | undefined>(today);
   const [loading, setLoading] = useState<boolean>(false);
   const [stationFilter, setStationFilter] = useState<string>("all");
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -289,8 +289,6 @@ export default function HistorySection({ cookie, searchParams }: Props) {
                   <TableHead>NO3 3</TableHead>
                   <TableHead>NO2</TableHead>
                   <TableHead>Depth</TableHead>
-                  <TableHead>Lgnh4+</TableHead>
-                  <TableHead>Liquid</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -318,8 +316,6 @@ export default function HistorySection({ cookie, searchParams }: Props) {
                     <TableCell>{item.no3_3}</TableCell>
                     <TableCell>{item.no2}</TableCell>
                     <TableCell>{item.depth}</TableCell>
-                    <TableCell>{item.lgnh4_plus || "-"}</TableCell>
-                    <TableCell>{item.liquid || "-"}</TableCell>
                   </TableRow>
                 )) ?? <></>}
               </TableBody>

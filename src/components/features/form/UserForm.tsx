@@ -113,7 +113,7 @@ export default function UserForm({ setIsOpen, action, value }: props) {
               <FormItem className="w-full">
                 <FormLabel>Username</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} placeholder="Masukan Username..." />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -126,7 +126,11 @@ export default function UserForm({ setIsOpen, action, value }: props) {
               <FormItem className="w-full">
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input type="password" {...field} />
+                  <Input
+                    type="password"
+                    {...field}
+                    placeholder="Masukan Password..."
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -139,7 +143,7 @@ export default function UserForm({ setIsOpen, action, value }: props) {
               <FormItem className="w-full">
                 <FormLabel>Nama Dinas</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} placeholder="Masukan Nama Dinss..." />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -152,7 +156,7 @@ export default function UserForm({ setIsOpen, action, value }: props) {
               <FormItem className="w-full">
                 <FormLabel>API Key</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} placeholder="Masukan API Key..." />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -165,16 +169,26 @@ export default function UserForm({ setIsOpen, action, value }: props) {
               <FormItem className="w-full">
                 <FormLabel>Secret Key</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} placeholder="Masukan Secret Key..." />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
-        <Button type="submit" className="w-full">
-          {action == "add" ? "Tambah Data" : "Edit Data"}
-        </Button>
+        <div className="flex gap-3 pt-5">
+          <Button
+            className="w-44"
+            variant="destructive"
+            onClick={() => setIsOpen(false)}
+          >
+            Batal
+          </Button>
+
+          <Button type="submit" className="w-44">
+            {action == "add" ? "Tambah Data" : "Edit Data"}
+          </Button>
+        </div>
       </form>
     </Form>
   );
