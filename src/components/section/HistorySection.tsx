@@ -38,6 +38,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
+import ExportForm from "../features/export/ExportForm";
 
 type Props = {
   cookie: string;
@@ -50,11 +51,10 @@ type Props = {
 export default function HistorySection({ cookie, searchParams }: Props) {
   const today = new Date();
   const threeMonthsAgo = subMonths(today, 3);
-  const [startDate, setStartDate] = useState<Date>(threeMonthsAgo);
-  const [endDate, setEndDate] = useState<Date>(today);
+  const [startDate, setStartDate] = useState<Date | undefined>(threeMonthsAgo);
+  const [endDate, setEndDate] = useState<Date | undefined>(today);
   const [startHour, setStartHour] = useState<Date | undefined>(today);
   const [endHour, setEndHour] = useState<Date | undefined>(today);
-  const [loading, setLoading] = useState<boolean>(false);
   const [stationFilter, setStationFilter] = useState<string>("all");
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const page = searchParams?.page || "1";
@@ -113,44 +113,6 @@ export default function HistorySection({ cookie, searchParams }: Props) {
     setStationFilter("all");
   };
 
-  const handleExport = async () => {
-    setLoading(true);
-    try {
-      const res = await exportHistory({
-        cookie,
-        startDate,
-        endDate,
-        startHour,
-        endHour,
-      });
-
-      const contentDisposition = res.headers["content-disposition"];
-      const fileName = contentDisposition
-        ? contentDisposition.split("filename=")[1].replace(/"/g, "")
-        : "data.xlsx";
-
-      const blob = new Blob([res?.data], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-      saveAs(blob, fileName);
-      toast({
-        title: "Export Sukses",
-        description: "Data Berhasil Diexport",
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        toast({
-          variant: "destructive",
-          title: "Export Gagal",
-          description: error.message,
-        });
-      }
-    } finally {
-      setLoading(false);
-      setIsOpen(false);
-    }
-  };
-
   return (
     <section className="space-y-5">
       <div className="flex w-full items-start justify-between">
@@ -180,66 +142,12 @@ export default function HistorySection({ cookie, searchParams }: Props) {
               </SelectGroup>
             </SelectContent>
           </Select>
-          <AlertDialog open={isOpen}>
-            <AlertDialogTrigger asChild>
-              <Button
-                data-testid="export-excel"
-                className="text-slate-50 dark:text-slate-50"
-                onClick={() => setIsOpen(true)}
-              >
-                {loading ? (
-                  <div
-                    className="text-surface mr-2 inline-block size-[14px] animate-spin rounded-full border-2 border-solid border-current border-e-transparent align-[-0.125em] text-white motion-reduce:animate-[spin_1.5s_linear_infinite]"
-                    role="status"
-                    data-testid="loading-icon"
-                  >
-                    <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
-                      Loading...
-                    </span>
-                  </div>
-                ) : (
-                  <Download className="mr-2 h-4 w-4" />
-                )}
-                Export
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Export Data</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Anda yakin ingin mengekspor data dari{" "}
-                  {format(startDate, "dd MMMM yyyy")} hingga{" "}
-                  {format(endDate, "dd MMMM yyyy")}?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel
-                  disabled={loading}
-                  onClick={() => {
-                    setIsOpen(false);
-                  }}
-                >
-                  Cancel
-                </AlertDialogCancel>
-                <AlertDialogAction onClick={handleExport} disabled={loading}>
-                  {loading ? (
-                    <div
-                      className="text-surface mr-2 inline-block size-[14px] animate-spin rounded-full border-2 border-solid border-current border-e-transparent align-[-0.125em] text-white motion-reduce:animate-[spin_1.5s_linear_infinite]"
-                      role="status"
-                      data-testid="loading-icon"
-                    >
-                      <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
-                        Loading...
-                      </span>
-                    </div>
-                  ) : (
-                    <Download className="mr-2 h-4 w-4" />
-                  )}
-                  Export
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <ExportForm
+            isOpen={isOpen}
+            setIsOpen={setIsOpen}
+            token={cookie}
+            type="history"
+          />
         </div>
       </div>
       <div className="flex flex-wrap justify-end gap-5">
@@ -249,22 +157,26 @@ export default function HistorySection({ cookie, searchParams }: Props) {
             Clear Filter
           </Button>
         </div>
-        <DatePicker
-          date={startDate}
-          setDate={setStartDate}
-          placeholder="Tanggal Awal"
-          label="Dari :"
-          hour={startHour}
-          setHour={setStartHour}
-        />
-        <DatePicker
-          date={endDate}
-          setDate={setEndDate}
-          placeholder="Tanggal Akhir"
-          label="Sampai :"
-          hour={endHour}
-          setHour={setEndHour}
-        />
+        <div className="w-[280px]">
+          <DatePicker
+            date={startDate}
+            setDate={setStartDate}
+            placeholder="Tanggal Awal"
+            label="Dari :"
+            hour={startHour}
+            setHour={setStartHour}
+          />
+        </div>
+        <div className="w-[280px]">
+          <DatePicker
+            date={endDate}
+            setDate={setEndDate}
+            placeholder="Tanggal Akhir"
+            label="Sampai :"
+            hour={endHour}
+            setHour={setEndHour}
+          />
+        </div>
       </div>
       <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
         {dbQuery?.data?.success && (

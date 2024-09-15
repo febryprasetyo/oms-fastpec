@@ -10,17 +10,19 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Dispatch } from "react";
+import { Dispatch, useState } from "react";
 import { Label } from "@radix-ui/react-label";
 import { TimePicker } from "./TimePicker";
 
 type Props = {
-  date: Date;
-  setDate: Dispatch<Date>;
+  date: Date | undefined;
+  setDate: Dispatch<Date | undefined>;
   label: string;
   placeholder: string;
-  hour: Date | undefined;
-  setHour: Dispatch<Date | undefined>;
+  hour?: Date | undefined;
+  setHour?: Dispatch<Date | undefined>;
+  withTime?: boolean;
+  disabledDate?: (date: Date) => boolean;
 };
 
 export function DatePicker({
@@ -30,16 +32,22 @@ export function DatePicker({
   placeholder,
   hour,
   setHour,
+  withTime = true,
+  disabledDate,
 }: Props) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Popover>
-      <div className="flex flex-col gap-2">
-        <Label>{label}</Label>
+    <Popover open={open}>
+      <div className=" flex flex-col gap-2">
+        <Label className="text-sm">{label}</Label>
+
         <PopoverTrigger asChild>
           <Button
+            onClick={() => setOpen(true)}
             variant={"outline"}
             className={cn(
-              "w-[280px] justify-start border-none bg-white text-left font-normal text-slate-950 shadow-sm hover:bg-slate-950 hover:text-white dark:bg-darkSecondary dark:text-slate-50 dark:hover:bg-dark_accent",
+              "w-full justify-start border-none bg-white text-left font-normal text-slate-950 shadow-sm hover:bg-slate-950 hover:text-white dark:bg-darkSecondary dark:text-slate-50 dark:hover:bg-dark_accent",
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
@@ -47,17 +55,30 @@ export function DatePicker({
           </Button>
         </PopoverTrigger>
       </div>
-      <PopoverContent className="w-auto p-0">
+      <PopoverContent
+        className=" w-auto p-0"
+        onFocusOutside={() => setOpen(false)}
+        onInteractOutside={() => setOpen(false)}
+      >
         <Calendar
           mode="single"
           selected={date}
-          onSelect={(day) => day && setDate(day)}
+          onSelect={(day) => {
+            setDate(day);
+            setOpen(false);
+          }}
           initialFocus
+          disabled={disabledDate}
         />
-        <hr />
-        <div className="p-3">
-          <TimePicker date={hour} setDate={setHour} />
-        </div>
+
+        {withTime && (
+          <>
+            <hr />
+            <div className="p-3">
+              <TimePicker date={hour} setDate={setHour || (() => {})} />
+            </div>
+          </>
+        )}
       </PopoverContent>
     </Popover>
   );
