@@ -21,9 +21,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${poppins.className} bg-slate-50 text-slate-700 dark:bg-dark dark:text-white`}
-      >
+      <body className={`${poppins.className} bg-slate-100 text-slate-700 `}>
         <NextTopLoader color="#3b82f6" showSpinner={false} zIndex={2000} />
         <NextThemesProvider
           attribute="class"

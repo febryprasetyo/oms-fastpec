@@ -21,4 +21,4 @@ export const apiAuthPrefix = "/fastpec/api/auth/login";
 
 export const DEFAULT_LOGIN_REDIRECT = "/dashboard";
 
-export const unprotectedRoutes = ["monitoring"];
+export const unprotectedRoutes = ["monitoring", "newmonit"];
