@@ -10,7 +10,7 @@ type Props = {
 };
 const id = 240305005321334;
 export default async function page({
-  params: { id = "2403050053212991" },
+  params: { id = "240305005321296" },
 }: Props) {
   return (
     <main className="h-screen w-full">
