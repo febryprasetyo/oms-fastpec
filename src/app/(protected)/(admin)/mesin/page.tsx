@@ -8,6 +8,12 @@ import {
 import { getCookie } from "cookies-next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Mesin | Fastpect",
+  description: "Manajemen mesin sensor",
+};
 
 export default async function Station() {
   const queryClient = new QueryClient();
@@ -26,7 +32,7 @@ export default async function Station() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <DeviceTableSection cookie={cookie} />
+      <DeviceTableSection key="mesin-page" cookie={cookie} />
     </HydrationBoundary>
   );
 }

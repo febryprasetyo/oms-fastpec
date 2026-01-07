@@ -17,12 +17,13 @@ import { TimePicker } from "./TimePicker";
 type Props = {
   date: Date | undefined;
   setDate: Dispatch<Date | undefined>;
-  label: string;
+  label?: string;
   placeholder: string;
   hour?: Date | undefined;
   setHour?: Dispatch<Date | undefined>;
   withTime?: boolean;
   disabledDate?: (date: Date) => boolean;
+  className?: string;
 };
 
 export function DatePicker({
@@ -34,24 +35,26 @@ export function DatePicker({
   setHour,
   withTime = true,
   disabledDate,
+  className,
 }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
     <Popover open={open}>
-      <div className=" flex flex-col gap-2">
-        <Label className="text-sm">{label}</Label>
+      <div className="flex flex-col gap-1.5 w-full">
+        {label && <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300">{label}</Label>}
 
         <PopoverTrigger asChild>
           <Button
             onClick={() => setOpen(true)}
             variant={"outline"}
             className={cn(
-              "w-full justify-start border-none bg-white text-left font-normal text-slate-950 shadow-sm hover:bg-slate-950 hover:text-white dark:bg-darkSecondary dark:text-slate-50 dark:hover:bg-dark_accent",
+              "w-full justify-start h-11 rounded-xl bg-white text-left font-medium text-slate-700 dark:bg-darkSecondary dark:text-slate-200 border-slate-200 dark:border-dark_accent hover:bg-slate-50 dark:hover:bg-dark_accent/50",
+              className
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? format(date, "PPP") : <span>{placeholder}</span>}
+            <CalendarIcon className="mr-2 h-4 w-4 text-slate-400" />
+            {date ? format(date, "PPP") : <span className="text-slate-400">{placeholder}</span>}
           </Button>
         </PopoverTrigger>
       </div>

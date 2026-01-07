@@ -20,7 +20,7 @@ import ActionButton from "../actionButton/ActionButton";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  type: "user" | "device" | "station";
+  type: "user" | "device" | "station" | "inventory" | "pengajuan" | "pengajuan-internet" | "pengajuan-listrik";
 }
 
 export function DataTable<TData, TValue>({

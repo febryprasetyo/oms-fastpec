@@ -8,6 +8,12 @@ import {
 import { getCookie } from "cookies-next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "User | Fastpect",
+  description: "Manajemen pengguna",
+};
 
 export default async function User() {
   const queryClient = new QueryClient();

@@ -59,6 +59,6 @@ export const useAuthStore = create<TAuthStore>()(
 );
 
 export const useExpandedStore = create<Expanded>((set) => ({
-  isExpanded: true,
+  isExpanded: false,
   setExpanded: (isExpanded) => set({ isExpanded: isExpanded }),
 }));

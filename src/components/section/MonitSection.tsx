@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import MonitoringCardSkeleton from "../features/skeleton/MonitoringCardSkeleton";
 import MonitCard from "../features/card/MonitCard";
 
-import Klhk from "@/assets/img/logo-klh.png";
+import Klhk from "@/assets/img/logo-lhk.png";
 import Logo from "@/assets/img/logo.png";
 import SuhuCard from "../features/card/SuhuCard";
 import MonitoringBadge from "../features/badge/MonitoringBadege";

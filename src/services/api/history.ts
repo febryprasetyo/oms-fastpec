@@ -69,6 +69,7 @@ export const exportHistory = async ({
   endDate,
   startHour,
   endHour,
+  stationFilter,
 }: Props) => {
   const params: { [key: string]: string } = {};
 
@@ -90,6 +91,10 @@ export const exportHistory = async ({
     const formattedEndHour = format(endHour, "HH:mm:ss");
     params["startHour"] = formattedStartHour;
     params["endHour"] = formattedEndHour;
+  }
+
+  if (stationFilter && stationFilter !== "all") {
+    params["namaStasiun"] = stationFilter;
   }
 
   const queryString = Object.entries(params)

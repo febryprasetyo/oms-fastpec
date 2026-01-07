@@ -1,1 +1,7 @@
-type TableData = StationTableData | UserTableData | DeviceTableData;
+type TableData =
+  | StationTableData
+  | UserTableData
+  | DeviceTableData
+  | InventoryTableData
+  | PengajuanInternetData
+  | PengajuanListrikData;

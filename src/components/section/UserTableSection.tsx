@@ -7,6 +7,7 @@ import { getUserList } from "@/services/api/user";
 import UserModal from "../features/actionButton/ActionModal";
 import ReactPaginate from "react-paginate";
 import LimitPageCSR from "../features/limitPage/LimitPageCSR";
+import { Search, Users, Plus, ListFilter, UserPlus } from "lucide-react";
 
 type Props = {
   cookie: string;
@@ -15,6 +16,7 @@ type Props = {
 export default function UserTableSection({ cookie }: Props) {
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
   const [itemOffset, setItemOffset] = useState<number>(0);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   const userQuery = useQuery({
     queryKey: ["user"],
@@ -46,42 +48,63 @@ export default function UserTableSection({ cookie }: Props) {
     },
   ];
 
-  const endOffset = itemOffset + itemsPerPage;
-  const currentItems = userQuery?.data?.data?.values.slice(
-    itemOffset,
-    endOffset,
-  );
-  const pageCount = Math.ceil(
-    (userQuery?.data?.data.values.length ?? 0) / itemsPerPage,
+  // Display only users from the 'user' array, or use values array for backward compatibility
+    const allUsers = (userQuery?.data?.data?.values || userQuery?.data?.data?.user || []) as any[];
+
+  const filteredUsers = allUsers.filter((u: any) => 
+    u.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.nama_dinas?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const endOffset = itemOffset + itemsPerPage;
+  const currentItems = filteredUsers.slice(itemOffset, endOffset);
+  const pageCount = Math.ceil((filteredUsers.length ?? 0) / itemsPerPage);
+
   const handlePageClick = (event: any) => {
-    const newOffset =
-      (event.selected * itemsPerPage) %
-      (userQuery?.data?.data.values.length ?? 0);
+    const newOffset = (event.selected * itemsPerPage) % (filteredUsers.length ?? 0);
     setItemOffset(newOffset);
   };
 
   return (
-    <section className="space-y-5">
-      <div className="flex w-full items-center justify-between">
-        <h1 className="text-3xl font-semibold">User</h1>
-        {userQuery?.data?.success && !userQuery?.isError && (
-          <UserModal action="add" type="user" />
-        )}
-      </div>
-      {userQuery?.data?.success && !userQuery?.isError && (
-        <div className="flex w-full justify-end">
-          <div className="flex gap-3">
-            <LimitPageCSR limit={itemsPerPage} setLimit={setItemsPerPage} />
+    <section className="space-y-6">
+      {/* Premium Toolbar Area */}
+      <div className="rounded-2xl border border-slate-200 bg-white/50 p-6 shadow-sm backdrop-blur-sm dark:border-dark_accent/30 dark:bg-darkSecondary/30">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              Manajemen Pengguna
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Total {filteredUsers.length} pengguna terdaftar di sistem</p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Cari Username atau Dinas..."
+                className="w-full h-11 rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm focus:border-primary focus:ring-4 focus:ring-primary/5 focus:outline-none dark:bg-darkSecondary dark:border-dark_accent dark:text-white transition-all shadow-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <LimitPageCSR limit={itemsPerPage} setLimit={setItemsPerPage} />
+              {userQuery?.data?.success && !userQuery?.isError && (
+                <UserModal action="add" type="user" />
+              )}
+            </div>
           </div>
         </div>
-      )}
+      </div>
+
       <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
         {userQuery?.data?.success && !userQuery?.isError && (
           <DataTable
             columns={columns}
-            data={currentItems || userQuery?.data?.data?.values}
+            data={currentItems}
             type="user"
           />
         )}

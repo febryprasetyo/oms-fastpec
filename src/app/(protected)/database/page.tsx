@@ -1,4 +1,5 @@
 import DatabaseTableSection from "@/components/section/DatabaseTableSection";
+import { Suspense } from "react";
 import { getStationList } from "@/services/api/station";
 import {
   HydrationBoundary,
@@ -34,7 +35,9 @@ export default async function User({ searchParams }: Props) {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <DatabaseTableSection cookie={cookie} limit={limit} page={page} />
+      <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}>
+        <DatabaseTableSection cookie={cookie} limit={limit} page={page} />
+      </Suspense>
     </HydrationBoundary>
   );
 }

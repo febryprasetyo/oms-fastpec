@@ -7,6 +7,7 @@ import { getDeviceTableList } from "@/services/api/device";
 import ReactPaginate from "react-paginate";
 import ActionModal from "../features/actionButton/ActionModal";
 import LimitPageCSR from "../features/limitPage/LimitPageCSR";
+import { Search, Cpu, Plus, ListFilter } from "lucide-react";
 
 type Props = {
   cookie: string;
@@ -15,6 +16,7 @@ type Props = {
 export default function DeviceTableSection({ cookie }: Props) {
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
   const [itemOffset, setItemOffset] = useState<number>(0);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   const deviceQuery = useQuery({
     queryKey: ["device"],
@@ -47,42 +49,63 @@ export default function DeviceTableSection({ cookie }: Props) {
     },
   ];
 
-  const endOffset = itemOffset + itemsPerPage;
-  const currentItems = deviceQuery?.data?.data?.values.slice(
-    itemOffset,
-    endOffset,
-  );
-  const pageCount = Math.ceil(
-    (deviceQuery?.data?.data?.values.length ?? 0) / itemsPerPage,
+  const values = (deviceQuery?.data?.data?.values || []) as any[];
+
+  const filteredValues = values.filter((d: any) => 
+    d.nama_stasiun?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    d.id_mesin?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    d.nama_dinas?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const endOffset = itemOffset + itemsPerPage;
+  const currentItems = filteredValues.slice(itemOffset, endOffset);
+  const pageCount = Math.ceil((filteredValues.length ?? 0) / itemsPerPage);
+
   const handlePageClick = (event: any) => {
-    const newOffset =
-      (event.selected * itemsPerPage) %
-      (deviceQuery?.data?.data?.values.length ?? 0);
+    const newOffset = (event.selected * itemsPerPage) % (filteredValues.length ?? 0);
     setItemOffset(newOffset);
   };
 
   return (
-    <section className="space-y-5">
-      <div className="flex w-full items-center justify-between">
-        <h1 className="text-3xl font-semibold">Mesin</h1>
-        {deviceQuery?.data?.success && !deviceQuery?.isError && (
-          <ActionModal action="add" type="device" />
-        )}
-      </div>
-      {deviceQuery?.data?.success && !deviceQuery?.isError && (
-        <div className="flex w-full justify-end">
-          <div className="flex gap-3">
-            <LimitPageCSR limit={itemsPerPage} setLimit={setItemsPerPage} />
+    <section className="space-y-6">
+      {/* Premium Toolbar Area */}
+      <div className="rounded-2xl border border-slate-200 bg-white/50 p-6 shadow-sm backdrop-blur-sm dark:border-dark_accent/30 dark:bg-darkSecondary/30">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <Cpu className="h-5 w-5 text-primary" />
+              Manajemen Perangkat
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Total {filteredValues.length} perangkat terdaftar aktif</p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Cari Stasiun, ID Mesin, atau Dinas..."
+                className="w-full h-11 rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm focus:border-primary focus:ring-4 focus:ring-primary/5 focus:outline-none dark:bg-darkSecondary dark:border-dark_accent dark:text-white transition-all shadow-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <LimitPageCSR limit={itemsPerPage} setLimit={setItemsPerPage} />
+              {deviceQuery?.data?.success && !deviceQuery?.isError && (
+                <ActionModal action="add" type="device" />
+              )}
+            </div>
           </div>
         </div>
-      )}
+      </div>
+
       <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
         {deviceQuery?.data?.success && !deviceQuery?.isError && (
           <DataTable
             columns={columns}
-            data={currentItems || deviceQuery?.data?.data.values}
+            data={currentItems}
             type="device"
           />
         )}

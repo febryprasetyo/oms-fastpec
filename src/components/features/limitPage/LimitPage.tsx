@@ -22,7 +22,7 @@ export default function LimitPage() {
       }}
     >
       <SelectTrigger className="w-[100px]" data-testid="limit-per-page">
-        <SelectValue placeholder={"10"} />
+        <SelectValue placeholder={"10"}  />
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
@@ -33,6 +33,8 @@ export default function LimitPage() {
             10
           </SelectItem>
           <SelectItem value={"20"}>20</SelectItem>
+          <SelectItem value={"50"}>50</SelectItem>
+          <SelectItem value={"100"}>100</SelectItem>
         </SelectGroup>
       </SelectContent>
     </Select>

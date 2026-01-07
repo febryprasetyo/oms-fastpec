@@ -32,7 +32,7 @@ export default function MainContainer({ children }: Props) {
   return (
     <main
       className={`px-5 py-5 transition-all sm:px-10 ${
-        isExpanded ? "pl-20 sm:pl-24" : ""
+        isExpanded ? "sm:pl-72" : ""
       }`}
     >
       {children}

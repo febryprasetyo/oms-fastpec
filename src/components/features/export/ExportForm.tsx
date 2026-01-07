@@ -17,21 +17,48 @@ import {
 import { DatePicker } from "../form/DatePicker";
 import { TimePicker } from "../form/TimePicker";
 import { exportHistory } from "@/services/api/history";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Props = {
   type: "database" | "history";
   isOpen: boolean;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   token: string;
+  stationFilter?: string;
+  stationList?: StationTableData[];
 };
 
-export default function ExportForm({ type, isOpen, setIsOpen, token }: Props) {
+export default function ExportForm({ type, isOpen, setIsOpen, token, stationFilter, stationList }: Props) {
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  const [startHour, setStartHour] = useState<Date | undefined>(undefined);
-  const [endHour, setEndHour] = useState<Date | undefined>(undefined);
+  const [selectedStation, setSelectedStation] = useState<string>(stationFilter || "all");
+  
+  // Set default time to cover full day: 00:00:00 to 23:59:59
+  const defaultStartTime = new Date();
+  defaultStartTime.setHours(0, 0, 0, 0);
+  
+  const defaultEndTime = new Date();
+  defaultEndTime.setHours(23, 59, 59, 999);
+  
+  const [startHour, setStartHour] = useState<Date | undefined>(defaultStartTime);
+  const [endHour, setEndHour] = useState<Date | undefined>(defaultEndTime);
   const [isSubmitable, setIsSubmitable] = useState(false);
+
+  const setQuickFilter = (days: number) => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - days);
+    setStartDate(start);
+    setEndDate(end);
+  };
 
   const handleExport = async () => {
     setLoading(true);
@@ -43,6 +70,7 @@ export default function ExportForm({ type, isOpen, setIsOpen, token }: Props) {
           endDate,
           startHour,
           endHour,
+          stationFilter: selectedStation,
         });
       } else {
         return exportHistory({
@@ -51,6 +79,7 @@ export default function ExportForm({ type, isOpen, setIsOpen, token }: Props) {
           endDate,
           startHour,
           endHour,
+          stationFilter: selectedStation,
         });
       }
     };
@@ -82,22 +111,30 @@ export default function ExportForm({ type, isOpen, setIsOpen, token }: Props) {
       setIsOpen(false);
       setStartDate(undefined);
       setEndDate(undefined);
-      setStartHour(undefined);
-      setEndHour(undefined);
+      setStartHour(defaultStartTime);
+      setEndHour(defaultEndTime);
     }
   };
 
-  useEffect(() => {
-    setEndDate(undefined);
-  }, [startDate]);
+  // Removed useEffect that clears endDate when startDate changes to allow quick filters to work better
+  // useEffect(() => {
+  //   setEndDate(undefined);
+  // }, [startDate]);
 
   useEffect(() => {
-    if (startDate && endDate && startHour && endHour) {
+    // Only require dates to be selected, time has default values
+    if (startDate && endDate) {
       setIsSubmitable(true);
     } else {
       setIsSubmitable(false);
     }
-  }, [startDate, endDate, startHour, endHour]);
+  }, [startDate, endDate]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedStation(stationFilter || "all");
+    }
+  }, [isOpen, stationFilter]);
 
   return (
     <Dialog open={isOpen}>
@@ -129,10 +166,57 @@ export default function ExportForm({ type, isOpen, setIsOpen, token }: Props) {
           <DialogDescription>
             Isi form di bawah ini untuk mengekspor data{" "}
             {type === "database" ? "database" : "history"}.
+            <br />
+            <span className="text-xs text-muted-foreground">
+              Waktu otomatis diset 00:00:00 - 23:59:59 untuk mengunduh data 1 hari penuh. 
+              Maksimal export 31 hari.
+            </span>
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
+          {stationList && stationList.length > 1 && (
+            <div className="flex flex-col gap-2">
+              <Label className="text-sm">Pilih Stasiun :</Label>
+              <Select
+                value={selectedStation}
+                onValueChange={(value) => setSelectedStation(value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pilih Stasiun" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="all">Semua Stasiun</SelectItem>
+                    {stationList.map((station) => (
+                      <SelectItem key={station.id} value={station.nama_stasiun}>
+                        {station.nama_stasiun}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Quick Filter Presets */}
+          <div className="flex flex-col gap-2">
+            <Label className="text-sm">Quick Filter :</Label>
+            <div className="flex items-center gap-2">
+              {[1, 7, 30].map((days) => (
+                <Button
+                  key={days}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs px-3 rounded-full border-slate-200 text-slate-900 dark:text-slate-300 font-medium hover:bg-primary hover:text-white transition-all shadow-sm"
+                  onClick={() => setQuickFilter(days)}
+                >
+                  {days === 1 ? "1 Day" : `${days} Days`}
+                </Button>
+              ))}
+            </div>
+          </div>
           <DatePicker
             date={startDate}
             setDate={setStartDate}
@@ -155,17 +239,7 @@ export default function ExportForm({ type, isOpen, setIsOpen, token }: Props) {
             }}
           />
 
-          <div className="flex flex-col gap-2">
-            <Label className="text-sm">Jam Awal :</Label>
-
-            <TimePicker date={startHour} setDate={setStartHour} />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label className="text-sm">Jam Akhir :</Label>
-
-            <TimePicker date={endHour} setDate={setEndHour} />
-          </div>
+          {/* Jam Awal and Jam Akhir removed per user request, but state is kept for backend defaults */}
         </div>
 
         <DialogFooter>
@@ -176,8 +250,8 @@ export default function ExportForm({ type, isOpen, setIsOpen, token }: Props) {
               setIsOpen(false);
               setStartDate(undefined);
               setEndDate(undefined);
-              setStartHour(undefined);
-              setEndHour(undefined);
+              setStartHour(defaultStartTime);
+              setEndHour(defaultEndTime);
             }}
           >
             Cancel

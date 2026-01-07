@@ -1,5 +1,6 @@
 import { axiosInstance } from "@/lib/axiosInstance";
 import { parseISO, format } from "date-fns";
+import { KlhkListResponse } from "../store/type";
 
 type Props = {
   cookie: string;
@@ -45,12 +46,12 @@ export const getDatabaseList = async ({
   }
 
   if (stationFilter && stationFilter !== "all") {
-    params.append("namaStasiun", stationFilter);
+    params.set("namaStasiun", stationFilter);
   }
 
-  params.append("limit", limit);
+  params.set("limit", limit);
   const offset = (parseInt(page) - 1) * parseInt(limit);
-  params.append("offset", offset.toString());
+  params.set("offset", offset.toString());
 
   const res = await axiosInstance.get<DatabaseResponse>(
     `/api/data/klhk/list?${params.toString()}`,
@@ -70,6 +71,7 @@ export const exportDatabase = async ({
   endDate,
   startHour,
   endHour,
+  stationFilter,
 }: Props) => {
   const params: { [key: string]: string } = {};
 
@@ -93,6 +95,10 @@ export const exportDatabase = async ({
     params["endHour"] = formattedEndHour;
   }
 
+  if (stationFilter && stationFilter !== "all") {
+    params["namaStasiun"] = stationFilter;
+  }
+
   const queryString = Object.entries(params)
     .map(([key, value]) => `${key}=${value}`)
     .join("&");
@@ -106,4 +112,27 @@ export const exportDatabase = async ({
       responseType: "blob",
     },
   );
+};
+
+export const getKlhkList = async ({
+  cookie,
+  page = "1",
+  limit = "10",
+}: Props) => {
+  const params = new URLSearchParams();
+
+  params.set("limit", limit);
+  const offset = (parseInt(page) - 1) * parseInt(limit);
+  params.set("offset", offset.toString());
+
+  const res = await axiosInstance.get<KlhkListResponse>(
+    `/api/data/klhk/list?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${cookie}`,
+      },
+    },
+  );
+
+  return res.data;
 };

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getDatabaseList } from "@/services/api/database";
 import {
@@ -12,10 +12,11 @@ import {
 } from "@/components/ui/table";
 import LimitPage from "@/components/features/limitPage/LimitPage";
 import { DatePicker } from "../features/form/DatePicker";
-import { format, parseISO, subMonths } from "date-fns";
+import { format, parseISO, subMonths, isValid } from "date-fns";
 import { Button } from "../ui/button";
-import { Trash } from "lucide-react";
+import { Trash, Calendar, Filter, FileDown, Search, ArrowRight } from "lucide-react";
 import { getStationList } from "@/services/api/station";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   Select,
   SelectContent,
@@ -34,20 +35,87 @@ type Props = {
 };
 
 export default function DatabaseTableSection({ cookie, limit, page }: Props) {
-  const today = new Date();
-  const threeMonthsAgo = subMonths(today, 3);
-  const [startDate, setStartDate] = useState<Date | undefined>(threeMonthsAgo);
-  const [endDate, setEndDate] = useState<Date | undefined>(today);
-  const [startHour, setStartHour] = useState<Date | undefined>(today);
-  const [endHour, setEndHour] = useState<Date | undefined>(today);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const [today, setToday] = useState<Date | undefined>(undefined);
+  const [threeMonthsAgo, setThreeMonthsAgo] = useState<Date | undefined>(undefined);
+
+  // Initial state from URL or defaults
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [stationFilter, setStationFilter] = useState<string>("all");
+  const [startHour, setStartHour] = useState<Date | undefined>(undefined);
+  const [endHour, setEndHour] = useState<Date | undefined>(undefined);
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isReady, setIsReady] = useState(false);
+
+  // Sync state from URL on mount only
+  useEffect(() => {
+    const now = new Date();
+    const tma = subMonths(now, 3);
+    setToday(now);
+    setThreeMonthsAgo(tma);
+
+    const urlStation = searchParams.get("station") || "all";
+    const urlStart = searchParams.get("startDate");
+    const urlEnd = searchParams.get("endDate");
+
+    if (urlStart && isValid(parseISO(urlStart))) setStartDate(parseISO(urlStart));
+    else setStartDate(tma);
+
+    if (urlEnd && isValid(parseISO(urlEnd))) setEndDate(parseISO(urlEnd));
+    else setEndDate(now);
+
+    setStationFilter(urlStation);
+    setStartHour(now);
+    setEndHour(now);
+    setIsReady(true);
+  }, []);
+
+  const updateFilters = (newStation?: string, newStart?: Date, newEnd?: Date) => {
+    if (!isReady) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", "1"); // Always reset page on filter change
+    
+    if (newStation !== undefined) {
+      if (newStation === "all") params.delete("station");
+      else params.set("station", newStation);
+      setStationFilter(newStation);
+    }
+    
+    if (newStart !== undefined) {
+      params.set("startDate", format(newStart, "yyyy-MM-dd"));
+      setStartDate(newStart);
+    }
+    
+    if (newEnd !== undefined) {
+      params.set("endDate", format(newEnd, "yyyy-MM-dd"));
+      setEndDate(newEnd);
+    }
+
+    // Small timeout to allow UI (Select/Popover) to settle
+    setTimeout(() => {
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    }, 50);
+  };
+
+  const setQuickFilter = (days: number) => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - days);
+    updateFilters(undefined, start, end);
+    setStartHour(undefined);
+    setEndHour(undefined);
+  };
 
   const dateQueryKey =
     startDate && endDate
       ? {
-          startDate: format(parseISO(startDate.toISOString()), "yyyy-MM-dd"),
-          endDate: format(parseISO(endDate.toISOString()), "yyyy-MM-dd"),
+          startDate: format(startDate, "yyyy-MM-dd"),
+          endDate: format(endDate, "yyyy-MM-dd"),
         }
       : null;
   const hourQueryKey =
@@ -78,6 +146,7 @@ export default function DatabaseTableSection({ cookie, limit, page }: Props) {
         limit,
       });
     },
+    enabled: isReady,
     refetchInterval: false,
   });
 
@@ -89,89 +158,117 @@ export default function DatabaseTableSection({ cookie, limit, page }: Props) {
   });
 
   const handleResetFilter = () => {
+    if (!today || !threeMonthsAgo) return;
     setStartDate(threeMonthsAgo);
     setEndDate(today);
     setStartHour(undefined);
     setEndHour(undefined);
     setStationFilter("all");
+    router.push(pathname, { scroll: false });
   };
 
   return (
-    <section className="space-y-5">
-      <div className="flex w-full items-start justify-between">
-        <h1 className="text-3xl font-semibold">Integrasi Data Onlimo</h1>
-        <div className="flex w-full flex-wrap-reverse items-end justify-end gap-5">
-          <LimitPage />
-          <Select
-            value={stationFilter}
-            onValueChange={(value: string) => {
-              setStationFilter(value);
-            }}
-            defaultValue="all"
-          >
-            <SelectTrigger className="w-[180px]" data-testid="station-filter">
-              <SelectValue placeholder="Pilih Stasiun" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="all" defaultChecked>
-                  Semua Stasiun
-                </SelectItem>
-                {stationQuery?.data?.data?.values.map((item, index) => (
-                  <SelectItem
-                    key={index}
-                    value={item.nama_stasiun}
-                    data-testid={`station-filter-${item.nama_stasiun}`}
-                  >
-                    {item.nama_stasiun}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+    <section className="space-y-4">
+      {/* Compact Minimalist Toolbar */}
+      <div className="rounded-xl border border-slate-200 bg-white dark:bg-darkSecondary dark:border-dark_accent/30 p-4 shadow-sm transition-all">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center justify-between">
+          {/* Left: Filters Group */}
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Station Filter */}
+            <div className="w-full sm:w-48">
+              <Select
+                value={stationFilter}
+                onValueChange={(value: string) => {
+                  updateFilters(value);
+                }}
+                defaultValue="all"
+              >
+                <SelectTrigger className="h-10 rounded-lg bg-slate-50 dark:bg-dark/40 border-slate-200 dark:border-dark_accent text-xs font-medium">
+                  <SelectValue placeholder="Semua Stasiun" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="all">Semua Stasiun</SelectItem>
+                    {stationQuery?.data?.data?.values.map((item, index) => (
+                      <SelectItem key={index} value={item.nama_stasiun}>
+                        {item.nama_stasiun}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <ExportForm
-            token={cookie}
-            type="database"
-            isOpen={isOpen}
-            setIsOpen={setIsOpen}
-          />
+            {/* Date Range Group */}
+            <div className="flex h-10 items-center gap-1 bg-slate-50 dark:bg-dark/40 px-3 rounded-lg border border-slate-200 dark:border-dark_accent">
+              <DatePicker
+                date={startDate}
+                setDate={(date) => updateFilters(undefined, date)}
+                placeholder="Mulai"
+                className="h-8 border-none bg-transparent shadow-none hover:bg-slate-200/50"
+              />
+              <ArrowRight className="h-3 w-3 text-slate-400 mx-1" />
+              <DatePicker
+                date={endDate}
+                setDate={(date) => updateFilters(undefined, undefined, date)}
+                placeholder="Sampai"
+                className="h-8 border-none bg-transparent shadow-none hover:bg-slate-200/50"
+              />
+            </div>
+
+            {/* Quick Presets */}
+            <div className="flex items-center gap-2">
+              {[1, 7, 30].map((days) => (
+                <Button
+                  key={days}
+                  type="button"
+                  variant="outline"
+                  className="h-10 text-[11px] px-3 rounded-lg border-slate-200 bg-slate-50 dark:bg-dark/40 dark:border-dark_accent text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider hover:bg-primary hover:border-primary hover:text-white transition-all shadow-sm"
+                  onClick={() => setQuickFilter(days)}
+                >
+                  {days === 1 ? "1 Day" : `${days} Days`}
+                </Button>
+              ))}
+            </div>
+
+            
+          </div>
+
+          {/* Right: Actions Group */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleResetFilter}
+              className="h-10 text-xs font-bold text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
+            >
+              <Trash className="mr-1.5 h-3.5 w-3.5" />
+              Reset
+            </Button>
+            <ExportForm
+              token={cookie}
+              type="database"
+              isOpen={isOpen}
+              setIsOpen={setIsOpen}
+              stationFilter={stationFilter}
+              stationList={stationQuery?.data?.data?.values}
+            />
+          </div>
         </div>
       </div>
-      <div className="flex flex-wrap justify-end gap-5">
-        <div className="flex items-end">
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleResetFilter}
-            data-testid="reset-filter"
-          >
-            <Trash className="mr-2 h-4 w-4" />
-            Clear Filter
-          </Button>
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-darkSecondary">
+        {/* Table Header */}
+        <div className="border-b border-slate-200 bg-slate-50 px-6 py-4 dark:border-slate-700 dark:bg-slate-800">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+            Data Onlimo
+          </h3>
+          <p className="mt-1 text-sm text-slate-500">
+            {dbQuery?.data?.totalData ?? 0} total data ditemukan
+          </p>
         </div>
-        <div className="w-[280px]">
-          <DatePicker
-            date={startDate}
-            setDate={setStartDate}
-            placeholder="Tanggal Awal"
-            label="Dari :"
-            hour={startHour}
-            setHour={setStartHour}
-          />
-        </div>
-        <div className="w-[280px]">
-          <DatePicker
-            date={endDate}
-            setDate={setEndDate}
-            placeholder="Tanggal Akhir"
-            label="Sampai :"
-            hour={endHour}
-            setHour={setEndHour}
-          />
-        </div>
-      </div>
-      <div className="rounded-xl bg-white p-5 shadow dark:bg-darkSecondary">
+        
+        {/* Table Container with Scroll */}
+        <div className="overflow-x-auto">
         {dbQuery?.data?.success && (
           <>
             <Table>
@@ -179,7 +276,7 @@ export default function DatabaseTableSection({ cookie, limit, page }: Props) {
                 <TableRow>
                   <TableHead>No</TableHead>
                   <TableHead className="min-w-[180px]">ID Stasiun</TableHead>
-                  <TableHead className="min-w-[150px]">Tanggal</TableHead>
+                  <TableHead className="min-w-[160px]">Tanggal</TableHead>
                   <TableHead>Jam</TableHead>
                   <TableHead className="min-w-[100px]">Suhu</TableHead>
                   <TableHead>TDS</TableHead>
@@ -196,7 +293,14 @@ export default function DatabaseTableSection({ cookie, limit, page }: Props) {
               </TableHeader>
               <TableBody>
                 {dbQuery?.data?.data?.map((item, index) => {
-                  const { data }: { data: payload } = JSON.parse(item?.payload);
+                  let data: payload;
+                  try {
+                    const parsed = typeof item?.payload === 'string' ? JSON.parse(item?.payload) : item?.payload;
+                    data = parsed?.data || parsed;
+                  } catch (e) {
+                    console.error("Error parsing payload", e);
+                    data = {} as payload;
+                  }
                   return (
                     <TableRow key={index} data-testid="data-table">
                       <TableCell>
@@ -250,27 +354,40 @@ export default function DatabaseTableSection({ cookie, limit, page }: Props) {
                 })}
               </TableBody>
             </Table>
-
-            <div className="mt-5">
-              <ReusablePagination
-                currentPage={parseInt(page)}
-                totalData={Number(dbQuery?.data?.totalData)}
-                limit={parseInt(limit)}
-              />
-            </div>
           </>
         )}
+        </div>
+        
+        {/* Pagination */}
+        {dbQuery?.data?.success && (
+          <div className="border-t border-slate-200 px-6 py-4 dark:border-slate-700">
+            <ReusablePagination
+              currentPage={parseInt(page)}
+              totalData={Number(dbQuery?.data?.totalData)}
+              limit={parseInt(limit)}
+            />
+          </div>
+        )}
+        
         {dbQuery?.isPending && (
           <div className="flex h-[400px] animate-pulse items-center justify-center">
-            <p className="text-lg">Memuat data...</p>
+            <div className="text-center">
+              <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+              <p className="text-lg text-slate-500">Memuat data...</p>
+            </div>
           </div>
         )}
         {!dbQuery?.data?.success && !dbQuery?.isPending && (
           <div className="flex h-[400px] items-center justify-center">
-            <p className="text-red-500">
-              Gagal memuat data: {dbQuery?.error?.message || "Network Error"} ,
-              Coba muat ulang halaman
-            </p>
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              <p className="text-red-500">
+                Gagal memuat data: {dbQuery?.error?.message || "Network Error"}
+              </p>
+              <p className="mt-1 text-sm text-slate-400">Coba muat ulang halaman</p>
+            </div>
           </div>
         )}
       </div>

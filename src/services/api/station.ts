@@ -19,6 +19,26 @@ type AddStationRequest = {
   nama_dinas: string;
 };
 
+type KlhkStatusResponse = {
+  success: boolean;
+  total: number;
+  Hidup: number;
+  Mati: number;
+  data: {
+    uuid: string;
+    id_stasiun: string;
+    id_mesin: string;
+    nama_stasiun: string;
+    status: string;
+    instrument_status?: string;
+    next_calibration_date?: string;
+    overdue_days?: number;
+    lokasi?: string;
+    minutesDiff: number;
+    time: string;
+  }[];
+};
+
 type AddStationResponse = MutateDataResponse | undefined;
 
 export const getStationList = async (accessToken: string) => {
@@ -208,4 +228,56 @@ export const DeleteStationList = async (
       throw new Error(error.response?.data.message);
     }
   }
+};
+
+export const detailStation = async (
+  data: AddStationRequest,
+  accessToken: string,
+): Promise<AddStationResponse> => {
+  try {
+    const res: AxiosResponse<MutateDataResponse> = await axiosInstance.post(
+      `/api/data/detail`,
+      {
+        ...data,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    return res.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data.message);
+    }
+  }
+};
+
+export const getStationDetail = async (accessToken: string) => {
+  const res = await axiosInstance.get<StationResponse>(
+    `api/data/station/status`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+  return res.data;
+};
+export const getKlhkStatusSummary = async (
+  cookie: string,
+): Promise<KlhkStatusResponse> => {
+  const res = await axiosInstance.get<KlhkStatusResponse>(
+    "api/data/station/status",
+    {
+      headers: {
+        Authorization: `Bearer ${cookie}`,
+      },
+    },
+  );
+
+  return res.data;
 };

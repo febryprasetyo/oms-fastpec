@@ -1,5 +1,4 @@
 import MonitoringCardSkeleton from "@/components/features/skeleton/MonitoringCardSkeleton";
-import ThemeToogle from "@/components/features/theme/ThemeToogle";
 import Image from "next/image";
 import Logo from "@/assets/img/logo.png";
 import Link from "next/link";
@@ -22,7 +21,6 @@ export default function Loading() {
         </h1>
         <div className="flex items-center gap-5">
           <p>Loading...</p>
-          <ThemeToogle />
         </div>
       </header>
       <main className={`p-5 transition-all sm:px-10`}>

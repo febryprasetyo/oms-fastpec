@@ -1,4 +1,5 @@
 import HistorySection from "@/components/section/HistorySection";
+import { Suspense } from "react";
 import { getStationList } from "@/services/api/station";
 import {
   HydrationBoundary,
@@ -32,7 +33,9 @@ export default async function User({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <HistorySection cookie={cookie} searchParams={searchParams} />
+      <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}>
+        <HistorySection cookie={cookie} searchParams={searchParams} />
+      </Suspense>
     </HydrationBoundary>
   );
 }

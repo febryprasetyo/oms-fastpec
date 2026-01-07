@@ -9,7 +9,9 @@ interface UserTableData {
 interface UserResponse {
   success: boolean;
   data: {
-    values: UserTableData[];
+    values?: UserTableData[];
+    user?: UserTableData[];
+    engineering?: UserTableData[];
     total: string;
   };
   statusCode?: number;

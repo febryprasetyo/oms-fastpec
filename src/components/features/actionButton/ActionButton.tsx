@@ -16,12 +16,19 @@ import { toast } from "@/components/ui/use-toast";
 import { DeleteStationList } from "@/services/api/station";
 import { DeleteUserList } from "@/services/api/user";
 import { DeleteDeviceList } from "@/services/api/device";
+import { DeleteInventoryList } from "@/services/api/inventory";
+import {
+  deletePengajuanInternet,
+  deletePengajuanListrik,
+} from "@/services/api/pengajuan";
 import ActionModal from "./ActionModal";
 import { useAuthStore } from "@/services/store";
 
 type props = {
   action: "edit" | "add";
-  type: "user" | "device" | "station";
+  type: "user" | "device" | "station" | "inventory" | "pengajuan"
+  | "pengajuan-internet"
+  | "pengajuan-listrik";
   data: TableData;
 };
 
@@ -29,7 +36,7 @@ export default function ActionButton({ action, data, type }: props) {
   const queryClient = useQueryClient();
   const accessToken = useAuthStore((state) => state?.user?.token?.access_token);
   const deleteMutation = useMutation({
-    mutationFn: async (id: string | number): Promise<void> => {
+    mutationFn: async (id: string | number) => {
       if (type === "user") {
         return DeleteUserList(id, accessToken as string);
       }
@@ -38,6 +45,15 @@ export default function ActionButton({ action, data, type }: props) {
       }
       if (type === "device") {
         return DeleteDeviceList(id, accessToken as string);
+      }
+      if (type === "inventory") {
+        return DeleteInventoryList(id, accessToken as string);
+      }
+      if (type === "pengajuan-internet") {
+        return deletePengajuanInternet(id, accessToken as string);
+      }
+      if (type === "pengajuan-listrik") {
+        return deletePengajuanListrik(id, accessToken as string);
       }
     },
     onError: (error) => {

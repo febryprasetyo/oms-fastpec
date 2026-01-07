@@ -50,3 +50,12 @@ interface CityResponse {
   statusCode?: number;
   data: CityData[];
 }
+
+interface StationMonitoring {
+  uuid: string;
+  id_stasiun: string;
+  status: string;
+  address: string;
+  minutesDiff: string;
+  time: number;
+}

@@ -7,7 +7,7 @@ import { deleteCookie } from "cookies-next";
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const axiosInstance: AxiosInstance = axios.create({
-  ...(isServer ? { baseURL: BASE_URL } : { baseURL: "/fastpec" }),
+  baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
