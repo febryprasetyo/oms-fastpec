@@ -62,6 +62,35 @@ export default function CreateCalibration() {
 
   const watchAll = form.watch();
 
+  // Auto-save draft every 30 seconds if form has changes and stationId is set
+  useEffect(() => {
+    if (!watchAll.stationId) return;
+
+    const timer = setInterval(() => {
+      const values = form.getValues();
+      createMutation.mutate({ ...values, status: "Draft" }, {
+        onSuccess: () => {
+          toast.success("Draft auto-saved successfully!");
+        }
+      });
+    }, 30000);
+
+    return () => clearInterval(timer);
+  }, [watchAll.stationId]);
+
+  // Alert before leaving page if form is dirty
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (form.formState.isDirty) {
+        e.preventDefault();
+        e.returnValue = "You have unsaved changes. Are you sure you want to leave?";
+        return e.returnValue;
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [form.formState.isDirty]);
+
   // Progress calculator
   useEffect(() => {
     let filled = 0;

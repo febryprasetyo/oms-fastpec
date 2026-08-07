@@ -1,13 +1,21 @@
+"use client";
+
 import React from "react";
+import dynamic from "next/dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import QRCode from "react-qr-code";
+
+// Dynamically import QRCode so it never renders on the server
+const QRCode = dynamic(() => import("react-qr-code"), { ssr: false });
 
 interface QRCodeCardProps {
   uuid: string;
 }
 
 export const QRCodeCard: React.FC<QRCodeCardProps> = ({ uuid }) => {
-  const verificationUrl = `${window.location.origin}/verify/${uuid}`;
+  const verificationUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/verify/${uuid}`
+      : `/verify/${uuid}`;
 
   return (
     <Card className="shadow-sm w-full max-w-[280px] mx-auto text-center">

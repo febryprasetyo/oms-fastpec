@@ -5,8 +5,8 @@ import { useAuthStore } from "@/services/store";
 export const useCalibrationAuth = () => {
   const user = useAuthStore((state) => state?.user);
   const token = user?.token?.access_token || "";
-  const officerName = user?.name || user?.username || "Officer";
-  const role = user?.role || "USER";
+  const officerName = user?.user_data?.fullname || user?.user_data?.username || "Officer";
+  const role = user?.user_data?.role_name || "USER";
   return { token, officerName, role };
 };
 

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/features/badge/StatusBadge";
 import { Plus, Search, Eye, Edit, Trash2, CheckCircle } from "lucide-react";
+import { CalibrationListSkeleton } from "@/components/features/calibration/CalibrationSkeleton";
 import { toast } from "sonner";
 
 export default function CalibrationDashboard() {
@@ -85,8 +86,8 @@ export default function CalibrationDashboard() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-slate-500">
-                  Loading calibrations...
+                <TableCell colSpan={6} className="py-4">
+                  <CalibrationListSkeleton />
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
