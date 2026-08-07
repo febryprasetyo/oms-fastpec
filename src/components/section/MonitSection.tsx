@@ -64,7 +64,12 @@ export default function MonitSection({ id }: Props) {
   });
 
   useEffect(() => {
-    const client = mqtt.connect(process.env.NEXT_PUBLIC_WS_URL as string);
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    let wsUrl = process.env.NEXT_PUBLIC_WS_URL as string;
+    if (wsUrl && wsUrl.startsWith("ws://") && protocol === "wss") {
+      wsUrl = wsUrl.replace("ws://", "wss://");
+    }
+    const client = mqtt.connect(wsUrl);
     client.subscribe(topic);
 
     client.on("message", (_topic, message) => {

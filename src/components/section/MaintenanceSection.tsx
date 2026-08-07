@@ -1,16 +1,17 @@
 "use client";
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getKlhkStatusSummary } from "@/services/api/station";
-import { 
-  saveMaintenanceLog, 
-  getMaintenanceHistory, 
+import {
+  saveMaintenanceLog,
+  getMaintenanceHistory,
   updateCalibrationSchedule,
   updateMaintenanceStatus,
   MaintenanceStatus,
   MaintenanceHistoryItem,
   MaintenanceLogRequest
 } from "@/services/api/maintenance";
+import { getReports, Report } from "@/services/api/reports";
 import { useAuthStore } from "@/services/store";
 import { toast } from "@/components/ui/use-toast";
 import {
@@ -22,11 +23,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { 
-  Loader2, 
-  Plus, 
-  History, 
-  MapPin, 
+import {
+  Loader2,
+  Plus,
+  History,
+  MapPin,
   Clock,
   Play,
   Square,
@@ -75,10 +76,37 @@ export default function MaintenanceSection({ cookie }: Props) {
   const [description, setDescription] = useState<string>("");
   const [calDate, setCalDate] = useState<Date | undefined>(new Date());
   const [searchTerm, setSearchTerm] = useState<string>("");
-  
+
+  // Logbook & Reports State
+  const [reportId, setReportId] = useState<string>("");
+  const [progress, setProgress] = useState<string>("Pengerjaan");
+  const [availableReports, setAvailableReports] = useState<Report[]>([]);
+
   const queryClient = useQueryClient();
   const accessToken = useAuthStore((state) => state?.user?.token?.access_token);
   const userName = useAuthStore((state) => state?.user?.user_data?.username || "Petugas");
+
+  // Fetch Reports when modal opens
+  const fetchAvailableReports = async () => {
+    if (!selectedUuid || !accessToken) return;
+    try {
+      const res = await getReports(accessToken, {
+        station_uuid: selectedUuid,
+      });
+      if (res.success) {
+        // Filter only Open and Eskalasi
+        setAvailableReports(res.data.filter((r: Report) => ['Open', 'Eskalasi'].includes(r.status)));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    if (isModalOpen && selectedUuid) {
+      fetchAvailableReports();
+    }
+  }, [isModalOpen, selectedUuid]);
 
   // Fetch station status list
   const stationStatusQuery = useQuery({
@@ -103,8 +131,13 @@ export default function MaintenanceSection({ cookie }: Props) {
       });
       setActivityType("");
       setDescription("");
+      setReportId("");
+      setProgress("Pengerjaan");
       queryClient.invalidateQueries({ queryKey: ["maintenance-history", selectedUuid] });
       queryClient.invalidateQueries({ queryKey: ["station-status-maintenance"] });
+
+      // Also refresh reports as status might have changed
+      fetchAvailableReports();
     },
     onError: (error: any) => {
       toast({
@@ -115,8 +148,77 @@ export default function MaintenanceSection({ cookie }: Props) {
     },
   });
 
+
+  const handleAction = (uuid: string, status: MaintenanceStatus) => {
+    const activityMap: Record<string, string> = {
+      start: "Start",
+      stop: "Stop",
+      maintenance: "Maintenance",
+      calibration: "Calibration"
+    };
+
+    const type = activityMap[status] || status;
+    const desc = `Merubah status alat menjadi ${type.toUpperCase()}`;
+
+    // Update form states so user sees it in the modal
+    setActivityType(type);
+    setDescription(desc);
+
+    // Reset specific fields for simple actions
+    setReportId("");
+    setProgress("Pengerjaan");
+
+    // Call logMutation directly to ensure a complete history record (avoiding null activity_type)
+    logMutation.mutate({
+      uuid: uuid,
+      status: status,
+      activity_type: type,
+      description: desc,
+      next_calibration_date: "",
+    });
+  };
+
+
+  const handleSaveLog = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUuid || !activityType) {
+      toast({
+        title: "Peringatan",
+        description: "Mohon isi Tipe Aktivitas",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (progress === 'Selesai') {
+      // Description can be optional if Selesai?? 
+      // Let's enforce it if user hasn't typed anything
+      if (!description) {
+        // Maybe auto-fill?
+        // setDescription("Pekerjaan Selesai"); 
+      }
+    } else if (!description) {
+      toast({
+        title: "Peringatan",
+        description: "Mohon isi deskripsi tindakan",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    logMutation.mutate({
+      uuid: selectedUuid,
+      status: currentStation?.instrument_status || "maintenance",
+      activity_type: activityType,
+      description: description || "Pekerjaan Selesai",
+      next_calibration_date: "",
+      progress: progress,
+      report_id: reportId ? parseInt(reportId) : undefined
+    });
+  };
+
   const calMutation = useMutation({
-    mutationFn: (data: { uuid: string; next_calibration_date: string }) => 
+    mutationFn: (data: { uuid: string; next_calibration_date: string }) =>
       updateCalibrationSchedule(data, cookie),
     onSuccess: () => {
       console.log("Calibration update success");
@@ -138,7 +240,7 @@ export default function MaintenanceSection({ cookie }: Props) {
   });
 
   const statusMutation = useMutation({
-    mutationFn: (data: { uuid: string; status: MaintenanceStatus }) => 
+    mutationFn: (data: { uuid: string; status: MaintenanceStatus }) =>
       updateMaintenanceStatus(data, cookie),
     onSuccess: () => {
       toast({
@@ -156,37 +258,13 @@ export default function MaintenanceSection({ cookie }: Props) {
     },
   });
 
-  const handleAction = (uuid: string, status: MaintenanceStatus) => {
-    const activityMap: Record<string, string> = {
-      start: "Start",
-      stop: "Stop",
-      maintenance: "Maintenance",
-      calibration: "Calibration"
-    };
 
-    const type = activityMap[status] || status;
-    const desc = `Merubah status alat menjadi ${type.toUpperCase()}`;
-
-    // Update form states so user sees it in the modal
-    setActivityType(type);
-    setDescription(desc);
-
-    // Call logMutation directly to ensure a complete history record (avoiding null activity_type)
-    logMutation.mutate({
-      uuid: uuid,
-      status: status,
-      activity_type: type,
-      description: desc,
-      next_calibration_date: "",
-    });
-  };
-  
   const openCalModal = (uuid: string) => {
     console.log("🛠️ openCalModal called with UUID:", uuid);
     const station = stations.find(s => s.uuid === uuid);
     setSelectedUuid(uuid);
     setIsCalModalOpen(true);
-    
+
     // Set initial date from station data if available, or today
     if (station?.next_calibration_date && moment(station.next_calibration_date, "YYYY-MM-DD", true).isValid()) {
       setCalDate(new Date(station.next_calibration_date));
@@ -197,7 +275,7 @@ export default function MaintenanceSection({ cookie }: Props) {
 
   const handleUpdateCal = () => {
     console.log("🚀 handleUpdateCal execution started", { selectedUuid, calDate });
-    
+
     if (!selectedUuid) {
       console.error("❌ Aborted: selectedUuid is missing!");
       toast({ title: "Error", description: "Internal Error: UUID Hilang. Coba buka kembali modal.", variant: "destructive" });
@@ -212,28 +290,10 @@ export default function MaintenanceSection({ cookie }: Props) {
 
     const formattedDate = moment(calDate).format("YYYY-MM-DD");
     console.log("📝 Sending mutation for calibration:", { uuid: selectedUuid, next_calibration_date: formattedDate });
-    
+
     calMutation.mutate({ uuid: selectedUuid, next_calibration_date: formattedDate });
   };
 
-  const handleSaveLog = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedUuid || !activityType || !description) {
-      toast({
-        title: "Peringatan",
-        description: "Mohon isi semua field",
-        variant: "destructive",
-      });
-      return;
-    }
-    logMutation.mutate({
-      uuid: selectedUuid,
-      status: currentStation?.instrument_status || "maintenance",
-      activity_type: activityType,
-      description: description,
-      next_calibration_date: "",
-    });
-  };
 
   const handleOpenDetail = (uuid: string) => {
     setSelectedUuid(uuid);
@@ -254,7 +314,7 @@ export default function MaintenanceSection({ cookie }: Props) {
   const currentStation = stations.find(s => (s.uuid || s.id_mesin) === selectedUuid);
 
   // Filter stations based on search term
-  const filteredStations = stations.filter((station: any) => 
+  const filteredStations = stations.filter((station: any) =>
     station.id_mesin?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     station.nama_stasiun?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -308,50 +368,50 @@ export default function MaintenanceSection({ cookie }: Props) {
                 filteredStations.map((station: any) => {
                   const stationId = station.uuid || station.id_mesin;
                   return (
-                    <TableRow 
-                      key={stationId} 
+                    <TableRow
+                      key={stationId}
                       className="transition-colors hover:bg-slate-50/80 dark:hover:bg-dark_accent/10"
                     >
-                    <TableCell className="font-bold text-slate-700 dark:text-slate-300">
-                      {station.id_mesin}
-                    </TableCell>
-                    <TableCell className="text-slate-500 dark:text-slate-400">
-                      <div className="flex items-center gap-1 font-medium">
-                        <MapPin className="h-3 w-3" />
-                        <span>{station.nama_stasiun || "Unknown Station"}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <BadgeStatus status={station.instrument_status || "NORMAL"} />
-                    </TableCell>
-                    <TableCell>
-                      <CalibrationDisplay 
-                        date={station.next_calibration_date} 
-                        overdue={station.overdue_days} 
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-amber-600 hover:text-amber-700 border-amber-100 hover:bg-amber-50 h-7 text-[11px]"
-                          onClick={() => openCalModal(stationId)}
-                        >
-                          Set Cal
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-blue-600 hover:text-blue-700 dark:text-blue-400 h-7 text-[11px]"
-                          onClick={() => handleOpenDetail(stationId)}
-                        >
-                          Detail
-                        </Button>
-                      </div>
-                    </TableCell>
-                      </TableRow>
-                    );
+                      <TableCell className="font-bold text-slate-700 dark:text-slate-300">
+                        {station.id_mesin}
+                      </TableCell>
+                      <TableCell className="text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center gap-1 font-medium">
+                          <MapPin className="h-3 w-3" />
+                          <span>{station.nama_stasiun || "Unknown Station"}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <BadgeStatus status={station.instrument_status || "NORMAL"} />
+                      </TableCell>
+                      <TableCell>
+                        <CalibrationDisplay
+                          date={station.next_calibration_date}
+                          overdue={station.overdue_days}
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-amber-600 hover:text-amber-700 border-amber-100 hover:bg-amber-50 h-7 text-[11px]"
+                            onClick={() => openCalModal(stationId)}
+                          >
+                            Set Cal
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-blue-600 hover:text-blue-700 dark:text-blue-400 h-7 text-[11px]"
+                            onClick={() => handleOpenDetail(stationId)}
+                          >
+                            Detail
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
                 })
               )}
             </TableBody>
@@ -431,10 +491,63 @@ export default function MaintenanceSection({ cookie }: Props) {
                   >
                     <option value="">Pilih Aktivitas...</option>
                     <option value="Pengecekan Rutin">Pengecekan Rutin</option>
-                    <option value="Kalibrasi Sensor">Kalibrasi Sensor</option>
-                    <option value="Perbaikan Alat">Perbaikan Alat</option>
-                    <option value="Ganti Part">Ganti Part</option>
+                    <option value="Kalibrasi">Kalibrasi</option>
+                    <option value="Perbaikan">Perbaikan</option>
+                    <option value="Penggantian Part">Penggantian Part</option>
                   </select>
+                </div>
+
+                {/* Report Selection */}
+                {['Perbaikan', 'Penggantian Part'].includes(activityType) && (
+                  <div className="space-y-2.5 animate-in slide-in-from-top-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      LAPORAN TERKAIT
+                    </label>
+                    <select
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none dark:bg-dark dark:border-dark_accent"
+                      value={reportId}
+                      onChange={(e) => setReportId(e.target.value)}
+                    >
+                      <option value="">-- Pilih Laporan (Optional) --</option>
+                      {availableReports.map(r => (
+                        <option key={r.id} value={r.id}>
+                          [{r.status}] {r.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Progress Selection */}
+                <div className="space-y-2.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                    PROGRESS PEKERJAAN
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                      <input
+                        type="radio"
+                        name="progress"
+                        value="Pengerjaan"
+                        checked={progress === 'Pengerjaan'}
+                        onChange={() => setProgress('Pengerjaan')}
+                        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                      />
+                      Sedang Pengerjaan
+                    </label>
+                    <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                      <input
+                        type="radio"
+                        name="progress"
+                        value="Selesai"
+                        checked={progress === 'Selesai'}
+                        onChange={() => setProgress('Selesai')}
+                        className="w-4 h-4 text-green-600 focus:ring-green-500"
+                      />
+                      Selesai
+                    </label>
+                  </div>
                 </div>
 
                 {/* 3. Detailed Description */}
@@ -444,12 +557,16 @@ export default function MaintenanceSection({ cookie }: Props) {
                     DESKRIPSI TINDAKAN
                   </label>
                   <textarea
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none dark:bg-dark dark:border-dark_accent"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none dark:bg-dark dark:border-dark_accent disabled:bg-slate-100 disabled:text-slate-400"
                     placeholder="Contoh: Perbaikan PSU, Pembersihan Sensor..."
                     rows={4}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
+                    disabled={progress === 'Selesai'}
                   />
+                  {progress === 'Selesai' && (
+                    <p className="text-[10px] text-orange-500 italic">*Deskripsi otomatis dikunci saat status Selesai</p>
+                  )}
                 </div>
 
                 <Button
@@ -530,10 +647,10 @@ export default function MaintenanceSection({ cookie }: Props) {
           </div>
           <DialogFooter className="px-6 pb-6 pt-2">
             <Button variant="ghost" size="sm" onClick={() => setIsCalModalOpen(false)}>Batal</Button>
-            <Button 
-              size="sm" 
-              className="bg-primary hover:bg-primary/90" 
-              onClick={handleUpdateCal} 
+            <Button
+              size="sm"
+              className="bg-primary hover:bg-primary/90"
+              onClick={handleUpdateCal}
               disabled={calMutation.isPending || !calDate || !selectedUuid}
             >
               {calMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -568,16 +685,16 @@ function BadgeStatus({ status }: { status: string }) {
   );
 }
 
-function StatusButton({ 
-  active, 
-  icon, 
-  label, 
-  color, 
-  onClick 
-}: { 
-  active: boolean; 
-  icon: React.ReactNode; 
-  label: string; 
+function StatusButton({
+  active,
+  icon,
+  label,
+  color,
+  onClick
+}: {
+  active: boolean;
+  icon: React.ReactNode;
+  label: string;
   color: "emerald" | "red" | "amber" | "blue";
   onClick: () => void;
 }) {
@@ -589,7 +706,7 @@ function StatusButton({
   };
 
   return (
-    <button 
+    <button
       type="button"
       onClick={onClick}
       className={`flex items-center gap-1.5 rounded px-2 py-1 text-[10px] font-bold transition-all ${colorConfigs[color]} ${active ? "shadow-sm scale-105" : "scale-100 opacity-70 hover:opacity-100"}`}

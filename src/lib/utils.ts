@@ -208,3 +208,10 @@ export function display12HourValue(hours: number) {
   if (hours % 12 > 9) return `${hours}`;
   return `0${hours % 12}`;
 }
+export function formatRupiah(amount: number) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(amount);
+}

@@ -1,6 +1,6 @@
 export type TAuthStore = {
   user: TAuthResponse | null;
-  doLogin: (arg: { username: string; password: string }) => Promise<void>;
+  doLogin: (arg: { username: string; password: string }) => Promise<boolean>;
   doLogout: () => void;
 };
 

@@ -122,7 +122,15 @@ export default function MonitoringSection({ id }: Props) {
   }, [id]);
 
   useEffect(() => {
-    const wsUrl = `${process.env.NEXT_PUBLIC_SOCKET_URL}/monitoring/${id}`;
+    let socketBaseUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+    if (
+      typeof window !== "undefined" &&
+      window.location.protocol === "https:" &&
+      socketBaseUrl?.startsWith("ws://")
+    ) {
+      socketBaseUrl = socketBaseUrl.replace("ws://", "wss://");
+    }
+    const wsUrl = `${socketBaseUrl}/monitoring/${id}`;
     let ws: WebSocket | null = null;
     let reconnectTimeout: NodeJS.Timeout;
 
@@ -138,7 +146,7 @@ export default function MonitoringSection({ id }: Props) {
         try {
           const message = JSON.parse(event.data);
           console.log("🔍 Raw WebSocket Message:", event.data);
-          
+
           if (message.type === 'monitoring' && message.data) {
             console.log("📨 Received Data Object:", message.data);
             const raw = message.data;
@@ -186,7 +194,7 @@ export default function MonitoringSection({ id }: Props) {
               Status_ORP: raw.status_orp,
 
               // Control Status (convert bool to number if type allows, or keep as boolean if simple cast works. Type says number.)
-              Pump_Status: raw.pump_status ? 1 : 0, 
+              Pump_Status: raw.pump_status ? 1 : 0,
               CV_Status: raw.cv_status ? 1 : 0,
               Read_Status: raw.read_status ? 1 : 0,
 
@@ -199,10 +207,10 @@ export default function MonitoringSection({ id }: Props) {
             setMonitoringData(mappedData);
             setIsLoaded(true);
             setIsOffline(message.data.status === 'mati');
-            
+
             // Update station name if available from data
             if (message.data.id_stasiun && message.data.id_stasiun !== '-') {
-               setStationName(message.data.id_stasiun);
+              setStationName(message.data.id_stasiun);
             }
           } else if (message.type === 'error') {
             console.error("❌ WebSocket Error Message:", message.message);
@@ -227,7 +235,11 @@ export default function MonitoringSection({ id }: Props) {
     connect();
 
     return () => {
-      if (ws) ws.close();
+      if (ws) {
+        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+          ws.close();
+        }
+      }
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
     };
   }, [id]);

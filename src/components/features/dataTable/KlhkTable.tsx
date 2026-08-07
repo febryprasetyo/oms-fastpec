@@ -13,6 +13,13 @@ type Props = {
 };
 
 export const KlhkTable = ({ data }: Props) => {
+  // Helper to replace sentinel -3 values with 0 for UI display
+  const formatValue = (val: any) => {
+    const num = parseFloat(val);
+    if (!isNaN(num) && num === -3) return 0;
+    return val;
+  };
+
   return (
     <div className="bg-red-700p-5 overflow-x-auto rounded-xl shadow">
       <Table className="min-w-full border">
@@ -60,7 +67,7 @@ export const KlhkTable = ({ data }: Props) => {
                 "Kedalaman",
               ].map((key) => (
                 <TableCell key={key} className="">
-                  {row[key]}
+                  {formatValue(row[key])}
                 </TableCell>
               ))}
             </TableRow>

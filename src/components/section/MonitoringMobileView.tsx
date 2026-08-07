@@ -2,10 +2,11 @@
 import React from "react";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle, Wifi } from "lucide-react";
+import { AlertTriangle, Wifi, Thermometer, CheckCircle2, Droplets, Waves, FlaskConical, Filter, Wind, Zap, TestTube2, ArrowDown } from "lucide-react";
 import Klhk from "@/assets/img/logo-lhk.png";
 import Logo from "@/assets/img/logo.png";
 import { MonitoringData } from "./MonitoringSection";
+import SensorRowCard from "@/components/features/monitoring/SensorRowCard";
 
 const safeToFixed = (value: any): string => {
   const num = Number(value);
@@ -72,8 +73,8 @@ export default function MonitoringMobileView({
           </div>
 
           <div className="relative flex flex-col justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-3 text-center shadow-sm">
-            <div className="absolute right-0 top-0 p-1 text-xs text-red-500">
-              <i className="fas fa-temperature-high"></i>
+            <div className="absolute right-0 top-0 p-2 text-red-500">
+              <Thermometer className="h-4 w-4" />
             </div>
             {isLoaded && monitoringData.Temperature !== undefined ? (
               <>
@@ -177,17 +178,21 @@ export default function MonitoringMobileView({
                       { label: "Amonia", status: monitoringData.NH4_Status },
                       { label: "Level", status: monitoringData.Depth_Status },
                       { label: "NO3", status: monitoringData.NO3_Status },
+                      ...((monitoringData.ORP ?? 0) !== 0 
+                        ? [{ label: "NO2", status: monitoringData.NO2_Status }] 
+                        : []
+                      ),
                     ].map((sensor) => (
                       <span
                         key={sensor.label}
-                        className={`rounded-full border px-2 py-1 text-[10px] font-bold ${
+                        className={`rounded-full border px-2 py-1 text-[10px] font-bold flex items-center ${
                           sensor.status === 'on'
                             ? "border-green-200 bg-green-100 text-green-700"
                             : "border-slate-200 bg-slate-100 text-slate-400"
                         }`}
                       >
                         {sensor.status === 'on' && (
-                          <i className="fas fa-check-circle mr-1"></i>
+                          <CheckCircle2 className="mr-1 h-3 w-3" />
                         )}
                         {sensor.label}
                       </span>
@@ -245,84 +250,44 @@ export default function MonitoringMobileView({
           ) : (
             <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
               {/* DO */}
-              <div className="flex items-center justify-between p-4 transition-colors hover:bg-slate-50">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                    <i className="fas fa-droplet text-lg"></i>
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-700">DO</p>
-                    <p className="text-[10px] text-slate-400">
-                      Dissolved Oxygen
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-black text-slate-800">
-                    {safeToFixed(monitoringData.DO)}
-                  </p>
-                  <p className="text-[10px] font-medium text-slate-500">mg/L</p>
-                </div>
-              </div>
+              <SensorRowCard
+                label="DO"
+                subLabel="Dissolved Oxygen"
+                value={safeToFixed(monitoringData.DO)}
+                unit="mg/L"
+                Icon={Droplets}
+                iconClassName="bg-blue-50 text-blue-600"
+              />
 
               {/* TURBIDITY */}
-              <div className="flex items-center justify-between p-4 transition-colors hover:bg-slate-50">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-50 text-teal-600">
-                    <i className="fas fa-tint text-lg"></i>
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-700">TURBIDITY</p>
-                    <p className="text-[10px] text-slate-400">Kekeruhan</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-black text-slate-800">
-                    {safeToFixed(monitoringData.TUR)}
-                  </p>
-                  <p className="text-[10px] font-medium text-slate-500">NTU</p>
-                </div>
-              </div>
+              <SensorRowCard
+                label="TURBIDITY"
+                subLabel="Kekeruhan"
+                value={safeToFixed(monitoringData.TUR)}
+                unit="NTU"
+                Icon={Waves}
+                iconClassName="bg-teal-50 text-teal-600"
+              />
 
               {/* TDS */}
-              <div className="flex items-center justify-between p-4 transition-colors hover:bg-slate-50">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-50 text-cyan-600">
-                    <i className="fas fa-water text-lg"></i>
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-700">TDS</p>
-                    <p className="text-[10px] text-slate-400">
-                      Total Dissolved Solids
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-black text-slate-800">
-                    {safeToFixed(monitoringData.CT)}
-                  </p>
-                  <p className="text-[10px] font-medium text-slate-500">ppm</p>
-                </div>
-              </div>
+              <SensorRowCard
+                label="TDS"
+                subLabel="Total Dissolved Solids"
+                value={safeToFixed(monitoringData.CT)}
+                unit="ppm"
+                Icon={Waves}
+                iconClassName="bg-cyan-50 text-cyan-600"
+              />
 
               {/* pH */}
-              <div className="flex items-center justify-between p-4 transition-colors hover:bg-slate-50">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-50 text-purple-600">
-                    <i className="fas fa-flask text-lg"></i>
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-700">pH</p>
-                    <p className="text-[10px] text-slate-400">Acidity</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-black text-slate-800">
-                    {safeToFixed(monitoringData.PH)}
-                  </p>
-                  <p className="text-[10px] font-medium text-slate-500">pH</p>
-                </div>
-              </div>
+              <SensorRowCard
+                label="pH"
+                subLabel="Acidity"
+                value={safeToFixed(monitoringData.PH)}
+                unit="pH"
+                Icon={FlaskConical}
+                iconClassName="bg-purple-50 text-purple-600"
+              />
 
               {/* BOD & COD Grid */}
               <div className="grid grid-cols-2 divide-x divide-slate-100">
@@ -347,109 +312,65 @@ export default function MonitoringMobileView({
               </div>
 
               {/* TSS */}
-              <div className="flex items-center justify-between p-4 transition-colors hover:bg-slate-50">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-orange-600">
-                    <i className="fas fa-filter text-lg"></i>
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-700">TSS</p>
-                    <p className="text-[10px] text-slate-400">
-                      Suspended Solids
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-black text-slate-800">
-                    {safeToFixed(monitoringData.TSS)}
-                  </p>
-                  <p className="text-[10px] font-medium text-slate-500">mg/L</p>
-                </div>
-              </div>
+              <SensorRowCard
+                label="TSS"
+                subLabel="Suspended Solids"
+                value={safeToFixed(monitoringData.TSS)}
+                unit="mg/L"
+                Icon={Filter}
+                iconClassName="bg-orange-50 text-orange-600"
+              />
 
               {/* AMONIA */}
-              <div className="flex items-center justify-between p-4 transition-colors hover:bg-slate-50">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-600">
-                    <i className="fas fa-wind text-lg"></i>
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-700">AMONIA</p>
-                    <p className="text-[10px] text-slate-400">NH4</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-black text-slate-800">
-                    {safeToFixed(monitoringData.N)}
-                  </p>
-                  <p className="text-[10px] font-medium text-slate-500">mg/L</p>
-                </div>
-              </div>
+              <SensorRowCard
+                label="AMONIA"
+                subLabel="NH4"
+                value={safeToFixed(monitoringData.N)}
+                unit="mg/L"
+                Icon={Wind}
+                iconClassName="bg-red-50 text-red-600"
+              />
 
-              {/* DEPTH & NO3 Grid */}
-              <div className="grid grid-cols-2 divide-x divide-slate-100 border-t border-slate-100">
-                <div className="flex flex-col items-center p-4 text-center">
-                  <span className="mb-1 text-[10px] font-bold uppercase text-slate-400">
-                    DEPTH (M)
-                  </span>
-                  <span className="text-xl font-black text-slate-800">
-                    {safeToFixed(monitoringData.DEPTH)}
-                  </span>
-                </div>
-                <div className="flex flex-col items-center p-4 text-center">
-                  <span className="mb-1 text-[10px] font-bold uppercase text-slate-400">
-                    NO3 (mg/L)
-                  </span>
-                  <span className="text-xl font-black text-slate-800">
-                    {safeToFixed(monitoringData["NO3-3"])}
-                  </span>
-                </div>
-              </div>
+              {/* DEPTH */}
+              <SensorRowCard
+                label="DEPTH"
+                subLabel="Water Level"
+                value={safeToFixed(monitoringData.DEPTH)}
+                unit="m"
+                Icon={ArrowDown}
+                iconClassName="bg-blue-50 text-blue-600"
+              />
+
+              {/* NO3 */}
+              <SensorRowCard
+                label="NO3"
+                subLabel="Nitrate"
+                value={safeToFixed(monitoringData["NO3-3"])}
+                unit="mg/L"
+                Icon={TestTube2}
+                iconClassName="bg-emerald-50 text-emerald-600"
+              />
 
               {/* ORP & NO2 if available */}
               {(monitoringData.ORP ?? 0) !== 0 && (
                 <>
-                  <div className="flex items-center justify-between p-4 transition-colors hover:bg-slate-50">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
-                        <i className="fas fa-bolt text-lg"></i>
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-700">ORP</p>
-                        <p className="text-[10px] text-slate-400">
-                          Oxidation Reduction
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-black text-slate-800">
-                        {safeToFixed(monitoringData.ORP)}
-                      </p>
-                      <p className="text-[10px] font-medium text-slate-500">
-                        mg/L
-                      </p>
-                    </div>
-                  </div>
+                  <SensorRowCard
+                    label="ORP"
+                    subLabel="Oxidation Reduction"
+                    value={safeToFixed(monitoringData.ORP)}
+                    unit="mg/L"
+                    Icon={Zap}
+                    iconClassName="bg-indigo-50 text-indigo-600"
+                  />
 
-                  <div className="flex items-center justify-between p-4 transition-colors hover:bg-slate-50">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-50 text-pink-600">
-                        <i className="fas fa-vial text-lg"></i>
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-700">NO2</p>
-                        <p className="text-[10px] text-slate-400">Nitrite</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-black text-slate-800">
-                        {safeToFixed(monitoringData.NO2)}
-                      </p>
-                      <p className="text-[10px] font-medium text-slate-500">
-                        mg/L
-                      </p>
-                    </div>
-                  </div>
+                  <SensorRowCard
+                    label="NO2"
+                    subLabel="Nitrite"
+                    value={safeToFixed(monitoringData.NO2)}
+                    unit="mg/L"
+                    Icon={TestTube2}
+                    iconClassName="bg-pink-50 text-pink-600"
+                  />
                 </>
               )}
             </div>

@@ -4,6 +4,7 @@ import { useAuthStore, useExpandedStore } from "@/services/store";
 import { Button } from "../ui/button";
 import { ChevronsRightIcon } from "lucide-react";
 import HeaderSkeleton from "../features/skeleton/HeaderSkeleton";
+import NotificationBell from "../features/notification/NotificationBell";
 
 type Props = {};
 
@@ -60,20 +61,26 @@ export default function Header({}: Props) {
           <p className="text-sm text-slate-300">{subtitle}</p>
         </div>
 
-        {/* User Info */}
-        {user?.user_data?.username ? (
-          <div className="flex items-center gap-3">
-            <div className="hidden text-right sm:block">
-              <p className="text-xs text-slate-400">Selamat datang,</p>
-              <p className="font-semibold">{user.user_data.username}</p>
+        {/* Notification & User Info */}
+        <div className="flex items-center gap-4">
+          {["admin", "engineering"].includes(user?.user_data?.role_name?.toLowerCase() || "") && (
+            <NotificationBell />
+          )}
+          
+          {user?.user_data?.username ? (
+            <div className="flex items-center gap-3 border-l border-white/20 pl-4">
+              <div className="hidden text-right sm:block">
+                <p className="text-xs text-slate-400">Selamat datang,</p>
+                <p className="font-semibold">{user.user_data.username}</p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-sm font-bold">
+                {user.user_data.username.substring(0, 2).toUpperCase()}
+              </div>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-sm font-bold">
-              {user.user_data.username.substring(0, 2).toUpperCase()}
-            </div>
-          </div>
-        ) : (
-          <HeaderSkeleton />
-        )}
+          ) : (
+            <HeaderSkeleton />
+          )}
+        </div>
       </div>
     </header>
   );

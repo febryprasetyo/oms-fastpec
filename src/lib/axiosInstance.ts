@@ -4,7 +4,7 @@ import { isServer } from "@tanstack/react-query";
 import axios, { AxiosError, AxiosInstance } from "axios";
 import { deleteCookie } from "cookies-next";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export const axiosInstance: AxiosInstance = axios.create({
   baseURL: BASE_URL,

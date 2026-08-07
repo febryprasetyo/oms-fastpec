@@ -12,7 +12,7 @@ export const authRoutes = ["/login"];
  * @type {string}
  */
 
-export const apiAuthPrefix = "/fastpec/api/auth/login";
+export const apiAuthPrefix = "/api";
 
 /**
  * The default login redirect path

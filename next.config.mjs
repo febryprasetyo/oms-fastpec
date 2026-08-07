@@ -28,17 +28,19 @@ const nextConfig = {
       },
     ],
   },
-  env: {
-    API_SOURCE: process.env.NEXT_PUBLIC_API_URL,
+  allowedDevOrigins: [
+    "http://103.84.206.53:5160",
+    "http://localhost:5160",
+    "https://oms.cahayamascemerlang.co.id",
+  ],
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "http://localhost:3304/api/:path*",
+      },
+    ];
   },
-  // async rewrites() {
-  //   return [
-  //     {
-  //       source: "/fastpec/:path*",
-  //       destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
-  //     },
-  //   ];
-  // },
   async redirects() {
     return [
       {

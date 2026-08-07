@@ -11,6 +11,8 @@ import {
   Wrench,
   History,
   FolderKanban,
+  Receipt,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -138,7 +140,9 @@ export default function Sidebar() {
                   <MenuItem to="/user" label="User" Icon={User} />
                   <MenuItem to="/mesin" label="Mesin" Icon={Wrench} />
                   <MenuItem to="/inventory" label="Inventory" Icon={Newspaper} />
-                  <MenuItem to="/pengajuan" label="Pengajuan" Icon={FolderKanban} />
+                  {/* <MenuItem to="/pengajuan" label="Pengajuan" Icon={FolderKanban} /> */}
+                  {/* <MenuItem to="/billing" label="Billing" Icon={Receipt} /> */}
+                  <MenuItem to="/reports" label="Laporan" Icon={ClipboardList} />
                   <MenuItem to="/maintenance" label="Maintenance" Icon={Settings} />
                 </div>
               </div>

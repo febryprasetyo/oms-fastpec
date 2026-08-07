@@ -23,19 +23,20 @@ export const useAuthStore = create<TAuthStore>()(
               description: "Login Berhasil",
               duration: 3000,
             });
+            return true;
           }
+          return false;
         } catch (error) {
           if (error instanceof AxiosError) {
             toast({
               title: "Error",
-              description: error?.response?.data?.message,
+              description: error?.response?.data?.message || "Login Gagal",
               duration: 3000,
               variant: "destructive",
             });
           }
+          return false;
         }
-
-        return;
       },
       doLogout: async () => {
         set(() => ({ user: null }));
@@ -59,6 +60,6 @@ export const useAuthStore = create<TAuthStore>()(
 );
 
 export const useExpandedStore = create<Expanded>((set) => ({
-  isExpanded: false,
+  isExpanded: true,
   setExpanded: (isExpanded) => set({ isExpanded: isExpanded }),
 }));

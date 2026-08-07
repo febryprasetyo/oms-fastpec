@@ -3,6 +3,7 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import { NextThemesProvider } from "@/services/providers/NextThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
 import QueryProvider from "@/services/providers/QueryProvider";
 import NextTopLoader from "nextjs-toploader";
 import { HydrationGuard } from "@/services/providers/HydrationGuard";
@@ -37,6 +38,7 @@ export default function RootLayout({
           </QueryProvider>
         </NextThemesProvider>
         <Toaster />
+        <SonnerToaster />
       </body>
     </html>
   );

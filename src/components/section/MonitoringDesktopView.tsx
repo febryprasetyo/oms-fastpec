@@ -143,12 +143,12 @@ export default function MonitoringDesktopView({
       {/* Sidebar */}
       <aside className="z-20 flex h-full w-80 flex-col border-r border-slate-200 bg-white shadow-lg">
         {/* Logo Header */}
-        <div className="flex items-center gap-4 border-b border-slate-100 p-6">
+        <div className="flex items-center justify-center gap-4 border-b border-slate-100 p-6">
           <div className="flex items-center justify-center">
-            <Image src={Klhk} alt="Logo KLHK" width={40} height={40} className="object-contain" />
+            <Image src={Klhk} alt="Logo KLHK" width={60} height={60} className="object-contain" />
           </div>
           <div className="flex items-center justify-center">
-            <Image src={Logo} alt="Logo Fastpec" width={120} height={40} className="object-contain" />
+            <Image src={Logo} alt="Logo Fastpec" width={0} height={54} className="object-contain" />
           </div>
         </div>
 
@@ -187,8 +187,8 @@ export default function MonitoringDesktopView({
                     Suhu Air
                   </p>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold text-blue-400">
-                      {safeToFixed(monitoringData.Temperature)}
+                    <span className={`text-3xl font-bold ${!isOffline ? "text-blue-400" : "text-slate-500"}`}>
+                      {!isOffline ? safeToFixed(monitoringData.Temperature) : "---"}
                     </span>
                     <span className="text-lg opacity-80">°C</span>
                   </div>
@@ -202,6 +202,7 @@ export default function MonitoringDesktopView({
           { /* Indeks IKA Card */ }
           <div className={`group relative overflow-hidden rounded-2xl p-5 text-white shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl ${
             (() => {
+              if (isOffline) return "bg-slate-600"; // Offline color
               const ika = monitoringData.IKA ?? 0;
               if (ika <= 1.0) return "bg-emerald-600";
               if (ika <= 5.0) return "bg-yellow-600";
@@ -217,12 +218,13 @@ export default function MonitoringDesktopView({
              </p>
               <div className="flex items-baseline gap-1">
                 <span className="text-3xl font-bold">
-                  {safeToFixed(monitoringData.IKA)}
+                  {!isOffline ? safeToFixed(monitoringData.IKA) : "---"}
                 </span>
                 <span className="text-sm opacity-80">pts</span>
               </div>
               <div className="mt-2 text-xs text-emerald-100 opacity-80">
                 Status: {(() => {
+                  if (isOffline) return "Offline";
                   const ika = monitoringData.IKA ?? 0;
                   if (ika <= 1.0) return "Memenuhi Baku Mutu";
                   if (ika <= 5.0) return "Cemar Ringan";
@@ -232,7 +234,21 @@ export default function MonitoringDesktopView({
               </div>
               
               {/* Dominant Parameter Info */}
-              {(monitoringData.IKA_Param && monitoringData.IKA_Param !== "-") && (
+              {(monitoringData.time) && (
+                 <div className="mt-2 text-[10px] text-emerald-100/70">
+                    Updated: {new Date(monitoringData.time).toLocaleString("id-ID", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    })}
+                 </div>
+              )}
+
+              {/* Dominant Parameter Info */}
+              {(monitoringData.IKA_Param && monitoringData.IKA_Param !== "-" && !isOffline) && (
                  <div className="mt-1 border-t border-white/20 pt-1 text-[10px] text-white/90">
                     <span className="font-semibold opacity-75">Param Dominan:</span>
                     <div className="flex items-center justify-between font-bold">
@@ -292,16 +308,17 @@ export default function MonitoringDesktopView({
             {isLoaded ? (
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: "PUMP", icon: "fa-power-off", status: monitoringData.Pump_Status },
-                  { label: "CV", icon: "fa-sliders-h", status: monitoringData.CV_Status },
+                  { label: "PUMP", icon: "fa-power-off", status: !isOffline ? monitoringData.Pump_Status : 0 },
+                  { label: "CV", icon: "fa-sliders-h", status: !isOffline ? monitoringData.CV_Status : 0 },
                 ].map((item) => (
                   <button
                     key={item.label}
+                    disabled={isOffline}
                     className={`group flex flex-col items-center gap-1 rounded-lg border py-3 text-sm font-bold shadow-sm transition-all ${
                       item.status
                         ? "border-blue-500 bg-blue-600 text-white shadow-blue-200"
                         : "border-slate-200 bg-white text-slate-400"
-                    }`}
+                    } ${isOffline ? "cursor-not-allowed opacity-50" : ""}`}
                   >
                     <i
                       className={`fas ${item.icon} text-lg transition-transform group-hover:scale-110 ${
@@ -312,27 +329,28 @@ export default function MonitoringDesktopView({
                   </button>
                 ))}
                 <button
+                  disabled={isOffline}
                   className={`col-span-2 rounded-lg py-3 text-sm font-bold shadow-md transition-all ${
-                    monitoringData.Read_Status
+                    !isOffline && monitoringData.Read_Status
                       ? "bg-slate-800 text-white hover:bg-slate-900"
                       : "bg-slate-200 text-slate-500"
-                  }`}
+                  } ${isOffline ? "cursor-not-allowed opacity-50" : ""}`}
                 >
                   READ STATE
                 </button>
 
                 {/* Control Menu Actions */}
                 <div className="col-span-2 mt-1 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3">
-                  <button className="group flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-500 shadow-sm transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600">
-                    <i className="fas fa-stop-circle mb-1 text-lg text-slate-300 transition-colors group-hover:text-red-500"></i>
+                  <button disabled={isOffline} className={`group flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-500 shadow-sm transition-all ${!isOffline ? "hover:border-red-200 hover:bg-red-50 hover:text-red-600" : "cursor-not-allowed opacity-50"}`}>
+                    <i className={`fas fa-stop-circle mb-1 text-lg text-slate-300 transition-colors ${!isOffline ? "group-hover:text-red-500" : ""}`}></i>
                     STOP
                   </button>
-                  <button className="group flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-500 shadow-sm transition-all hover:border-amber-200 hover:bg-amber-50 hover:text-amber-600">
-                    <i className="fas fa-tools mb-1 text-lg text-slate-300 transition-colors group-hover:text-amber-500"></i>
+                  <button disabled={isOffline} className={`group flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-500 shadow-sm transition-all ${!isOffline ? "hover:border-amber-200 hover:bg-amber-50 hover:text-amber-600" : "cursor-not-allowed opacity-50"}`}>
+                    <i className={`fas fa-tools mb-1 text-lg text-slate-300 transition-colors ${!isOffline ? "group-hover:text-amber-500" : ""}`}></i>
                     MAINT
                   </button>
-                  <button className="group flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-500 shadow-sm transition-all hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-600">
-                    <i className="fas fa-crosshairs mb-1 text-lg text-slate-300 transition-colors group-hover:text-cyan-500"></i>
+                  <button disabled={isOffline} className={`group flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-500 shadow-sm transition-all ${!isOffline ? "hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-600" : "cursor-not-allowed opacity-50"}`}>
+                    <i className={`fas fa-crosshairs mb-1 text-lg text-slate-300 transition-colors ${!isOffline ? "group-hover:text-cyan-500" : ""}`}></i>
                     CALIB
                   </button>
                 </div>
@@ -354,11 +372,11 @@ export default function MonitoringDesktopView({
             {isLoaded ? (
               <div className="flex flex-wrap gap-2">
                 {[
-                  { label: "Multi", status: monitoringData.Y4000_Status },
-                  { label: "UV254", status: monitoringData.UV254_Status },
-                  { label: "NH4", status: monitoringData.NH4_Status },
-                  { label: "Level", status: monitoringData.Depth_Status },
-                  { label: "NO3", status: monitoringData.NO3_Status },
+                  { label: "Multi", status: !isOffline ? monitoringData.Y4000_Status : 'off' },
+                  { label: "UV254", status: !isOffline ? monitoringData.UV254_Status : 'off' },
+                  { label: "NH4", status: !isOffline ? monitoringData.NH4_Status : 'off' },
+                  { label: "Level", status: !isOffline ? monitoringData.Depth_Status : 'off' },
+                  { label: "NO3", status: !isOffline ? monitoringData.NO3_Status : 'off' },
                 ].map((sensor) => (
                   <span
                     key={sensor.label}
@@ -399,13 +417,13 @@ export default function MonitoringDesktopView({
         <div className="absolute left-0 top-0 -z-10 h-64 w-full bg-gradient-to-b from-white to-transparent"></div>
 
         {/* Header */}
-        <header className="z-10 flex items-center justify-between px-8 py-6">
-          <div>
+        <header className="z-10 flex items-center justify-center px-8 py-6">
+          <div className="text-center">
             <h2 className="text-2xl font-black tracking-tight text-slate-800">
               ONLINE MONITORING SYSTEM
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Real-time water quality analysis dashboard
+              Real-time water quality analysis
             </p>
           </div>
         </header>

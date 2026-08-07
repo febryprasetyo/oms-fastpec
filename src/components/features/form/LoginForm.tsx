@@ -36,8 +36,10 @@ export default function LoginForm() {
 
   const onSubmit: SubmitHandler<formFields> = async (data) => {
     try {
-      await useAuthStore.getState().doLogin(data);
-      router.push("/dashboard");
+      const success = await useAuthStore.getState().doLogin(data);
+      if (success) {
+        router.push("/dashboard");
+      }
     } catch (error) {
       console.error(error);
     }

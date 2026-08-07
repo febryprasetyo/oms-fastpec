@@ -15,7 +15,10 @@ export type MaintenanceLogRequest = {
   description: string;
   next_calibration_date: string;
   technician_name?: string;
+  progress?: string;
+  report_id?: number;
 };
+
 
 export type CalibrationScheduleRequest = {
   uuid: string;
