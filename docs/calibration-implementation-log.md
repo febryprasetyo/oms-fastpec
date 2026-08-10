@@ -46,3 +46,14 @@
 ### Validation
 
 - `npx.cmd tsc --noEmit` completed successfully.
+
+## Phase 2 — Form Creation Workflow
+
+**Status:** In progress
+
+### Confirmed inputs
+
+- Station list items are returned in `data.values`; `id` maps to `station_id` and `coordinate` is available as a read-only display value.
+- The initial autosave lifecycle is `POST` draft, `GET` detail, then `PUT` CRM defaults and later form changes.
+- CRM measurements may be incomplete in a draft. Strict completeness validation belongs to the submit endpoint.
+- The form does not expose a parameter remark field and sends `remark: null`.
