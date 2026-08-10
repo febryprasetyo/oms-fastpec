@@ -180,13 +180,15 @@ export const mapCalibrationDetail = (calibration: ApiCalibrationRecord): Calibra
 
 export const calibrationService = {
   async getStations(accessToken: string): Promise<Station[]> {
-    const response = await axiosInstance.post<ApiResponse<{ values: StationListItem[] }>>(
+    const response = await axiosInstance.post<ApiResponse<{ values?: StationListItem[]; list?: StationListItem[] }>>(
       "/api/data/station/list",
       { limit: 100, offset: 0 },
       { headers: authHeaders(accessToken) },
     );
 
-    return response.data.data.values.map((station) => {
+    const stationItems = response.data.data.values ?? response.data.data.list ?? [];
+
+    return stationItems.map((station) => {
       const coordinate = parseCoordinate(station.coordinate);
 
       return {
