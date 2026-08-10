@@ -24,6 +24,11 @@ interface ApiResponse<T> {
   total?: number;
 }
 
+export interface CalibrationListResult {
+  items: Calibration[];
+  total: number;
+}
+
 interface ApiCalibrationRecord {
   id: string;
   report_no: string;
@@ -197,12 +202,13 @@ export const calibrationService = {
     return calibrationParameterConfigs.map((config) => toParameter(config.id, config.name));
   },
 
-  async getCalibrations(accessToken: string): Promise<Calibration[]> {
+  async getCalibrations(accessToken: string, options: { limit: number; offset: number; status?: CalibrationApiStatus }): Promise<CalibrationListResult> {
     const response = await axiosInstance.get<ApiResponse<ApiCalibrationRecord[]>>("/api/calibrations", {
       headers: authHeaders(accessToken),
+      params: options,
     });
 
-    return response.data.data.map(mapCalibration);
+    return { items: response.data.data.map(mapCalibration), total: response.data.total ?? 0 };
   },
 
   async getCalibrationById(id: string, accessToken: string): Promise<CalibrationDetail> {

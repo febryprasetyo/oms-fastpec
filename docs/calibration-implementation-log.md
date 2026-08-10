@@ -71,10 +71,16 @@
 
 ## Phase 3 — Dashboard and Actions
 
-**Status:** In progress
+**Status:** Complete
 
 ### Confirmed inputs
 
 - List pagination is server-backed with `limit`, `offset`, optional `status`, and `total`; the default page size is 20.
 - Search and sorting are client-side within the loaded page until the backend exposes dedicated query parameters.
 - Approval is allowed for `adm` and `eng`; deletion is backend-restricted to drafts.
+
+### Delivered
+
+- Added server-backed pagination and status filtering with client-side page search.
+- Added conditional approval for `adm` and `eng`, plus draft-only edit and delete actions.
+- Validated with `npx.cmd tsc --noEmit`.

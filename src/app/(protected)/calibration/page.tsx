@@ -1,156 +1,43 @@
 "use client";
 
-import React, { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useCalibrations, useDeleteCalibration, useApproveCalibration, useCalibrationAuth } from "@/hook/useCalibration";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { CheckCircle, ChevronLeft, ChevronRight, Eye, FileText, Plus, Search, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { useApproveCalibration, useCalibrationAuth, useCalibrations, useDeleteCalibration } from "@/hook/useCalibration";
+import { StatusBadge } from "@/components/features/badge/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { StatusBadge } from "@/components/features/badge/StatusBadge";
-import { Plus, Search, Eye, Edit, Trash2, CheckCircle } from "lucide-react";
-import { CalibrationListSkeleton } from "@/components/features/calibration/CalibrationSkeleton";
-import { toast } from "sonner";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const pageSize = 20;
 
 export default function CalibrationDashboard() {
-  const { data: calibrations, isLoading } = useCalibrations();
+  const { role } = useCalibrationAuth();
+  const [page, setPage] = useState(0);
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState<"all" | "draft" | "submitted" | "approved">("all");
+  const { data, isLoading } = useCalibrations({ limit: pageSize, offset: page * pageSize, ...(status === "all" ? {} : { status }) });
   const deleteMutation = useDeleteCalibration();
   const approveMutation = useApproveCalibration();
-  const { role } = useCalibrationAuth();
-  const [search, setSearch] = useState("");
+  const canApprove = role === "adm" || role === "eng";
+  const rows = useMemo(() => (data?.items ?? []).filter((item) => `${item.reportNo} ${item.stationName} ${item.officer}`.toLowerCase().includes(query.toLowerCase())), [data?.items, query]);
+  const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / pageSize));
 
-  const filtered = (calibrations || []).filter(
-    (c) =>
-      c.stationName.toLowerCase().includes(search.toLowerCase()) ||
-      c.reportNo.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this calibration sheet?")) {
-      try {
-        await deleteMutation.mutateAsync(id);
-        toast.success("Calibration deleted successfully");
-      } catch {
-        toast.error("Failed to delete calibration");
-      }
-    }
+  const remove = async (id: string) => {
+    if (!window.confirm("Hapus calibration draft ini?")) return;
+    try { await deleteMutation.mutateAsync(id); toast.success("Calibration berhasil dihapus"); } catch { toast.error("Calibration tidak dapat dihapus"); }
+  };
+  const approve = async (id: string) => {
+    if (!window.confirm("Approve calibration ini?")) return;
+    try { await approveMutation.mutateAsync(id); toast.success("Calibration berhasil disetujui"); } catch { toast.error("Calibration tidak dapat disetujui"); }
   };
 
-  const handleApprove = async (id: string) => {
-    try {
-      await approveMutation.mutateAsync(id);
-      toast.success("Calibration approved successfully");
-    } catch {
-      toast.error("Failed to approve calibration");
-    }
-  };
-
-  return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Calibration Logs</h1>
-          <p className="text-sm text-slate-500">Manage, review and verify station sensor calibrations.</p>
-        </div>
-        <Link href="/calibration/create">
-          <Button className="gap-2 shadow-sm">
-            <Plus className="h-4 w-4" />
-            <span>New Calibration</span>
-          </Button>
-        </Link>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-          <Input
-            placeholder="Search station or report number..."
-            className="pl-9"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="border rounded-lg bg-white overflow-hidden shadow-sm">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-50">
-              <TableHead className="font-bold text-slate-700">Report No</TableHead>
-              <TableHead className="font-bold text-slate-700">Station</TableHead>
-              <TableHead className="font-bold text-slate-700">Date</TableHead>
-              <TableHead className="font-bold text-slate-700">Officer</TableHead>
-              <TableHead className="font-bold text-slate-700 text-center">Status</TableHead>
-              <TableHead className="w-[180px] font-bold text-slate-700 text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="py-4">
-                  <CalibrationListSkeleton />
-                </TableCell>
-              </TableRow>
-            ) : filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-slate-500">
-                  No calibration logs found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtered.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell className="font-semibold text-slate-800">{c.reportNo}</TableCell>
-                  <TableCell>{c.stationName}</TableCell>
-                  <TableCell>{c.calibrationDate}</TableCell>
-                  <TableCell>{c.officer}</TableCell>
-                  <TableCell className="text-center">
-                    <StatusBadge status={c.status} />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Link href={`/calibration/${c.id}`}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-600">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </Link>
-
-                      {c.status === "Draft" && (
-                        <Link href={`/calibration/edit/${c.id}`}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-600">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                      )}
-
-                      {role === "ADMIN" && c.status === "Submitted" && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-green-600 hover:text-green-800"
-                          onClick={() => handleApprove(c.id)}
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                        </Button>
-                      )}
-
-                      {c.status === "Draft" && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-500 hover:text-red-700"
-                          onClick={() => handleDelete(c.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
-  );
+  return <div className="space-y-6 p-6">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><h1 className="text-2xl font-bold tracking-tight">Calibration</h1><p className="text-sm text-muted-foreground">Kelola laporan kalibrasi stasiun.</p></div><Button asChild><Link href="/calibration/create"><Plus className="mr-2 h-4 w-4" />New Calibration</Link></Button></div>
+    <div className="flex flex-col gap-3 sm:flex-row"><div className="relative flex-1"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari report, station, atau officer..." /></div><Select value={status} onValueChange={(value) => { setStatus(value as typeof status); setPage(0); }}><SelectTrigger className="w-full sm:w-44"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Semua Status</SelectItem><SelectItem value="draft">Draft</SelectItem><SelectItem value="submitted">Submitted</SelectItem><SelectItem value="approved">Approved</SelectItem></SelectContent></Select></div>
+    <div className="overflow-x-auto rounded-lg border"><Table><TableHeader><TableRow><TableHead>Report No</TableHead><TableHead>Station</TableHead><TableHead>Date</TableHead><TableHead>Officer</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader><TableBody>{isLoading ? <TableRow><TableCell colSpan={6} className="py-10 text-center">Memuat calibration...</TableCell></TableRow> : rows.length === 0 ? <TableRow><TableCell colSpan={6} className="py-10 text-center text-muted-foreground">Belum ada data calibration.</TableCell></TableRow> : rows.map((item) => <TableRow key={item.id}><TableCell className="font-medium">{item.reportNo}</TableCell><TableCell>{item.stationName}</TableCell><TableCell>{item.calibrationDate}</TableCell><TableCell>{item.officer}</TableCell><TableCell><StatusBadge status={item.status} /></TableCell><TableCell><div className="flex justify-end gap-1"><Button asChild variant="ghost" size="icon"><Link href={`/calibration/${item.id}`}><Eye className="h-4 w-4" /></Link></Button>{item.status === "Draft" && <Button asChild variant="ghost" size="icon"><Link href={`/calibration/edit/${item.id}`}><FileText className="h-4 w-4" /></Link></Button>}{item.status === "Draft" && <Button variant="ghost" size="icon" onClick={() => void remove(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}{canApprove && item.status === "Submitted" && <Button variant="ghost" size="icon" onClick={() => void approve(item.id)}><CheckCircle className="h-4 w-4 text-green-600" /></Button>}</div></TableCell></TableRow>)}</TableBody></Table></div>
+    <div className="flex items-center justify-between text-sm text-muted-foreground"><span>Halaman {page + 1} dari {totalPages}</span><div className="flex gap-2"><Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((value) => value - 1)}><ChevronLeft className="h-4 w-4" />Previous</Button><Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage((value) => value + 1)}>Next<ChevronRight className="h-4 w-4" /></Button></div></div>
+  </div>;
 }
