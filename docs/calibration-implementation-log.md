@@ -84,3 +84,13 @@
 - Added server-backed pagination and status filtering with client-side page search.
 - Added conditional approval for `adm` and `eng`, plus draft-only edit and delete actions.
 - Validated with `npx.cmd tsc --noEmit`.
+
+## Phase 4 — Report and Verification
+
+**Status:** In progress
+
+### Confirmed inputs
+
+- Detail and public verification responses provide all report metadata, joined parameter names, CRM details, and water samples.
+- Signature place/date combines `station_city` with `calibration_date`.
+- The report uses `src/assets/img/cmc_icon.png` as the company logo.
