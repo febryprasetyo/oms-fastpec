@@ -104,9 +104,14 @@
 
 ## Phase 5 — Responsive UX and Printing
 
-**Status:** In progress
+**Status:** Complete
 
 ### Scope
 
 - Stabilize the A4 print layout and hide application controls in print mode.
 - Improve table overflow and mobile/tablet layout without changing backend contracts.
+
+### Delivered
+
+- Added A4 print page sizing, print background cleanup, and application chrome suppression.
+- Verified TypeScript with `npx.cmd tsc --noEmit`.

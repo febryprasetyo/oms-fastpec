@@ -39,3 +39,26 @@
 *::-webkit-scrollbar {
   @apply h-0 w-0;
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm 15mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  .print\:hidden,
+  nav,
+  header,
+  aside {
+    display: none !important;
+  }
+
+  table {
+    break-inside: avoid;
+  }
+}
