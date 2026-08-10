@@ -50,6 +50,7 @@ export default function CreateCalibrationPage() {
   const updateMutation = useUpdateCalibration();
   const [draftId, setDraftId] = useState<string>();
   const [stationSearch, setStationSearch] = useState("");
+  const [isStationMenuOpen, setIsStationMenuOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const form = useForm<CalibrationFormValues>({
@@ -122,6 +123,7 @@ export default function CreateCalibrationPage() {
     form.setValue("latitude", station.latitude, { shouldDirty: true });
     form.setValue("longitude", station.longitude, { shouldDirty: true });
     setStationSearch(station.name);
+    setIsStationMenuOpen(false);
   };
 
   const toggleParameter = (parameterId: string) => {
@@ -139,8 +141,8 @@ export default function CreateCalibrationPage() {
     <div className="mx-auto max-w-6xl space-y-6 p-6">
       <CalibrationHeader reportNo="Draft" officer={values.officer} calibrationDate={values.calibrationDate?.toLocaleDateString() || ""} status="Draft" completionPercentage={completion} />
       <Card><CardHeader><CardTitle>General Information</CardTitle></CardHeader><CardContent className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2 md:col-span-2"><Label>Station</Label><Input value={stationSearch} onChange={(event) => setStationSearch(event.target.value)} placeholder="Cari stasiun..." />
-          {stationSearch && !values.stationId && <div className="rounded-md border bg-background p-1">{matchingStations.map((station) => <button key={station.id} type="button" className="w-full rounded px-3 py-2 text-left text-sm hover:bg-muted" onClick={() => selectStation(station.id)}>{station.name}</button>)}</div>}</div>
+        <div className="space-y-2 md:col-span-2"><Label>Station</Label><Input value={stationSearch} onFocus={() => setIsStationMenuOpen(true)} onChange={(event) => { setStationSearch(event.target.value); setIsStationMenuOpen(true); }} placeholder="Ketik nama stasiun..." />
+          {isStationMenuOpen && matchingStations.length > 0 && <div className="max-h-56 overflow-y-auto rounded-md border bg-background p-1 shadow-md">{matchingStations.map((station) => <button key={station.id} type="button" className="w-full rounded px-3 py-2 text-left text-sm hover:bg-muted" onMouseDown={(event) => { event.preventDefault(); selectStation(station.id); }}>{station.name}</button>)}</div>}</div>
         <div className="space-y-2"><Label>Station Name</Label><Input readOnly value={values.stationName} /></div>
         <div className="space-y-2"><Label>Coordinate</Label><Input readOnly value={values.stationId ? `${values.latitude}, ${values.longitude}` : ""} /></div>
         <div className="space-y-2"><Label>Address</Label><Input readOnly value={values.address} /></div>
