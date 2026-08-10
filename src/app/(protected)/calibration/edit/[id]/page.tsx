@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalibrationSchema, CalibrationFormValues } from "@/schemas/calibration.schema";
-import { useStations, useCalibrationDetail, useUpdateCalibration, useCalibrationAuth } from "@/hook/useCalibration";
+import { useStations, useCalibrationDetail, useUpdateCalibration, useSubmitCalibration } from "@/hook/useCalibration";
 import { CalibrationHeader } from "@/components/features/badge/CalibrationHeader";
 import { ParameterTable } from "@/components/features/calibration/ParameterTable";
 import { WaterSampleTable } from "@/components/features/calibration/WaterSampleTable";
@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { toUpdateCalibrationPayload } from "@/lib/calibration-payload";
 
 export default function EditCalibration() {
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function EditCalibration() {
   const { data: detail, isLoading } = useCalibrationDetail(id);
   const { data: stations } = useStations();
   const updateMutation = useUpdateCalibration();
+  const submitMutation = useSubmitCalibration();
   const [percentage, setPercentage] = useState(0);
 
   const form = useForm<CalibrationFormValues>({
@@ -78,9 +80,10 @@ export default function EditCalibration() {
 
   const onSubmit = async (values: CalibrationFormValues) => {
     try {
-      await updateMutation.mutateAsync({ id, data: { ...values, status: "Submitted" } });
+      await updateMutation.mutateAsync({ id, data: toUpdateCalibrationPayload(values) });
+      await submitMutation.mutateAsync(id);
       toast.success("Calibration successfully submitted!");
-      router.push("/calibration");
+      router.push(`/calibration/${id}`);
     } catch {
       toast.error("Failed to submit calibration sheet");
     }
@@ -89,7 +92,7 @@ export default function EditCalibration() {
   const saveDraft = async () => {
     const values = form.getValues();
     try {
-      await updateMutation.mutateAsync({ id, data: { ...values, status: "Draft" } });
+      await updateMutation.mutateAsync({ id, data: toUpdateCalibrationPayload(values) });
       toast.success("Draft saved successfully!");
     } catch {
       toast.error("Failed to save draft");

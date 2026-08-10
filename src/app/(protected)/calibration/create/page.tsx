@@ -1,242 +1,156 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalibrationSchema, CalibrationFormValues } from "@/schemas/calibration.schema";
-import { useStations, useParameters, useCreateCalibration, useCalibrationAuth } from "@/hook/useCalibration";
-import { CalibrationHeader } from "@/components/features/badge/CalibrationHeader";
+import { useForm } from "react-hook-form";
+import { CalendarDays, Check, X } from "lucide-react";
+import { calibrationParameterConfigs } from "@/config/calibration-parameters";
 import { ParameterTable } from "@/components/features/calibration/ParameterTable";
 import { WaterSampleTable } from "@/components/features/calibration/WaterSampleTable";
 import { NotesEditor } from "@/components/features/calibration/NotesEditor";
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { CalibrationHeader } from "@/components/features/badge/CalibrationHeader";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { calibrationService } from "@/services/api/calibration";
+import { toCreateCalibrationDraftPayload, toUpdateCalibrationPayload } from "@/lib/calibration-payload";
+import { CalibrationSchema, type CalibrationFormValues } from "@/schemas/calibration.schema";
+import { useCalibrationAuth, useCreateCalibration, useStations, useUpdateCalibration } from "@/hook/useCalibration";
 import { toast } from "sonner";
 
-export default function CreateCalibration() {
+const createParameterValue = (parameterId: string): CalibrationFormValues["parameters"][number] => {
+  const config = calibrationParameterConfigs.find((parameter) => parameter.id === parameterId);
+  if (!config) throw new Error("Unknown calibration parameter");
+
+  return {
+    parameterId: config.id,
+    parameterName: config.name,
+    spec: config.standards.map((standard) => `${standard.minAcceptable}-${standard.maxAcceptable} ${config.unit}`).join(" | "),
+    coeffType: config.coefficientType,
+    remark: null,
+    results: config.standards.map((standard) => ({
+      standardName: standard.crmName,
+      standardValue: standard.standardValue,
+      minAcceptable: standard.minAcceptable,
+      maxAcceptable: standard.maxAcceptable,
+      value: "",
+    })),
+    coefficients: config.coefficientKeys.map((key) => ({ key, value: 0 })),
+    status: "PASS",
+  };
+};
+
+export default function CreateCalibrationPage() {
   const router = useRouter();
-  const { officerName } = useCalibrationAuth();
-  const { data: stations } = useStations();
-  const { data: params } = useParameters();
+  const { token, officerName } = useCalibrationAuth();
+  const { data: stations = [] } = useStations();
   const createMutation = useCreateCalibration();
-  const [percentage, setPercentage] = useState(0);
+  const updateMutation = useUpdateCalibration();
+  const [draftId, setDraftId] = useState<string>();
+  const [stationSearch, setStationSearch] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const form = useForm<CalibrationFormValues>({
     resolver: zodResolver(CalibrationSchema),
     defaultValues: {
-      stationId: "",
-      stationName: "",
-      address: "",
-      latitude: 0,
-      longitude: 0,
-      calibrationDate: new Date(),
-      contactPerson: "",
-      phone: "",
-      officer: officerName,
-      parameters: [],
-      waterSamples: [
-        {
-          sampleName: "Aquades (Blank)",
-          temperature: undefined,
-          ph: undefined,
-          doValue: undefined,
-          conductivity: undefined,
-          tds: undefined,
-          salinity: undefined,
-          turbidity: undefined,
-          cod: undefined,
-          bod: undefined,
-          tss: undefined,
-          nh3: undefined,
-          no3: undefined,
-          orp: undefined,
-        },
-      ],
-      notes: "",
+      stationId: "", stationName: "", address: "", latitude: 0, longitude: 0,
+      calibrationDate: new Date(), contactPerson: "", phone: "", officer: officerName,
+      parameters: [], waterSamples: [{ sampleName: "Aquades (Blank)" }], notes: "",
     },
   });
+  const values = form.watch();
+  const matchingStations = useMemo(
+    () => stations.filter((station) => station.name.toLowerCase().includes(stationSearch.toLowerCase())).slice(0, 8),
+    [stationSearch, stations],
+  );
+  const completion = [values.stationId, values.contactPerson, values.phone, values.parameters.length > 0].filter(Boolean).length * 25;
 
-  const watchAll = form.watch();
-
-  // Auto-save draft every 30 seconds if form has changes and stationId is set
-  useEffect(() => {
-    if (!watchAll.stationId) return;
-
-    const timer = setInterval(() => {
-      const values = form.getValues();
-      createMutation.mutate({ ...values, status: "Draft" }, {
-        onSuccess: () => {
-          toast.success("Draft auto-saved successfully!");
-        }
-      });
-    }, 30000);
-
-    return () => clearInterval(timer);
-  }, [watchAll.stationId]);
-
-  // Alert before leaving page if form is dirty
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (form.formState.isDirty) {
-        e.preventDefault();
-        e.returnValue = "You have unsaved changes. Are you sure you want to leave?";
-        return e.returnValue;
+  const saveDraft = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      if (!draftId) {
+        const created = await createMutation.mutateAsync(toCreateCalibrationDraftPayload(form.getValues()));
+        const detail = await calibrationService.getCalibrationById(created.id, token);
+        form.reset({
+          stationId: detail.stationId, stationName: detail.stationName, address: detail.address,
+          latitude: detail.latitude, longitude: detail.longitude, calibrationDate: new Date(detail.calibrationDate),
+          contactPerson: detail.contactPerson, phone: detail.phone, officer: detail.officer || officerName,
+          parameters: detail.parameters, waterSamples: detail.waterSamples, notes: detail.notes,
+        });
+        setDraftId(created.id);
+        await updateMutation.mutateAsync({ id: created.id, data: toUpdateCalibrationPayload(form.getValues()) });
+        form.reset(form.getValues());
+        toast.success("Calibration berhasil disimpan");
+        return created.id;
+      } else {
+        await updateMutation.mutateAsync({ id: draftId, data: toUpdateCalibrationPayload(form.getValues()) });
       }
+      form.reset(form.getValues());
+      toast.success("Calibration berhasil disimpan");
+      return draftId;
+    } catch {
+      toast.error("Draft belum dapat disimpan. Lengkapi informasi wajib terlebih dahulu.");
+      return undefined;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [createMutation, draftId, form, officerName, token, updateMutation]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (draftId && form.formState.isDirty && !isSaving) void saveDraft();
+    }, 30000);
+    return () => window.clearInterval(timer);
+  }, [draftId, form.formState.isDirty, isSaving, saveDraft]);
+
+  useEffect(() => {
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      if (form.formState.isDirty) { event.preventDefault(); event.returnValue = ""; }
     };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("beforeunload", beforeUnload);
+    return () => window.removeEventListener("beforeunload", beforeUnload);
   }, [form.formState.isDirty]);
 
-  // Progress calculator
-  useEffect(() => {
-    let filled = 0;
-    let total = 6;
-    if (watchAll.stationId) filled++;
-    if (watchAll.contactPerson) filled++;
-    if (watchAll.phone) filled++;
-    if (watchAll.parameters && watchAll.parameters.length > 0) filled++;
-    if (watchAll.waterSamples && watchAll.waterSamples.length > 0) filled++;
-    if (watchAll.notes) filled++;
-
-    setPercentage(Math.round((filled / total) * 100));
-  }, [watchAll]);
-
-  // Set default parameters
-  useEffect(() => {
-    if (params && params.length > 0 && form.getValues("parameters").length === 0) {
-      const formatted = params.map((p) => {
-        const isPh = p.name.toLowerCase() === "ph";
-        return {
-          parameterId: p.id,
-          parameterName: p.name,
-          spec: p.spec,
-          results: isPh
-            ? [
-                { standardName: "Buffer pH 4.00", value: "" },
-                { standardName: "Buffer pH 7.01", value: "" },
-                { standardName: "Buffer pH 10.01", value: "" },
-              ]
-            : [
-                { standardName: "CRM Level 1", value: "" },
-                { standardName: "CRM Level 2", value: "" },
-              ],
-          coefficients: isPh
-            ? [
-                { key: "K1", value: 0 },
-                { key: "K2", value: 0 },
-                { key: "K3", value: 0 },
-                { key: "K4", value: 0 },
-              ]
-            : [
-                { key: "K", value: 0 },
-                { key: "B", value: 0 },
-              ],
-          status: "PASS" as const,
-        };
-      });
-      form.setValue("parameters", formatted);
-    }
-  }, [params]);
-
-  const handleStationChange = (id: string) => {
-    const selected = stations?.find((s) => s.id === id);
-    if (selected) {
-      form.setValue("stationId", selected.id);
-      form.setValue("stationName", selected.name);
-      form.setValue("address", selected.address);
-      form.setValue("latitude", selected.latitude);
-      form.setValue("longitude", selected.longitude);
-    }
+  const selectStation = (stationId: string) => {
+    const station = stations.find((item) => item.id === stationId);
+    if (!station) return;
+    form.setValue("stationId", station.id, { shouldDirty: true });
+    form.setValue("stationName", station.name, { shouldDirty: true });
+    form.setValue("address", station.address, { shouldDirty: true });
+    form.setValue("latitude", station.latitude, { shouldDirty: true });
+    form.setValue("longitude", station.longitude, { shouldDirty: true });
+    setStationSearch(station.name);
   };
 
-  const onSubmit = async (values: CalibrationFormValues) => {
-    try {
-      await createMutation.mutateAsync({ ...values, status: "Submitted" });
-      toast.success("Calibration successfully submitted!");
-      router.push("/calibration");
-    } catch {
-      toast.error("Failed to submit calibration sheet");
-    }
+  const toggleParameter = (parameterId: string) => {
+    const current = form.getValues("parameters");
+    const exists = current.some((parameter) => parameter.parameterId === parameterId);
+    form.setValue("parameters", exists ? current.filter((parameter) => parameter.parameterId !== parameterId) : [...current, createParameterValue(parameterId)], { shouldDirty: true });
   };
 
-  const saveDraft = async () => {
-    const values = form.getValues();
-    try {
-      await createMutation.mutateAsync({ ...values, status: "Draft" });
-      toast.success("Draft saved successfully!");
-    } catch {
-      toast.error("Failed to save draft");
-    }
+  const submit = async () => {
+    const id = await saveDraft();
+    if (id) router.push(`/calibration/edit/${id}`);
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <CalibrationHeader
-          reportNo="Draft"
-          officer={watchAll.officer}
-          calibrationDate={watchAll.calibrationDate?.toLocaleDateString() || ""}
-          status="Draft"
-          completionPercentage={percentage}
-        />
-
-        {/* Station Metadatas */}
-        <Card>
-          <CardContent className="p-6 grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Select Station</Label>
-              <Select onValueChange={handleStationChange} value={watchAll.stationId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose station..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {stations?.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Contact Person</Label>
-              <Input placeholder="Enter PIC name" {...form.register("contactPerson")} />
-            </div>
-            <div className="space-y-2">
-              <Label>Phone</Label>
-              <Input placeholder="Enter PIC phone" {...form.register("phone")} />
-            </div>
-            <div className="space-y-2">
-              <Label>Address</Label>
-              <Input disabled {...form.register("address")} className="bg-slate-50" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Section 1 */}
-        <h2 className="text-lg font-bold text-slate-800 border-b pb-2">
-          1. Sensor Parameter Calibration & Register Adjustment
-        </h2>
-        <ParameterTable form={form} />
-
-        {/* Section 2 */}
-        <WaterSampleTable form={form} />
-
-        {/* Notes */}
-        <NotesEditor value={watchAll.notes || ""} onChange={(val) => form.setValue("notes", val)} />
-
-        {/* Action Panel */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button type="button" variant="outline" onClick={saveDraft}>
-            Save Draft
-          </Button>
-          <Button type="submit">Submit Calibration</Button>
-        </div>
-      </form>
+    <div className="mx-auto max-w-6xl space-y-6 p-6">
+      <CalibrationHeader reportNo="Draft" officer={values.officer} calibrationDate={values.calibrationDate?.toLocaleDateString() || ""} status="Draft" completionPercentage={completion} />
+      <Card><CardHeader><CardTitle>General Information</CardTitle></CardHeader><CardContent className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2 md:col-span-2"><Label>Station</Label><Input value={stationSearch} onChange={(event) => setStationSearch(event.target.value)} placeholder="Cari stasiun..." />
+          {stationSearch && !values.stationId && <div className="rounded-md border bg-background p-1">{matchingStations.map((station) => <button key={station.id} type="button" className="w-full rounded px-3 py-2 text-left text-sm hover:bg-muted" onClick={() => selectStation(station.id)}>{station.name}</button>)}</div>}</div>
+        <div className="space-y-2"><Label>Station Name</Label><Input readOnly value={values.stationName} /></div>
+        <div className="space-y-2"><Label>Coordinate</Label><Input readOnly value={values.stationId ? `${values.latitude}, ${values.longitude}` : ""} /></div>
+        <div className="space-y-2"><Label>Address</Label><Input readOnly value={values.address} /></div>
+        <div className="space-y-2"><Label>Calibration Date</Label><div className="relative"><CalendarDays className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" type="date" value={values.calibrationDate ? values.calibrationDate.toISOString().slice(0, 10) : ""} onChange={(event) => form.setValue("calibrationDate", new Date(event.target.value), { shouldDirty: true })} /></div></div>
+        <div className="space-y-2"><Label>Contact Person</Label><Input {...form.register("contactPerson")} /></div><div className="space-y-2"><Label>Phone</Label><Input {...form.register("phone")} /></div>
+        <div className="space-y-2"><Label>Officer</Label><Input readOnly value={values.officer} /></div>
+      </CardContent></Card>
+      <Card><CardHeader><CardTitle>Parameter Calibration</CardTitle></CardHeader><CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{calibrationParameterConfigs.map((parameter) => { const selected = values.parameters.some((item) => item.parameterId === parameter.id); return <button key={parameter.id} type="button" onClick={() => toggleParameter(parameter.id)} className={`flex items-center gap-3 rounded-lg border p-3 text-left text-sm ${selected ? "border-primary bg-primary/5" : "hover:bg-muted"}`}>{selected ? <Check className="h-4 w-4 text-primary" /> : <X className="h-4 w-4 text-muted-foreground" />}<span>{parameter.name}</span></button>; })}</CardContent></Card>
+      <ParameterTable form={form} /><WaterSampleTable form={form} /><NotesEditor value={values.notes || ""} onChange={(notes) => form.setValue("notes", notes, { shouldDirty: true })} />
+      <div className="flex justify-end gap-3 border-t pt-4"><Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button><Button type="button" variant="outline" disabled={isSaving} onClick={() => void saveDraft()}>Save Draft</Button><Button type="button" disabled={isSaving} onClick={() => void submit()}>Continue to Review</Button></div>
     </div>
   );
 }

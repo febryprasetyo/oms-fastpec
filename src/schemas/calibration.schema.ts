@@ -41,7 +41,7 @@ export const ParameterCalibrationSchema = z.object({
   remark: z.string().nullable().optional(),
   results: z.array(ResultSchema),
   coefficients: z.array(CoefficientSchema),
-  status: z.enum(['PASS', 'FAILED']).default('PASS'),
+  status: z.enum(['PASS', 'FAILED']).nullable().default('PASS'),
 });
 
 export const CalibrationSchema = z.object({

@@ -54,6 +54,7 @@ interface StationListItem {
   lokasi?: string;
   latitude?: number | string;
   longitude?: number | string;
+  coordinate?: string;
 }
 
 const authHeaders = (accessToken: string) => ({ Authorization: `Bearer ${accessToken}` });
@@ -144,7 +145,17 @@ export const mapCalibrationDetail = (calibration: ApiCalibrationRecord): Calibra
       spec: parameter.spec,
       coeffType: detail.coeff_type ?? undefined,
       remark: detail.remark,
-      results: detail.standards.map((standard) => ({
+      results: (detail.standards.length > 0
+        ? detail.standards
+        : (getCalibrationParameterConfig(detail.parameter_id)?.standards ?? []).map((standard) => ({
+          crm_name: standard.crmName,
+            id: undefined,
+            crm_standard_value: standard.standardValue,
+            min_acceptable: standard.minAcceptable,
+            max_acceptable: standard.maxAcceptable,
+            calibration_result: null,
+          })))
+        .map((standard) => ({
         id: standard.id,
         standardName: standard.crm_name,
         standardValue: standard.crm_standard_value,
@@ -162,19 +173,24 @@ export const mapCalibrationDetail = (calibration: ApiCalibrationRecord): Calibra
 
 export const calibrationService = {
   async getStations(accessToken: string): Promise<Station[]> {
-    const response = await axiosInstance.post<ApiResponse<{ list: StationListItem[] }>>(
+    const response = await axiosInstance.post<ApiResponse<{ values: StationListItem[] }>>(
       "/api/data/station/list",
       { limit: 100, offset: 0 },
       { headers: authHeaders(accessToken) },
     );
 
-    return response.data.data.list.map((station) => ({
+    return response.data.data.values.map((station) => {
+      const coordinate = parseCoordinate(station.coordinate);
+
+      return {
       id: String(station.id ?? station.id_stasiun ?? station.uuid ?? ""),
       name: station.nama_stasiun ?? station.name ?? "",
       address: station.address ?? station.lokasi ?? "",
-      latitude: Number(station.latitude ?? 0),
-      longitude: Number(station.longitude ?? 0),
-    }));
+      latitude: Number(station.latitude ?? coordinate.latitude),
+      longitude: Number(station.longitude ?? coordinate.longitude),
+      coordinate: station.coordinate,
+    };
+    });
   },
 
   async getMasterParameters(): Promise<Parameter[]> {

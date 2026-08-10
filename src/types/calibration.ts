@@ -4,6 +4,7 @@ export interface Station {
   address: string;
   latitude: number;
   longitude: number;
+  coordinate?: string;
 }
 
 export interface Parameter {

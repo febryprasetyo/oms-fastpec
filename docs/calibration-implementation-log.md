@@ -49,7 +49,7 @@
 
 ## Phase 2 — Form Creation Workflow
 
-**Status:** In progress
+**Status:** Complete
 
 ### Confirmed inputs
 
@@ -57,3 +57,14 @@
 - The initial autosave lifecycle is `POST` draft, `GET` detail, then `PUT` CRM defaults and later form changes.
 - CRM measurements may be incomplete in a draft. Strict completeness validation belongs to the submit endpoint.
 - The form does not expose a parameter remark field and sends `remark: null`.
+
+### Delivered
+
+- Rebuilt the create screen around station search, selected-station metadata, date input, parameter selection, and dynamic parameter cards.
+- Implemented the initial draft lifecycle: create the header, retrieve backend detail IDs, then persist default CRM standards through the update endpoint.
+- Added 30-second draft autosave, dirty-page protection, completion feedback, and draft action handling.
+- Updated the edit submit path to save draft content first and then call the dedicated submit endpoint.
+
+### Validation
+
+- `npx.cmd tsc --noEmit` completed successfully.
