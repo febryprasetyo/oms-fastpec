@@ -2,7 +2,7 @@
 
 ## Phase 0 — API and Technical Baseline
 
-**Status:** Complete  
+**Status:** Complete
 **Date:** 2026-08-10
 
 ### Confirmed integration contract
@@ -28,3 +28,21 @@
 - Draft updates synchronize selected parameter IDs, CRM standards, and water samples, including removals.
 - Submitting a draft uses `POST /api/calibrations/:id/submit`.
 - Backend changes remain outside this frontend repository and must be available before the related UI flows are tested end-to-end.
+
+## Phase 1 — Data Layer and Validation
+
+**Status:** Complete  
+**Date:** 2026-08-10
+
+### Delivered
+
+- Added the frontend-owned static configuration for parameters, CRM standards, acceptance ranges, units, and coefficient types.
+- Added Zod schemas for backend create and update payloads, including nested standards and water samples.
+- Replaced calibration API fallbacks with the confirmed station endpoint and typed backend response mapping.
+- Added frontend mapping for backend snake_case fields, public verification UUIDs, PDF blobs, and the dedicated submit endpoint.
+- Added payload serializers that preserve backend detail and standard identifiers during draft autosave updates.
+- Added a React Query mutation hook for the dedicated submit endpoint.
+
+### Validation
+
+- `npx.cmd tsc --noEmit` completed successfully.

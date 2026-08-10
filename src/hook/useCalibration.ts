@@ -20,11 +20,9 @@ export const useStations = () => {
 };
 
 export const useParameters = () => {
-  const { token } = useCalibrationAuth();
   return useQuery({
     queryKey: ["master-parameters"],
-    queryFn: () => calibrationService.getMasterParameters(token),
-    enabled: !!token,
+    queryFn: () => calibrationService.getMasterParameters(),
   });
 };
 
@@ -74,6 +72,19 @@ export const useUpdateCalibration = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["calibrations"] });
       queryClient.invalidateQueries({ queryKey: ["calibration", variables.id] });
+    },
+  });
+};
+
+export const useSubmitCalibration = () => {
+  const queryClient = useQueryClient();
+  const { token } = useCalibrationAuth();
+
+  return useMutation({
+    mutationFn: (id: string) => calibrationService.submitCalibration(id, token),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ["calibrations"] });
+      queryClient.invalidateQueries({ queryKey: ["calibration", id] });
     },
   });
 };

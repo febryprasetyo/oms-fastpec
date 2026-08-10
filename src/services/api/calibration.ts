@@ -1,142 +1,243 @@
+import { calibrationParameterConfigs, getCalibrationParameterConfig } from "@/config/calibration-parameters";
 import { axiosInstance } from "@/lib/axiosInstance";
-import { 
-  Calibration, 
-  CalibrationDetail, 
-  Station, 
-  Parameter 
+import {
+  CreateCalibrationDraftPayloadSchema,
+  UpdateCalibrationPayloadSchema,
+  type CreateCalibrationDraftPayload,
+  type UpdateCalibrationPayload,
+} from "@/schemas/calibration-api.schema";
+import type {
+  Calibration,
+  CalibrationApiDetail,
+  CalibrationApiStatus,
+  CalibrationApiWaterSample,
+  CalibrationDetail,
+  Parameter,
+  Station,
+  WaterSample,
 } from "@/types/calibration";
 
-export interface CalibrationListResponse {
-  success: boolean;
-  data: Calibration[];
-  total: number;
-}
-
-export interface CalibrationDetailResponse {
-  success: boolean;
-  data: CalibrationDetail;
-}
-
-export interface StationListResponse {
-  success: boolean;
-  data: Station[];
-}
-
-export interface ParameterListResponse {
-  success: boolean;
-  data: Parameter[];
-}
-
-export interface CommonResponse {
+interface ApiResponse<T> {
   success: boolean;
   message?: string;
+  data: T;
+  total?: number;
 }
 
+interface ApiCalibrationRecord {
+  id: string;
+  report_no: string;
+  station_id: number;
+  station_name?: string;
+  station_address?: string;
+  station_coordinate?: string;
+  calibration_date: string;
+  contact_person: string;
+  phone: string;
+  officer_name?: string;
+  status: CalibrationApiStatus;
+  notes?: string | null;
+  verification_uuid?: string;
+  created_at: string;
+  updated_at: string;
+  details?: CalibrationApiDetail[];
+  waterSamples?: CalibrationApiWaterSample[];
+}
+
+interface StationListItem {
+  id?: number | string;
+  id_stasiun?: number | string;
+  uuid?: string;
+  nama_stasiun?: string;
+  name?: string;
+  address?: string;
+  lokasi?: string;
+  latitude?: number | string;
+  longitude?: number | string;
+}
+
+const authHeaders = (accessToken: string) => ({ Authorization: `Bearer ${accessToken}` });
+
+const displayStatus = (status: CalibrationApiStatus): Calibration["status"] =>
+  status.charAt(0).toUpperCase().concat(status.slice(1)) as Calibration["status"];
+
+const parseCoordinate = (coordinate?: string) => {
+  const values = coordinate?.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+  return { latitude: values[0] ?? 0, longitude: values[1] ?? 0 };
+};
+
+const parseCoefficients = (coefficients: CalibrationApiDetail["coefficients"]): Record<string, number> => {
+  if (!coefficients) return {};
+
+  if (typeof coefficients === "string") {
+    try {
+      const parsed = JSON.parse(coefficients) as Record<string, number>;
+      return parsed;
+    } catch {
+      return {};
+    }
+  }
+
+  return coefficients;
+};
+
+const toParameter = (parameterId: string, parameterName?: string): Parameter => {
+  const config = getCalibrationParameterConfig(parameterId);
+  const spec = config?.standards
+    .map((standard) => `${standard.minAcceptable}-${standard.maxAcceptable} ${config.unit}`)
+    .join(" | ") ?? "";
+
+  return { id: parameterId, name: parameterName ?? config?.name ?? "", spec };
+};
+
+const mapWaterSample = (sample: CalibrationApiWaterSample): WaterSample => ({
+  id: String(sample.id ?? ""),
+  sampleName: sample.sample_name,
+  temperature: sample.suhu ?? undefined,
+  ph: sample.ph ?? undefined,
+  doValue: sample.do ?? undefined,
+  conductivity: undefined,
+  tds: sample.tds ?? undefined,
+  salinity: undefined,
+  turbidity: sample.tur ?? undefined,
+  cod: sample.cod ?? undefined,
+  bod: sample.bod ?? undefined,
+  tss: sample.tss ?? undefined,
+  nh3: sample.amonia ?? undefined,
+  no3: sample.nitrat ?? undefined,
+  orp: sample.orp ?? undefined,
+});
+
+const mapCalibration = (calibration: ApiCalibrationRecord): Calibration => {
+  const coordinate = parseCoordinate(calibration.station_coordinate);
+
+  return {
+    id: calibration.id,
+    reportNo: calibration.report_no,
+    stationId: String(calibration.station_id),
+    stationName: calibration.station_name ?? "",
+    address: calibration.station_address ?? "",
+    latitude: coordinate.latitude,
+    longitude: coordinate.longitude,
+    calibrationDate: calibration.calibration_date,
+    contactPerson: calibration.contact_person,
+    phone: calibration.phone,
+    officer: calibration.officer_name ?? "",
+    status: displayStatus(calibration.status),
+    createdAt: calibration.created_at,
+    updatedAt: calibration.updated_at,
+    verificationUrl: calibration.verification_uuid ? `/verify/${calibration.verification_uuid}` : undefined,
+    uuid: calibration.verification_uuid,
+  };
+};
+
+export const mapCalibrationDetail = (calibration: ApiCalibrationRecord): CalibrationDetail => ({
+  ...mapCalibration(calibration),
+  parameters: (calibration.details ?? []).map((detail) => {
+    const parameter = toParameter(String(detail.parameter_id), detail.parameter_name);
+    const coefficients = parseCoefficients(detail.coefficients);
+
+    return {
+      id: detail.id,
+      parameterId: parameter.id,
+      parameterName: parameter.name,
+      spec: parameter.spec,
+      coeffType: detail.coeff_type ?? undefined,
+      remark: detail.remark,
+      results: detail.standards.map((standard) => ({
+        id: standard.id,
+        standardName: standard.crm_name,
+        standardValue: standard.crm_standard_value,
+        minAcceptable: standard.min_acceptable,
+        maxAcceptable: standard.max_acceptable,
+        value: standard.calibration_result?.toString() ?? "",
+      })),
+      coefficients: Object.entries(coefficients).map(([key, value]) => ({ key, value })),
+      status: detail.calculation_result,
+    };
+  }),
+  waterSamples: (calibration.waterSamples ?? []).map(mapWaterSample),
+  notes: calibration.notes ?? "",
+});
+
 export const calibrationService = {
-  getStations: async (accessToken: string): Promise<Station[]> => {
-    // API mock/call implementation, fallback to list endpoint
-    try {
-      const res = await axiosInstance.get<StationListResponse>(`/api/stations`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      return res.data.data;
-    } catch {
-      // Fallback fallback station list from typical payload if route doesn't exist
-      const res = await axiosInstance.post<{ data: { list: any[] } }>(
-        `/api/data/station/list`,
-        { limit: 100, offset: 0 },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      return (res.data?.data?.list || []).map((s: any) => ({
-        id: s.id_stasiun || s.uuid || String(s.id),
-        name: s.nama_stasiun || s.name,
-        address: s.address || s.lokasi || "Unknown",
-        latitude: parseFloat(s.latitude) || -8.3272340,
-        longitude: parseFloat(s.longitude) || 114.6118410,
-      }));
-    }
-  },
-
-  getMasterParameters: async (accessToken: string): Promise<Parameter[]> => {
-    try {
-      const res = await axiosInstance.get<ParameterListResponse>(`/api/master-parameters`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      return res.data.data;
-    } catch {
-      // Return defaults if API is not fully configured
-      return [
-        { id: "1", name: "Temperature", spec: "%trueness 99-101" },
-        { id: "2", name: "pH", spec: "Accuracy ± 0.05" },
-        { id: "3", name: "DO", spec: "%trueness 99-101" },
-        { id: "4", name: "Conductivity", spec: "%trueness 99-101" },
-        { id: "5", name: "Turbidity", spec: "%trueness 90-110" },
-        { id: "6", name: "COD", spec: "%trueness 99-100" },
-        { id: "7", name: "BOD", spec: "%trueness 99-100" },
-        { id: "8", name: "TSS", spec: "%trueness 99-100" },
-        { id: "9", name: "NH3", spec: "%trueness 99-101" },
-        { id: "10", name: "NO3", spec: "%trueness 99-100" },
-        { id: "11", name: "ORP", spec: "%trueness 99-101" },
-      ];
-    }
-  },
-
-  getCalibrations: async (accessToken: string): Promise<Calibration[]> => {
-    const res = await axiosInstance.get<CalibrationListResponse>(`/api/calibrations`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    return res.data.data;
-  },
-
-  getCalibrationById: async (id: string, accessToken?: string): Promise<CalibrationDetail> => {
-    const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined;
-    const res = await axiosInstance.get<CalibrationDetailResponse>(`/api/calibrations/${id}`, {
-      headers,
-    });
-    return res.data.data;
-  },
-
-  getCalibrationByUuid: async (uuid: string): Promise<CalibrationDetail> => {
-    const res = await axiosInstance.get<CalibrationDetailResponse>(`/api/verify/${uuid}`);
-    return res.data.data;
-  },
-
-  createCalibration: async (data: any, accessToken: string): Promise<Calibration> => {
-    const res = await axiosInstance.post<{ success: boolean; data: Calibration }>(
-      `/api/calibrations`,
-      data,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
+  async getStations(accessToken: string): Promise<Station[]> {
+    const response = await axiosInstance.post<ApiResponse<{ list: StationListItem[] }>>(
+      "/api/data/station/list",
+      { limit: 100, offset: 0 },
+      { headers: authHeaders(accessToken) },
     );
-    return res.data.data;
+
+    return response.data.data.list.map((station) => ({
+      id: String(station.id ?? station.id_stasiun ?? station.uuid ?? ""),
+      name: station.nama_stasiun ?? station.name ?? "",
+      address: station.address ?? station.lokasi ?? "",
+      latitude: Number(station.latitude ?? 0),
+      longitude: Number(station.longitude ?? 0),
+    }));
   },
 
-  updateCalibration: async (id: string, data: any, accessToken: string): Promise<Calibration> => {
-    const res = await axiosInstance.put<{ success: boolean; data: Calibration }>(
-      `/api/calibrations/${id}`,
-      data,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
-    );
-    return res.data.data;
+  async getMasterParameters(): Promise<Parameter[]> {
+    return calibrationParameterConfigs.map((config) => toParameter(config.id, config.name));
   },
 
-  deleteCalibration: async (id: string, accessToken: string): Promise<void> => {
-    await axiosInstance.delete(`/api/calibrations/${id}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+  async getCalibrations(accessToken: string): Promise<Calibration[]> {
+    const response = await axiosInstance.get<ApiResponse<ApiCalibrationRecord[]>>("/api/calibrations", {
+      headers: authHeaders(accessToken),
     });
+
+    return response.data.data.map(mapCalibration);
   },
 
-  approveCalibration: async (id: string, accessToken: string): Promise<Calibration> => {
-    const res = await axiosInstance.post<{ success: boolean; data: Calibration }>(
-      `/api/calibrations/${id}/approve`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
-    );
-    return res.data.data;
+  async getCalibrationById(id: string, accessToken: string): Promise<CalibrationDetail> {
+    const response = await axiosInstance.get<ApiResponse<ApiCalibrationRecord>>(`/api/calibrations/${id}`, {
+      headers: authHeaders(accessToken),
+    });
+
+    return mapCalibrationDetail(response.data.data);
+  },
+
+  async getCalibrationByUuid(uuid: string): Promise<CalibrationDetail> {
+    const response = await axiosInstance.get<ApiResponse<ApiCalibrationRecord>>(`/api/verify/${uuid}`);
+    return mapCalibrationDetail(response.data.data);
+  },
+
+  async createCalibration(data: unknown, accessToken: string): Promise<Calibration> {
+    const payload: CreateCalibrationDraftPayload = CreateCalibrationDraftPayloadSchema.parse(data);
+    const response = await axiosInstance.post<ApiResponse<ApiCalibrationRecord>>("/api/calibrations", payload, {
+      headers: authHeaders(accessToken),
+    });
+
+    return mapCalibration(response.data.data);
+  },
+
+  async updateCalibration(id: string, data: unknown, accessToken: string): Promise<Calibration> {
+    const payload: UpdateCalibrationPayload = UpdateCalibrationPayloadSchema.parse(data);
+    const response = await axiosInstance.put<ApiResponse<ApiCalibrationRecord>>(`/api/calibrations/${id}`, payload, {
+      headers: authHeaders(accessToken),
+    });
+
+    return mapCalibration(response.data.data);
+  },
+
+  async submitCalibration(id: string, accessToken: string): Promise<void> {
+    await axiosInstance.post(`/api/calibrations/${id}/submit`, {}, { headers: authHeaders(accessToken) });
+  },
+
+  async deleteCalibration(id: string, accessToken: string): Promise<void> {
+    await axiosInstance.delete(`/api/calibrations/${id}`, { headers: authHeaders(accessToken) });
+  },
+
+  async approveCalibration(id: string, accessToken: string): Promise<void> {
+    await axiosInstance.post(`/api/calibrations/${id}/approve`, {}, { headers: authHeaders(accessToken) });
+  },
+
+  async downloadPdf(id: string, accessToken: string): Promise<Blob> {
+    const response = await axiosInstance.get(`/api/calibrations/${id}/print`, {
+      headers: authHeaders(accessToken),
+      responseType: "blob",
+    });
+
+    return response.data as Blob;
   },
 };

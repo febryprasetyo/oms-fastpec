@@ -24,14 +24,21 @@ export const CoefficientSchema = z.object({
 });
 
 export const ResultSchema = z.object({
+  id: z.number().int().positive().optional(),
   standardName: z.string(),
+  standardValue: z.coerce.number().nullable().optional(),
+  minAcceptable: z.coerce.number().nullable().optional(),
+  maxAcceptable: z.coerce.number().nullable().optional(),
   value: z.string().min(1, 'Value is required'),
 });
 
 export const ParameterCalibrationSchema = z.object({
+  id: z.number().int().positive().optional(),
   parameterId: z.string(),
   parameterName: z.string(),
   spec: z.string(),
+  coeffType: z.enum(['linear', 'polynomial']).optional(),
+  remark: z.string().nullable().optional(),
   results: z.array(ResultSchema),
   coefficients: z.array(CoefficientSchema),
   status: z.enum(['PASS', 'FAILED']).default('PASS'),
