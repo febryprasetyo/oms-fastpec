@@ -20,3 +20,11 @@
 
 - Data-layer mapping will translate backend snake_case payloads and response fields into frontend domain types.
 - Validation will preserve backend-calculated results and must not calculate pass/fail in the browser.
+
+### Backend contract required for frontend integration
+
+- The backend owns `calculation_result` evaluation and validation. The frontend sends CRM measurements and coefficients only.
+- List and detail responses include station and officer display values; detail records include `parameter_name`.
+- Draft updates synchronize selected parameter IDs, CRM standards, and water samples, including removals.
+- Submitting a draft uses `POST /api/calibrations/:id/submit`.
+- Backend changes remain outside this frontend repository and must be available before the related UI flows are tested end-to-end.
