@@ -101,3 +101,12 @@
 - Routed PDF downloads through the protected backend print endpoint.
 - Extended public verification with station/contact metadata, notes, parameter statuses, and water samples.
 - Validated with `npx.cmd tsc --noEmit`.
+
+## Phase 5 — Responsive UX and Printing
+
+**Status:** In progress
+
+### Scope
+
+- Stabilize the A4 print layout and hide application controls in print mode.
+- Improve table overflow and mobile/tablet layout without changing backend contracts.
