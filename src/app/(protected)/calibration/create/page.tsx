@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -45,12 +45,13 @@ const createParameterValue = (parameterId: string): CalibrationFormValues["param
 export default function CreateCalibrationPage() {
   const router = useRouter();
   const { token, officerName } = useCalibrationAuth();
-  const { data: stations = [] } = useStations();
+  const { data: stations = [], isLoading: isStationsLoading, isError: isStationsError } = useStations();
   const createMutation = useCreateCalibration();
   const updateMutation = useUpdateCalibration();
   const [draftId, setDraftId] = useState<string>();
   const [stationSearch, setStationSearch] = useState("");
   const [isStationMenuOpen, setIsStationMenuOpen] = useState(false);
+  const stationPickerRef = useRef<HTMLDivElement>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const form = useForm<CalibrationFormValues>({
@@ -114,6 +115,21 @@ export default function CreateCalibrationPage() {
     return () => window.removeEventListener("beforeunload", beforeUnload);
   }, [form.formState.isDirty]);
 
+  useEffect(() => {
+    const closeStationPicker = (event: MouseEvent) => {
+      if (!stationPickerRef.current?.contains(event.target as Node)) setIsStationMenuOpen(false);
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsStationMenuOpen(false);
+    };
+    document.addEventListener("mousedown", closeStationPicker);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeStationPicker);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
   const selectStation = (stationId: string) => {
     const station = stations.find((item) => item.id === stationId);
     if (!station) return;
@@ -141,8 +157,8 @@ export default function CreateCalibrationPage() {
     <div className="mx-auto max-w-6xl space-y-6 p-6">
       <CalibrationHeader reportNo="Draft" officer={values.officer} calibrationDate={values.calibrationDate?.toLocaleDateString() || ""} status="Draft" completionPercentage={completion} />
       <Card className="bg-slate-50/80 dark:bg-slate-900/40"><CardHeader><CardTitle>General Information</CardTitle></CardHeader><CardContent className="grid gap-4 md:grid-cols-2">
-        <div className="relative space-y-2 md:col-span-2"><Label>Station</Label><Input value={stationSearch} onFocus={() => setIsStationMenuOpen(true)} onChange={(event) => { setStationSearch(event.target.value); setIsStationMenuOpen(true); }} placeholder="Ketik nama stasiun..." />
-          {isStationMenuOpen && <div className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-md border bg-background p-1 shadow-md">{matchingStations.length > 0 ? matchingStations.map((station) => <button key={station.id} type="button" className="w-full rounded px-3 py-2 text-left text-sm hover:bg-muted" onMouseDown={(event) => { event.preventDefault(); selectStation(station.id); }}>{station.name}</button>) : <p className="px-3 py-2 text-sm text-muted-foreground">Stasiun tidak ditemukan.</p>}</div>}</div>
+        <div ref={stationPickerRef} className="space-y-2 md:col-span-2"><Label>Station</Label><Input value={stationSearch} onFocus={() => setIsStationMenuOpen(true)} onChange={(event) => { setStationSearch(event.target.value); setIsStationMenuOpen(true); }} placeholder="Ketik nama stasiun..." />
+          {isStationMenuOpen && <div className="max-h-56 overflow-y-auto rounded-md border bg-background p-1 shadow-md">{isStationsLoading ? <p className="px-3 py-2 text-sm text-muted-foreground">Memuat stasiun...</p> : isStationsError ? <p className="px-3 py-2 text-sm text-destructive">Gagal memuat daftar stasiun.</p> : matchingStations.length > 0 ? matchingStations.map((station) => <button key={station.id} type="button" className="w-full rounded px-3 py-2 text-left text-sm hover:bg-muted" onMouseDown={(event) => { event.preventDefault(); selectStation(station.id); }}>{station.name}</button>) : <p className="px-3 py-2 text-sm text-muted-foreground">Stasiun tidak ditemukan.</p>}</div>}</div>
         <div className="space-y-2"><Label>Station Name</Label><Input readOnly value={values.stationName} /></div>
         <div className="space-y-2"><Label>Coordinate</Label><Input readOnly value={values.stationId ? `${values.latitude}, ${values.longitude}` : ""} /></div>
         <div className="space-y-2"><Label>Address</Label><Input readOnly value={values.address} /></div>
