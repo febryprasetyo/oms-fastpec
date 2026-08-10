@@ -115,3 +115,12 @@
 
 - Added A4 print page sizing, print background cleanup, and application chrome suppression.
 - Verified TypeScript with `npx.cmd tsc --noEmit`.
+
+## Phase 6 — Release Readiness
+
+**Status:** In progress
+
+### Scope
+
+- Run the available static validation and production build.
+- Record any backend-dependent checks that require a deployed API session.
