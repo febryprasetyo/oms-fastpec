@@ -36,6 +36,7 @@ interface ApiCalibrationRecord {
   station_name?: string;
   station_address?: string;
   station_coordinate?: string;
+  station_city?: string;
   calibration_date: string;
   contact_person: string;
   phone: string;
@@ -123,6 +124,7 @@ const mapCalibration = (calibration: ApiCalibrationRecord): Calibration => {
     stationId: String(calibration.station_id),
     stationName: calibration.station_name ?? "",
     address: calibration.station_address ?? "",
+    stationCity: calibration.station_city,
     latitude: coordinate.latitude,
     longitude: coordinate.longitude,
     calibrationDate: calibration.calibration_date,

@@ -2,6 +2,7 @@ export interface Station {
   id: string;
   name: string;
   address: string;
+  stationCity?: string;
   latitude: number;
   longitude: number;
   coordinate?: string;
@@ -69,6 +70,7 @@ export interface Calibration {
   stationId: string;
   stationName: string;
   address: string;
+  stationCity?: string;
   latitude: number;
   longitude: number;
   calibrationDate: string;

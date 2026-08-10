@@ -3,29 +3,28 @@ import { CalibrationDetail } from "@/types/calibration";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Printer, Download } from "lucide-react";
-import axios from "axios";
+import cmcIcon from "@/assets/img/cmc_icon.png";
+import { calibrationService } from "@/services/api/calibration";
+import { useCalibrationAuth } from "@/hook/useCalibration";
 
 interface ReportPreviewProps {
   detail: CalibrationDetail;
 }
 
 export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
+  const { token } = useCalibrationAuth();
   const handlePrint = () => {
     window.print();
   };
 
   const handleDownloadPdf = async () => {
     try {
-      const response = await axios.post(
-        "/api/calibration/download-pdf",
-        { id: detail.id },
-        { responseType: "blob" }
-      );
-      const blob = new Blob([response.data], { type: "application/pdf" });
+      const blob = await calibrationService.downloadPdf(detail.id, token);
       const link = document.createElement("a");
       link.href = window.URL.createObjectURL(blob);
       link.download = `Calibration_Report_${detail.reportNo.replace(/\//g, "_")}.pdf`;
       link.click();
+      window.URL.revokeObjectURL(link.href);
     } catch (error) {
       console.error("Failed to download PDF", error);
     }
@@ -50,7 +49,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
         <div className="flex border-b-2 border-slate-900 pb-4 mb-4 items-center justify-between">
           <div className="flex items-center gap-3">
             <img
-              src="https://uploads.onecompiler.io/44724abkh/1786077498764/icon-cmc.png"
+              src={cmcIcon.src}
               alt="CMC Logo"
               className="w-12 h-12 object-contain"
             />
@@ -182,12 +181,14 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
         {/* Signatures */}
         <div className="grid grid-cols-2 gap-4 mt-8 text-[11px]">
           <div className="text-center">
+            <p className="text-xs font-semibold text-slate-600">Place / Date: {detail.stationCity || detail.address}, {detail.calibrationDate}</p>
             <p className="font-semibold text-slate-600">Calibration Officer:</p>
             <div className="h-16" />
             <p className="font-bold underline text-slate-800">{detail.officer}</p>
             <p className="text-[9px] text-slate-500">PT Cahaya Mas Cemerlang</p>
           </div>
           <div className="text-center">
+            <p className="text-xs font-semibold text-slate-600">Place / Date: {detail.stationCity || detail.address}, {detail.calibrationDate}</p>
             <p className="font-semibold text-slate-600">Customer / Representative:</p>
             <div className="h-16" />
             <p className="font-bold text-slate-400">( ___________________________ )</p>

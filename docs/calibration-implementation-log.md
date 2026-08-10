@@ -87,10 +87,17 @@
 
 ## Phase 4 — Report and Verification
 
-**Status:** In progress
+**Status:** Complete
 
 ### Confirmed inputs
 
 - Detail and public verification responses provide all report metadata, joined parameter names, CRM details, and water samples.
 - Signature place/date combines `station_city` with `calibration_date`.
 - The report uses `src/assets/img/cmc_icon.png` as the company logo.
+
+### Delivered
+
+- Updated report metadata mapping for station city and local company branding.
+- Routed PDF downloads through the protected backend print endpoint.
+- Extended public verification with station/contact metadata, notes, parameter statuses, and water samples.
+- Validated with `npx.cmd tsc --noEmit`.
