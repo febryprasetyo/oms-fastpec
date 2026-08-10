@@ -13,6 +13,7 @@ import {
   FolderKanban,
   Receipt,
   ClipboardList,
+  ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -20,7 +21,7 @@ import { usePathname } from "next/navigation";
 import { Button } from "../ui/button";
 import { useAuthStore, useExpandedStore } from "@/services/store";
 import NavLinkSkeleton from "../features/skeleton/NavLinkSkeleton";
-import { isAdminOrEngineering } from "@/lib/roleHelper";
+import { isAdminOrEngineering, isAdminOrEngineeringById } from "@/lib/roleHelper";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -129,7 +130,7 @@ export default function Sidebar() {
             </div>
 
             {/* Admin Section */}
-            {isAdminOrEngineering(user?.user_data?.role_name) ? (
+            {isAdminOrEngineering(user?.user_data?.role_name) || isAdminOrEngineeringById(user?.user_data?.role_id) ? (
               <div className="space-y-1">
                 <div className="mb-2 flex items-center gap-2 px-2">
                   <div className="h-[1px] flex-1 bg-slate-100 dark:bg-dark_accent/30" />
@@ -143,6 +144,7 @@ export default function Sidebar() {
                   {/* <MenuItem to="/pengajuan" label="Pengajuan" Icon={FolderKanban} /> */}
                   {/* <MenuItem to="/billing" label="Billing" Icon={Receipt} /> */}
                   <MenuItem to="/reports" label="Laporan" Icon={ClipboardList} />
+                  <MenuItem to="/calibration" label="Calibration Report" Icon={ClipboardCheck} />
                   <MenuItem to="/maintenance" label="Maintenance" Icon={Settings} />
                 </div>
               </div>
