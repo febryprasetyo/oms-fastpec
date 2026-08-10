@@ -118,9 +118,15 @@
 
 ## Phase 6 — Release Readiness
 
-**Status:** In progress
+**Status:** Complete
 
 ### Scope
 
 - Run the available static validation and production build.
 - Record any backend-dependent checks that require a deployed API session.
+
+### Validation
+
+- `npm.cmd run build` completed successfully.
+- `npm.cmd run lint` completed successfully.
+- End-to-end API verification remains dependent on the deployed backend and authenticated test data.
