@@ -243,6 +243,12 @@ Hasil QR menjadi `https://app.example.com/verify/{verification_uuid}`. Route fro
 
 `PUBLIC_CALIBRATION_BASE_URL=https://api.example.com/api` tetap didukung sebagai fallback untuk deployment yang ingin QR langsung membuka halaman verifikasi backend.
 
+Backend tidak boleh membentuk URL QR dari header request `Origin`, `Referer`,
+`Host`, atau forwarded-host. Jika kedua konfigurasi eksplisit di atas tidak
+tersedia, backend mengembalikan kesalahan konfigurasi. Template PDF memakai
+placeholder gambar `<img src="{{QR_CODE_IMAGE}}" ...>`; tidak ada marker DOM
+`data-calibration-qr` yang perlu dicari atau dimutasi oleh frontend.
+
 ## 5. Autosave / edit detail laporan
 
 `PUT /calibrations/{id}`

@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   formatCalibrationDate,
+  formatCalibrationDateInput,
   formatCalibrationDateRange,
   formatCalibrationMeasurement,
+  formatCalibrationParameterName,
   formatCalibrationPlace,
   formatCalibrationStandard,
   translateCalibrationStatus,
@@ -11,6 +13,21 @@ import {
 describe("formatter kalibrasi Indonesia", () => {
   it("memformat tanggal kalender tanpa pergeseran zona waktu", () => {
     expect(formatCalibrationDate("2026-08-12")).toBe("12 Agustus 2026");
+  });
+
+  it("mempertahankan tanggal tengah malam lokal Asia/Jakarta untuk input tanggal", () => {
+    const originalTimezone = process.env.TZ;
+    process.env.TZ = "Asia/Jakarta";
+
+    try {
+      const localMidnight = new Date(2026, 7, 12, 0, 0, 0);
+
+      expect(localMidnight.toISOString()).toBe("2026-08-11T17:00:00.000Z");
+      expect(formatCalibrationDateInput(localMidnight)).toBe("2026-08-12");
+    } finally {
+      if (originalTimezone === undefined) delete process.env.TZ;
+      else process.env.TZ = originalTimezone;
+    }
   });
 
   it("meringkas rentang tanggal dalam bulan yang sama", () => {
@@ -47,5 +64,17 @@ describe("formatter kalibrasi Indonesia", () => {
     );
     expect(translateCalibrationStatus("PASS")).toBe("Lulus");
     expect(translateCalibrationStatus("Submitted")).toBe("Diajukan");
+  });
+
+  it.each([
+    ["Amonia", "Amonia (NH3-N)"],
+    ["NH3-N", "Amonia (NH3-N)"],
+    ["Nitrat", "Nitrat (NO3-N)"],
+    ["NO3", "Nitrat (NO3-N)"],
+    ["Nitrit", "Nitrit (NO2-N)"],
+    ["NO2-N", "Nitrit (NO2-N)"],
+    ["DO", "DO"],
+  ])("menampilkan nama parameter %s sebagai %s", (value, expected) => {
+    expect(formatCalibrationParameterName(value)).toBe(expected);
   });
 });

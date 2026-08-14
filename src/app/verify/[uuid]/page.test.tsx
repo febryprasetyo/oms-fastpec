@@ -89,6 +89,51 @@ describe("VerificationPage", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("membersihkan catatan berbahaya sambil mempertahankan pemformatan yang diizinkan", () => {
+    useCalibrationVerify.mockReturnValueOnce({
+      data: {
+        ...calibrationDetail,
+        notes: '<p onclick="alert(1)">Aman <em data-secret="x">miring</em><img src="x" onerror="alert(2)"><script>alert(3)</script><a href="javascript:alert(4)">tautan</a></p><ol style="color:red"><li>Butir</li></ol>',
+      },
+      isLoading: false,
+      error: null,
+    });
+
+    const { container } = render(<VerificationPage />);
+
+    expect(screen.getByText("miring").tagName).toBe("EM");
+    expect(screen.getByText("miring")).not.toHaveAttribute("data-secret");
+    expect(screen.getByText("Aman", { exact: false }).closest("p")).not.toHaveAttribute("onclick");
+    expect(screen.getByText("Butir").closest("ol")).not.toHaveAttribute("style");
+    const notes = container.querySelector(".calibration-notes-preview");
+    expect(notes?.querySelector("script, img, a, svg")).toBeNull();
+  });
+
+  it("membedakan gaya dan label status lulus, tidak lulus, dan menunggu", () => {
+    const baseParameter = calibrationDetail.parameters[0];
+    useCalibrationVerify.mockReturnValueOnce({
+      data: {
+        ...calibrationDetail,
+        parameters: [
+          { ...baseParameter, id: 1, parameterName: "Amonia", status: "PASS" },
+          { ...baseParameter, id: 2, parameterName: "Nitrat", status: "FAILED" },
+          { ...baseParameter, id: 3, parameterName: "Nitrit", status: null },
+        ],
+      },
+      isLoading: false,
+      error: null,
+    });
+
+    render(<VerificationPage />);
+
+    expect(screen.getByText("Amonia (NH3-N)")).toBeInTheDocument();
+    expect(screen.getByText("Nitrat (NO3-N)")).toBeInTheDocument();
+    expect(screen.getByText("Nitrit (NO2-N)")).toBeInTheDocument();
+    expect(screen.getByText("Lulus")).toHaveClass("bg-green-100", "text-green-800");
+    expect(screen.getByText("Tidak Lulus")).toHaveClass("bg-red-100", "text-red-800");
+    expect(screen.getByText("Menunggu")).toHaveClass("bg-amber-100", "text-amber-800");
+  });
+
   it("menampilkan keadaan memverifikasi dan gagal dalam bahasa Indonesia", () => {
     useCalibrationVerify.mockReturnValueOnce({ data: undefined, isLoading: true, error: null });
     const { rerender } = render(<VerificationPage />);

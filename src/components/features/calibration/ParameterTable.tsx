@@ -4,6 +4,7 @@ import { CalibrationFormValues } from "@/schemas/calibration.schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { formatCalibrationParameterName } from "@/lib/calibration-format";
 
 interface ParameterTableProps {
   form: UseFormReturn<CalibrationFormValues>;
@@ -27,7 +28,7 @@ export const ParameterTable: React.FC<ParameterTableProps> = ({ form }) => {
           <Card key={field.id} className="shadow-sm">
             <CardHeader className="bg-slate-50 border-b py-3 px-4">
               <CardTitle className="text-sm font-semibold flex items-center justify-between text-slate-800">
-                <span>{paramName} Kalibrasi</span>
+                <span>{formatCalibrationParameterName(paramName)} Kalibrasi</span>
                 <span className="text-xs font-normal text-slate-500">
                   Spesifikasi: {spec}
                 </span>

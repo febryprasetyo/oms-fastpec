@@ -9,8 +9,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
   formatCalibrationDateRange,
   formatCalibrationMeasurement,
+  formatCalibrationParameterName,
   translateCalibrationStatus,
 } from "@/lib/calibration-format";
+import { sanitizeCalibrationNotes } from "@/lib/calibration-notes";
+
+const parameterStatusStyle = (status: CalibrationDetailStatus) => {
+  if (status === "PASS") return "border-green-200 bg-green-100 text-green-800";
+  if (status === "FAILED") return "border-red-200 bg-red-100 text-red-800";
+  return "border-amber-200 bg-amber-100 text-amber-800";
+};
+
+type CalibrationDetailStatus = "PASS" | "FAILED" | null;
 
 export default function VerificationPage() {
   const { uuid } = useParams() as { uuid: string };
@@ -84,7 +94,7 @@ export default function VerificationPage() {
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">Catatan</h4>
             <div
               className="calibration-notes-preview rounded-md border bg-slate-50 p-3 text-slate-600"
-              dangerouslySetInnerHTML={{ __html: detail.notes || "-" }}
+              dangerouslySetInnerHTML={{ __html: sanitizeCalibrationNotes(detail.notes || "-") }}
             />
           </div>
 
@@ -103,10 +113,10 @@ export default function VerificationPage() {
                 <TableBody>
                   {detail.parameters.map((p, idx) => (
                     <TableRow key={idx}>
-                      <TableCell className="font-semibold text-xs text-slate-800">{p.parameterName}</TableCell>
+                      <TableCell className="font-semibold text-xs text-slate-800">{formatCalibrationParameterName(p.parameterName)}</TableCell>
                       <TableCell className="text-center">
-                        <span className="text-[10px] font-bold bg-green-100 text-green-800 px-2 py-0.5 rounded border border-green-200 uppercase">
-                          {translateCalibrationStatus(p.status)}
+                        <span className={`rounded border px-2 py-0.5 text-[10px] font-bold uppercase ${parameterStatusStyle(p.status)}`}>
+                          {translateCalibrationStatus(p.status ?? "PENDING")}
                         </span>
                       </TableCell>
                     </TableRow>

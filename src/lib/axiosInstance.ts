@@ -26,9 +26,9 @@ axiosInstance.interceptors.response.use(
         deleteCookie("token");
 
         toast({
-          title: "Unauthorized",
+          title: "Sesi Berakhir",
           variant: "destructive",
-          description: "Silahkan Login Untuk Melanjutkan",
+          description: "Silakan masuk kembali untuk melanjutkan.",
         });
 
         return;
@@ -36,7 +36,7 @@ axiosInstance.interceptors.response.use(
     }
 
     toast({
-      title: "Error",
+      title: "Kesalahan",
       variant: "destructive",
       description: error?.response?.data?.message || "Terjadi Kesalahan",
     });

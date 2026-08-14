@@ -71,6 +71,13 @@ const formatCalibrationNumber = (value: string | number): string => {
     : String(value);
 };
 
+const padCalendarPart = (value: number): string => String(value).padStart(2, "0");
+
+export const formatCalibrationDateInput = (value: Date): string => {
+  if (Number.isNaN(value.getTime())) return "";
+  return `${value.getFullYear()}-${padCalendarPart(value.getMonth() + 1)}-${padCalendarPart(value.getDate())}`;
+};
+
 export const formatCalibrationDate = (value: string | Date): string => {
   const parts = parseCalibrationDate(value);
   return parts ? formatDateParts(parts) : String(value);
@@ -127,6 +134,26 @@ export const formatCalibrationStandard = (
 
 export const formatCalibrationPlace = (value: string): string =>
   value.trim().replace(/^(?:Kabupaten|Kota)\s+/i, "");
+
+const CALIBRATION_PARAMETER_LABELS: Record<string, string> = {
+  AMONIA: "Amonia (NH3-N)",
+  "AMONIA (NH3-N)": "Amonia (NH3-N)",
+  NH3: "Amonia (NH3-N)",
+  "NH3-N": "Amonia (NH3-N)",
+  NITRAT: "Nitrat (NO3-N)",
+  "NITRAT (NO3-N)": "Nitrat (NO3-N)",
+  NO3: "Nitrat (NO3-N)",
+  "NO3-N": "Nitrat (NO3-N)",
+  NITRIT: "Nitrit (NO2-N)",
+  "NITRIT (NO2-N)": "Nitrit (NO2-N)",
+  NO2: "Nitrit (NO2-N)",
+  "NO2-N": "Nitrit (NO2-N)",
+};
+
+export const formatCalibrationParameterName = (value: string): string => {
+  const trimmedValue = value.trim();
+  return CALIBRATION_PARAMETER_LABELS[trimmedValue.toUpperCase()] ?? trimmedValue;
+};
 
 const CALIBRATION_STATUS_LABELS: Record<string, string> = {
   APPROVED: "Disetujui",

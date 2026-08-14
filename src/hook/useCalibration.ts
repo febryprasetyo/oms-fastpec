@@ -6,7 +6,7 @@ export const useCalibrationAuth = () => {
   const user = useAuthStore((state) => state?.user);
   const userData = user?.user_data as { fullname?: string; username?: string; role_id?: string; role_name?: string } | undefined;
   const token = user?.token?.access_token || "";
-  const officerName = userData?.fullname || userData?.username || "Officer";
+  const officerName = userData?.fullname || userData?.username || "Petugas";
   const role = userData?.role_id || userData?.role_name || "usr";
   return { token, officerName, role };
 };

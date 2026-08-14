@@ -1,8 +1,60 @@
 import { describe, expect, it } from "vitest";
 import { toUpdateCalibrationPayload } from "@/lib/calibration-payload";
-import { CalibrationSchema } from "./calibration.schema";
+import { CalibrationSchema, formatCalibrationValidationError } from "./calibration.schema";
 
 describe("CalibrationSchema", () => {
+  it("menampilkan label dan pesan validasi profesional tanpa path internal atau bahasa Inggris", () => {
+    const invalidStation = CalibrationSchema.safeParse({
+      stationId: "",
+      stationName: "",
+      address: "",
+      latitude: 0,
+      longitude: 0,
+      calibrationStartDate: new Date("2026-08-12T00:00:00"),
+      calibrationEndDate: new Date("2026-08-12T00:00:00"),
+      officer: "",
+      parameters: [],
+      waterSamples: [],
+      notes: "",
+    });
+
+    expect(invalidStation.success).toBe(false);
+    if (invalidStation.success) throw new Error("Fixture validasi seharusnya gagal.");
+    const message = formatCalibrationValidationError(invalidStation.error);
+    expect(message).toBe("Stasiun: Stasiun wajib dipilih.");
+    expect(message).not.toMatch(/stationId|String must contain|Required/i);
+
+    const invalidDate = CalibrationSchema.safeParse({
+      stationId: "1",
+      stationName: "Stasiun Uji",
+      address: "Jakarta",
+      latitude: 0,
+      longitude: 0,
+      calibrationStartDate: new Date("tanggal-tidak-valid"),
+      calibrationEndDate: new Date("2026-08-12T00:00:00"),
+      officer: "Budi Santoso",
+      parameters: [{
+        id: 1,
+        parameterId: "1",
+        parameterName: "DO",
+        spec: "",
+        coeffType: null,
+        crmReferenceValue: null,
+        crmReadingValue: null,
+        remark: null,
+        results: [],
+        coefficients: [],
+        status: null,
+      }],
+      waterSamples: [],
+      notes: "",
+    });
+
+    expect(invalidDate.success).toBe(false);
+    if (invalidDate.success) throw new Error("Fixture tanggal seharusnya gagal.");
+    expect(formatCalibrationValidationError(invalidDate.error)).toBe("Tanggal Mulai: Tanggal mulai kalibrasi tidak valid.");
+  });
+
   it("menyediakan fallback bahasa Indonesia untuk label formulir yang kosong", () => {
     const formValues = CalibrationSchema.parse({
       stationId: "1",

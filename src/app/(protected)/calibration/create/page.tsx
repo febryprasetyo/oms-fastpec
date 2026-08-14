@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, X } from "lucide-react";
@@ -9,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { formatCalibrationDateInput, formatCalibrationParameterName } from "@/lib/calibration-format";
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => formatCalibrationDateInput(new Date());
 
 export default function CreateCalibrationPage() {
   const router = useRouter();
@@ -53,7 +55,7 @@ export default function CreateCalibrationPage() {
       <div className="space-y-2"><Label>Alamat</Label><Input readOnly value={selectedStation?.address ?? ""} /></div>
       <div className="space-y-2"><Label>Koordinat</Label><Input readOnly value={selectedStation ? `${selectedStation.latitude}, ${selectedStation.longitude}` : ""} /></div>
     </CardContent></Card>
-    <Card><CardHeader><CardTitle>Parameter</CardTitle></CardHeader><CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{parametersLoading ? <p className="text-sm text-muted-foreground">Memuat data parameter...</p> : parameters.map((parameter) => { const selected = parameterIds.includes(parameter.id); return <button key={parameter.id} type="button" onClick={() => toggleParameter(parameter.id)} className={`flex items-center gap-3 rounded-lg border p-3 text-left text-sm ${selected ? "border-primary bg-primary/5" : "hover:bg-muted"}`}>{selected ? <Check className="h-4 w-4 text-primary" /> : <X className="h-4 w-4 text-muted-foreground" />}<span>{parameter.name}</span></button>; })}</CardContent></Card>
+    <Card><CardHeader><CardTitle>Parameter</CardTitle></CardHeader><CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{parametersLoading ? <p className="text-sm text-muted-foreground">Memuat data parameter...</p> : parameters.map((parameter) => { const selected = parameterIds.includes(parameter.id); return <button key={parameter.id} type="button" onClick={() => toggleParameter(parameter.id)} className={`flex items-center gap-3 rounded-lg border p-3 text-left text-sm ${selected ? "border-primary bg-primary/5" : "hover:bg-muted"}`}>{selected ? <Check className="h-4 w-4 text-primary" /> : <X className="h-4 w-4 text-muted-foreground" />}<span>{formatCalibrationParameterName(parameter.name)}</span></button>; })}</CardContent></Card>
     <div className="flex justify-end gap-3"><Button variant="outline" onClick={() => router.back()}>Batal</Button><Button disabled={createMutation.isPending} onClick={() => void createDraft()}>{createMutation.isPending ? "Membuat..." : "Buat Draf"}</Button></div>
   </div>;
 }

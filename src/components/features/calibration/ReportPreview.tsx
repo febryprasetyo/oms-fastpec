@@ -13,10 +13,12 @@ import {
   formatCalibrationDate,
   formatCalibrationDateRange,
   formatCalibrationMeasurement,
+  formatCalibrationParameterName,
   formatCalibrationPlace,
   formatCalibrationStandard,
   translateCalibrationStatus,
 } from "@/lib/calibration-format";
+import { sanitizeCalibrationNotes } from "@/lib/calibration-notes";
 
 interface ReportPreviewProps {
   detail: CalibrationDetail;
@@ -33,12 +35,12 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
     if (param.coeffType === "K1-K6") {
       return [["k1", "k2"], ["k3", "k4"], ["k5", "k6"]].map(([left, right]) => (
         <div key={left} className="whitespace-nowrap">
-          <strong>{left.toUpperCase()}:</strong> {byKey.get(left) ?? "-"} <span className="px-1">|</span>
-          <strong>{right.toUpperCase()}:</strong> {byKey.get(right) ?? "-"}
+          <strong>{left.toUpperCase()}:</strong> {formatCalibrationMeasurement(byKey.get(left))} <span className="px-1">|</span>
+          <strong>{right.toUpperCase()}:</strong> {formatCalibrationMeasurement(byKey.get(right))}
         </div>
       ));
     }
-    return ["b", "k"].filter((key) => byKey.has(key)).map((key) => <div key={key}><strong>{key.toUpperCase()}:</strong> {byKey.get(key)}</div>);
+    return ["b", "k"].filter((key) => byKey.has(key)).map((key) => <div key={key}><strong>{key.toUpperCase()}:</strong> {formatCalibrationMeasurement(byKey.get(key))}</div>);
   };
 
   const handlePrint = () => {
@@ -141,7 +143,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
           <tbody>
             {detail.parameters.map((param, index) => (
               <tr key={index} className="border-b hover:bg-slate-50">
-                <td className="border border-slate-300 p-2 font-bold">{param.parameterName}</td>
+                <td className="border border-slate-300 p-2 font-bold">{formatCalibrationParameterName(param.parameterName)}</td>
                 <td className="border border-slate-300 p-2 text-center align-middle">
                   {param.results.map((r, i) => <div key={r.id ?? i}>{formatCalibrationStandard(r.standardName, r.standardValue, param.parameterUnit)}</div>)}
                   {param.crmReferenceValue !== null && !param.results.some((result) => /crm/i.test(result.standardName)) && (
@@ -183,9 +185,9 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
                 {includesParameter("cod") && <th className="border p-1 text-center">COD<br />(mg/L)</th>}
                 {includesParameter("bod") && <th className="border p-1 text-center">BOD<br />(mg/L)</th>}
                 {includesParameter("tss") && <th className="border p-1 text-center">TSS<br />(mg/L)</th>}
-                {includesParameter("amonia", "nh3") && <th className="border p-1 text-center">NH3-N<br />(mg/L)</th>}
-                {includesParameter("nitrat", "no3") && <th className="border p-1 text-center">NO3-N<br />(mg/L)</th>}
-                {includesParameter("nitrit", "no2") && <th className="border p-1 text-center">NO2-N<br />(mg/L)</th>}
+                {includesParameter("amonia", "nh3", "nh3-n") && <th className="border p-1 text-center">{formatCalibrationParameterName("Amonia")}<br />(mg/L)</th>}
+                {includesParameter("nitrat", "no3", "no3-n") && <th className="border p-1 text-center">{formatCalibrationParameterName("Nitrat")}<br />(mg/L)</th>}
+                {includesParameter("nitrit", "no2", "no2-n") && <th className="border p-1 text-center">{formatCalibrationParameterName("Nitrit")}<br />(mg/L)</th>}
                 {includesParameter("kedalaman", "level", "depth") && <th className="border p-1 text-center">Kedalaman<br />(m)</th>}
               </tr>
             </thead>
@@ -202,9 +204,9 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
                   {includesParameter("cod") && <td className="border p-1.5 text-center">{formatCalibrationMeasurement(sample.cod)}</td>}
                   {includesParameter("bod") && <td className="border p-1.5 text-center">{formatCalibrationMeasurement(sample.bod)}</td>}
                   {includesParameter("tss") && <td className="border p-1.5 text-center">{formatCalibrationMeasurement(sample.tss)}</td>}
-                  {includesParameter("amonia", "nh3") && <td className="border p-1.5 text-center">{formatCalibrationMeasurement(sample.nh3)}</td>}
-                  {includesParameter("nitrat", "no3") && <td className="border p-1.5 text-center">{formatCalibrationMeasurement(sample.no3)}</td>}
-                  {includesParameter("nitrit", "no2") && <td className="border p-1.5 text-center">{formatCalibrationMeasurement(sample.no2)}</td>}
+                  {includesParameter("amonia", "nh3", "nh3-n") && <td className="border p-1.5 text-center">{formatCalibrationMeasurement(sample.nh3)}</td>}
+                  {includesParameter("nitrat", "no3", "no3-n") && <td className="border p-1.5 text-center">{formatCalibrationMeasurement(sample.no3)}</td>}
+                  {includesParameter("nitrit", "no2", "no2-n") && <td className="border p-1.5 text-center">{formatCalibrationMeasurement(sample.no2)}</td>}
                   {includesParameter("kedalaman", "level", "depth") && <td className="border p-1.5 text-center">{formatCalibrationMeasurement(sample.depth)}</td>}
                 </tr>
               ))}
@@ -215,7 +217,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
         {/* Notes */}
         <div className="border border-slate-300 bg-slate-50 p-3 rounded mb-4 text-[10px]">
           <span className="font-bold text-slate-800">Catatan:</span>
-          <div className="calibration-notes-preview mt-1 text-slate-600" dangerouslySetInnerHTML={{ __html: detail.notes || "-" }} />
+          <div className="calibration-notes-preview mt-1 text-slate-600" dangerouslySetInnerHTML={{ __html: sanitizeCalibrationNotes(detail.notes || "-") }} />
         </div>
 
         {/* Signatures */}

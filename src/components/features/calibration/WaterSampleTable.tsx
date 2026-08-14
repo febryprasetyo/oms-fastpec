@@ -5,6 +5,7 @@ import type { CalibrationFormValues } from "@/schemas/calibration.schema";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { formatCalibrationParameterName } from "@/lib/calibration-format";
 
 interface WaterSampleTableProps { form: UseFormReturn<CalibrationFormValues>; }
 
@@ -20,9 +21,9 @@ const sampleColumns: SampleColumn[] = [
   { field: "cod", label: "COD (mg/L)", parameterNames: ["cod"] },
   { field: "bod", label: "BOD (mg/L)", parameterNames: ["bod"] },
   { field: "tss", label: "TSS (mg/L)", parameterNames: ["tss"] },
-  { field: "nh3", label: "NH3-N (mg/L)", parameterNames: ["amonia", "nh3"] },
-  { field: "no3", label: "NO3-N (mg/L)", parameterNames: ["nitrat", "no3"] },
-  { field: "no2", label: "NO2-N (mg/L)", parameterNames: ["nitrit", "no2"] },
+  { field: "nh3", label: `${formatCalibrationParameterName("Amonia")} (mg/L)`, parameterNames: ["amonia", "nh3", "nh3-n"] },
+  { field: "no3", label: `${formatCalibrationParameterName("Nitrat")} (mg/L)`, parameterNames: ["nitrat", "no3", "no3-n"] },
+  { field: "no2", label: `${formatCalibrationParameterName("Nitrit")} (mg/L)`, parameterNames: ["nitrit", "no2", "no2-n"] },
   { field: "orp", label: "ORP (mV)", parameterNames: ["orp"] },
   { field: "depth", label: "Kedalaman (m)", parameterNames: ["kedalaman", "level", "depth"] },
 ];
@@ -34,7 +35,7 @@ export const WaterSampleTable: React.FC<WaterSampleTableProps> = ({ form }) => {
   const selectedNames = new Set(parameters.map((parameter) => parameter.parameterName.trim().toLowerCase()));
   const visibleColumns = sampleColumns.filter((column) => !column.parameterNames || column.parameterNames.some((name) => selectedNames.has(name)));
 
-  const addSample = () => append({ sampleName: `Sampel Air (Sungai #${fields.length + 1})` });
+  const addSample = () => append({ sampleName: `Sampel Air (Sungai ${fields.length + 1})` });
   const deleteSample = (index: number) => {
     const sample = form.getValues(`waterSamples.${index}`);
     if (sample?.id && !window.confirm(`Hapus sampel “${sample.sampleName}”? Perubahan akan disimpan ke server.`)) return;

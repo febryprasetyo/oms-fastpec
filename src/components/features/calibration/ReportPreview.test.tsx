@@ -49,7 +49,10 @@ const calibrationDetail: CalibrationDetail = {
           value: "0",
         },
       ],
-      coefficients: [],
+      coefficients: [
+        { key: "k", value: 1.413 },
+        { key: "b", value: 5.4 },
+      ],
       status: "PASS",
     },
   ],
@@ -89,12 +92,46 @@ describe("ReportPreview", () => {
       screen.getByText(/Morowali Utara, 12 Agustus 2026/),
     ).toBeInTheDocument();
     expect(screen.getByText("0,00 mg/L")).toBeInTheDocument();
+    expect(screen.getByText(/K:/).closest("div")).toHaveTextContent("K: 1,41");
+    expect(screen.getByText(/B:/).closest("div")).toHaveTextContent("B: 5,40");
     expect(screen.getByText("Standar/CRM")).toBeInTheDocument();
     expect(screen.getByAltText("Logo CMC")).toBeInTheDocument();
     expect(screen.queryByText("(Hunting)")).not.toBeInTheDocument();
     expect(
       screen.queryByText(/Calibration|Report|Station|Standart|Notes|Print|Download/i),
     ).not.toBeInTheDocument();
+  });
+
+  it("membersihkan catatan berbahaya sambil mempertahankan pemformatan yang diizinkan", () => {
+    const { container } = render(
+      <ReportPreview
+        detail={{
+          ...calibrationDetail,
+          notes: '<p onclick="alert(1)">Aman <strong data-secret="x">tebal</strong><img src="x" onerror="alert(2)"><script>alert(3)</script><a href="javascript:alert(4)">tautan</a></p><ul style="color:red"><li>Butir</li></ul>',
+        }}
+      />,
+    );
+
+    expect(screen.getByText("tebal").tagName).toBe("STRONG");
+    expect(screen.getByText("tebal")).not.toHaveAttribute("data-secret");
+    expect(screen.getByText("Aman", { exact: false }).closest("p")).not.toHaveAttribute("onclick");
+    expect(screen.getByText("Butir").closest("ul")).not.toHaveAttribute("style");
+    const notes = container.querySelector(".calibration-notes-preview");
+    expect(notes?.querySelector("script, img, a, svg")).toBeNull();
+  });
+
+  it("menampilkan nama kimia Indonesia beserta formula bakunya", () => {
+    const chemicalParameters = [
+      { ...calibrationDetail.parameters[0], id: 2, parameterId: "10", parameterName: "Amonia", results: [], coefficients: [] },
+      { ...calibrationDetail.parameters[0], id: 3, parameterId: "11", parameterName: "Nitrat", results: [], coefficients: [], coeffType: undefined },
+      { ...calibrationDetail.parameters[0], id: 4, parameterId: "12", parameterName: "Nitrit", results: [], coefficients: [], coeffType: undefined },
+    ];
+
+    render(<ReportPreview detail={{ ...calibrationDetail, parameters: chemicalParameters }} />);
+
+    expect(screen.getAllByText("Amonia (NH3-N)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Nitrat (NO3-N)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Nitrit (NO2-N)").length).toBeGreaterThan(0);
   });
 
   it("mengunduh laporan dengan nama berkas Indonesia", async () => {
