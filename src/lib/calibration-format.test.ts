@@ -45,6 +45,7 @@ describe("formatter kalibrasi Indonesia", () => {
   it.each([
     [0, "0,00"],
     [5.4, "5,40"],
+    [1.005, "1,01"],
     [1.413, "1,41"],
     [null, "-"],
   ])("memformat pengukuran %s menjadi %s", (value, expected) =>
@@ -62,6 +63,10 @@ describe("formatter kalibrasi Indonesia", () => {
     expect(formatCalibrationPlace("Kabupaten Morowali Utara")).toBe(
       "Morowali Utara",
     );
+    expect(formatCalibrationPlace("  kota   morowali UTARA  ")).toBe(
+      "Morowali Utara",
+    );
+    expect(formatCalibrationPlace("Morowali Utara")).toBe("Morowali Utara");
     expect(translateCalibrationStatus("PASS")).toBe("Lulus");
     expect(translateCalibrationStatus("Submitted")).toBe("Diajukan");
   });

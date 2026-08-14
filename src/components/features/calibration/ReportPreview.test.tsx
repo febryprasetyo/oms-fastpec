@@ -16,7 +16,7 @@ const calibrationDetail: CalibrationDetail = {
   stationId: "station-1",
   stationName: "Stasiun Pemantauan Bahoea Reko-Reko",
   address: "Kabupaten Morowali Utara",
-  stationCity: "Kabupaten Morowali Utara",
+  stationCity: "  kota   morowali UTARA  ",
   latitude: -2.1234,
   longitude: 121.5678,
   calibrationStartDate: "2026-08-10",
@@ -46,11 +46,11 @@ const calibrationDetail: CalibrationDetail = {
           standardValue: 0,
           minAcceptable: null,
           maxAcceptable: null,
-          value: "0",
+          value: "1.005",
         },
       ],
       coefficients: [
-        { key: "k", value: 1.413 },
+        { key: "k", value: 1.005 },
         { key: "b", value: 5.4 },
       ],
       status: "PASS",
@@ -92,7 +92,8 @@ describe("ReportPreview", () => {
       screen.getByText(/Morowali Utara, 12 Agustus 2026/),
     ).toBeInTheDocument();
     expect(screen.getByText("0,00 mg/L")).toBeInTheDocument();
-    expect(screen.getByText(/K:/).closest("div")).toHaveTextContent("K: 1,41");
+    expect(screen.getAllByText("1,01")).toHaveLength(2);
+    expect(screen.getByText(/K:/).closest("div")).toHaveTextContent("K: 1,01");
     expect(screen.getByText(/B:/).closest("div")).toHaveTextContent("B: 5,40");
     expect(screen.getByText("Standar/CRM")).toBeInTheDocument();
     expect(screen.getByAltText("Logo CMC")).toBeInTheDocument();

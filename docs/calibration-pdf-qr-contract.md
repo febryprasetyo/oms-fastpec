@@ -35,7 +35,7 @@ The actual PDF template uses an image placeholder where the signature QR code
 belongs:
 
 ```html
-<img src="{{QR_CODE_IMAGE}}" alt="QR Code" style="width:93px; height:93px; object-fit:contain; display:block;" />
+<img src="{{QR_CODE_IMAGE}}" alt="Kode QR verifikasi" style="width:93px; height:93px; object-fit:contain; display:block;" />
 ```
 
 The backend renderer creates a QR data URL from the configured verification

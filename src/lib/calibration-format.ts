@@ -133,7 +133,13 @@ export const formatCalibrationStandard = (
 };
 
 export const formatCalibrationPlace = (value: string): string =>
-  value.trim().replace(/^(?:Kabupaten|Kota)\s+/i, "");
+  value
+    .trim()
+    .replace(/^(?:Kabupaten|Kota)\b\s*/i, "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}`)
+    .join(" ");
 
 const CALIBRATION_PARAMETER_LABELS: Record<string, string> = {
   AMONIA: "Amonia (NH3-N)",
