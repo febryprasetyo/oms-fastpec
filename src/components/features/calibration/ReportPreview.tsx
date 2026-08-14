@@ -79,7 +79,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
           <div className="flex items-start gap-3">
             <img
               src={cmcIcon.src}
-              alt="CMC Logo"
+              alt="Logo CMC"
               className="w-12 h-12 object-contain"
             />
             <div>
@@ -94,7 +94,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
                   <strong>Pabrik:</strong> Jalan Rawa Gelam II No.3, Kawasan Industri Pulogadung, Jakarta Timur
                 </div>
                 <div>
-                  <strong>Telepon:</strong> 021-344 3456 <strong>(Hunting) Faks:</strong> 021-460 2340/460 2344
+                  <strong>Telepon:</strong> 021-344 3456 <strong>(Saluran Bersama) Faks:</strong> 021-460 2340/460 2344
                 </div>
                 <div>
                   <strong>Surel:</strong> info@cahayamascemerlang.com | <strong>Situs:</strong> www.cahayamascemerlang.com
@@ -132,7 +132,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
           <thead>
             <tr className="border-b bg-slate-100">
               <th className="w-[16%] border border-slate-300 p-2 text-center">Parameter</th>
-              <th className="w-[21%] border border-slate-300 p-2 text-center">Standar / CRM</th>
+              <th className="w-[21%] border border-slate-300 p-2 text-center">Standar/CRM</th>
               <th className="w-[20%] border border-slate-300 p-2 text-center">Hasil Pembacaan</th>
               <th className="w-[25%] border border-slate-300 p-2 text-center">Koefisien Internal (K / B)</th>
               <th className="w-[12%] border border-slate-300 p-2 text-center">Status</th>
