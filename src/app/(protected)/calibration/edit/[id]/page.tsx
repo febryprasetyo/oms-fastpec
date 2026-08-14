@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { CalibrationSchema, type CalibrationFormValues } from "@/schemas/calibration.schema";
 import { toUpdateCalibrationPayload } from "@/lib/calibration-payload";
+import { translateCalibrationStatus } from "@/lib/calibration-format";
 import { useCalibrationDetail, useParameters, useSubmitCalibration, useUpdateCalibration } from "@/hook/useCalibration";
 import { ParameterTable } from "@/components/features/calibration/ParameterTable";
 import { WaterSampleTable } from "@/components/features/calibration/WaterSampleTable";
@@ -71,7 +72,7 @@ export default function EditCalibrationPage() {
           if (unchangedDuringSave) initialized.current = false;
           await refetch();
         }
-        if (showToast) toast.success("Draft tersimpan.");
+        if (showToast) toast.success("Draf tersimpan.");
         return true;
       } catch { setSaveState("error"); return false; }
       finally { saving.current = false; activeSave.current = null; }
@@ -101,30 +102,30 @@ export default function EditCalibrationPage() {
 
   const submit = async () => {
     const missing = form.getValues("parameters").some((parameter) => parameter.results.some((result) => result.value.trim() === ""));
-    if (missing) return toast.error("Seluruh hasil calibration standard wajib diisi.");
+    if (missing) return toast.error("Seluruh hasil kalibrasi standar wajib diisi.");
     const missingCoefficients = form.getValues("parameters").some((parameter) => parameter.coeffType && parameter.coefficients.some((coefficient) => coefficient.value === undefined || !Number.isFinite(Number(coefficient.value))));
-    if (missingCoefficients) return toast.error("Seluruh K/B value hasil kalibrasi wajib diisi untuk parameter yang memiliki coefficient.");
+    if (missingCoefficients) return toast.error("Seluruh nilai koefisien K/B wajib diisi untuk parameter yang memiliki koefisien.");
     if (activeSave.current && !(await activeSave.current)) return;
     if (!(await save(false))) return;
-    try { await submitMutation.mutateAsync(id); toast.success("Calibration berhasil di-submit."); router.push(`/calibration/${id}`); } catch { /* interceptor handles message */ }
+    try { await submitMutation.mutateAsync(id); toast.success("Kalibrasi berhasil diajukan."); router.push(`/calibration/${id}`); } catch { /* interceptor handles message */ }
   };
 
-  if (isLoading) return <div className="p-8 text-center">Memuat calibration...</div>;
-  if (!detail) return <div className="p-8 text-center text-destructive">Calibration tidak ditemukan.</div>;
+  if (isLoading) return <div className="p-8 text-center">Memuat kalibrasi...</div>;
+  if (!detail) return <div className="p-8 text-center text-destructive">Kalibrasi tidak ditemukan.</div>;
   const editable = detail.status === "Draft";
   const completion = values?.parameters?.length ? Math.round(values.parameters.flatMap((parameter) => parameter.results).filter((result) => result.value !== "").length / Math.max(1, values.parameters.flatMap((parameter) => parameter.results).length) * 100) : 0;
 
   return <div className="mx-auto max-w-6xl space-y-6 p-6">
-    <CalibrationHeader reportNo={detail.reportNo} officer={detail.officer} calibrationDate={`${detail.calibrationStartDate} – ${detail.calibrationEndDate}`} status={detail.status} completionPercentage={completion} />
-    {!editable && <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm">Report berstatus {detail.status} dan tidak dapat diedit.</div>}
+    <CalibrationHeader reportNo={detail.reportNo} officer={detail.officer} calibrationStartDate={detail.calibrationStartDate} calibrationEndDate={detail.calibrationEndDate} status={detail.status} completionPercentage={completion} />
+    {!editable && <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm">Laporan berstatus {translateCalibrationStatus(detail.status)} dan tidak dapat diedit.</div>}
     <Card><CardContent className="grid gap-4 p-6 md:grid-cols-2">
-      <div><Label>Station</Label><Input readOnly value={detail.stationName} /></div><div><Label>Officer</Label><Input readOnly value={detail.officer} /></div>
-      <div><Label>Address</Label><Input readOnly value={detail.address} /></div><div><Label>Coordinate</Label><Input readOnly value={`LAT ${detail.latitude} | LONG ${detail.longitude}`} /></div>
+      <div><Label>Stasiun</Label><Input readOnly value={detail.stationName} /></div><div><Label>Petugas</Label><Input readOnly value={detail.officer} /></div>
+      <div><Label>Alamat</Label><Input readOnly value={detail.address} /></div><div><Label>Koordinat</Label><Input readOnly value={`Lintang ${detail.latitude} | Bujur ${detail.longitude}`} /></div>
       <div><Label>Tanggal Mulai</Label><Input disabled={!editable} type="date" value={values.calibrationStartDate ? values.calibrationStartDate.toISOString().slice(0, 10) : ""} onChange={(event) => form.setValue("calibrationStartDate", new Date(`${event.target.value}T00:00:00`), { shouldDirty: true })} /></div>
       <div><Label>Tanggal Selesai</Label><Input disabled={!editable} type="date" value={values.calibrationEndDate ? values.calibrationEndDate.toISOString().slice(0, 10) : ""} onChange={(event) => form.setValue("calibrationEndDate", new Date(`${event.target.value}T00:00:00`), { shouldDirty: true })} /></div>
     </CardContent></Card>
     {editable && <Card><CardContent className="grid gap-2 p-4 sm:grid-cols-2 lg:grid-cols-5">{masterParameters.map((parameter) => <Button key={parameter.id} type="button" variant={values.parameters?.some((item) => item.parameterId === parameter.id) ? "default" : "outline"} onClick={() => void changeParameters(parameter.id)}>{parameter.name}</Button>)}</CardContent></Card>}
     <fieldset disabled={!editable} className="space-y-6"><ParameterTable form={form} /><WaterSampleTable form={form} /><NotesEditor value={values.notes || ""} onChange={(notes) => form.setValue("notes", notes, { shouldDirty: true })} /></fieldset>
-    {editable && <div className="flex items-center justify-end gap-3 border-t pt-4"><span className="mr-auto text-xs text-muted-foreground">{saveState === "saving" ? "Menyimpan..." : saveState === "saved" ? "Tersimpan" : saveState === "error" ? "Gagal menyimpan" : ""}</span><Button variant="outline" onClick={() => void save(true)}>Save Draft</Button><Button onClick={() => void submit()} disabled={submitMutation.isPending}>Submit Calibration</Button></div>}
+    {editable && <div className="flex items-center justify-end gap-3 border-t pt-4"><span className="mr-auto text-xs text-muted-foreground">{saveState === "saving" ? "Menyimpan..." : saveState === "saved" ? "Tersimpan" : saveState === "error" ? "Gagal menyimpan" : ""}</span><Button variant="outline" onClick={() => void save(true)}>Simpan Draf</Button><Button onClick={() => void submit()} disabled={submitMutation.isPending}>Ajukan Kalibrasi</Button></div>}
   </div>;
 }

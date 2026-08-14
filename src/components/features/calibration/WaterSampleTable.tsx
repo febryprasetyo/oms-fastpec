@@ -12,11 +12,11 @@ type SampleField = "temperature" | "doValue" | "tds" | "turbidity" | "ph" | "cod
 type SampleColumn = { field: SampleField; label: string; parameterNames?: string[] };
 
 const sampleColumns: SampleColumn[] = [
-  { field: "temperature", label: "Temp (°C)" },
+  { field: "temperature", label: "Suhu (°C)" },
   { field: "doValue", label: "DO (mg/L)", parameterNames: ["do"] },
   { field: "tds", label: "TDS (mg/L)", parameterNames: ["tds"] },
-  { field: "turbidity", label: "Turb (NTU)", parameterNames: ["turbidity"] },
-  { field: "ph", label: "pH Unit", parameterNames: ["ph"] },
+  { field: "turbidity", label: "Kekeruhan (NTU)", parameterNames: ["turbidity"] },
+  { field: "ph", label: "Satuan pH", parameterNames: ["ph"] },
   { field: "cod", label: "COD (mg/L)", parameterNames: ["cod"] },
   { field: "bod", label: "BOD (mg/L)", parameterNames: ["bod"] },
   { field: "tss", label: "TSS (mg/L)", parameterNames: ["tss"] },
@@ -34,20 +34,20 @@ export const WaterSampleTable: React.FC<WaterSampleTableProps> = ({ form }) => {
   const selectedNames = new Set(parameters.map((parameter) => parameter.parameterName.trim().toLowerCase()));
   const visibleColumns = sampleColumns.filter((column) => !column.parameterNames || column.parameterNames.some((name) => selectedNames.has(name)));
 
-  const addSample = () => append({ sampleName: `Water Sample (River #${fields.length + 1})` });
+  const addSample = () => append({ sampleName: `Sampel Air (Sungai #${fields.length + 1})` });
   const deleteSample = (index: number) => {
     const sample = form.getValues(`waterSamples.${index}`);
-    if (sample?.id && !window.confirm(`Hapus sample “${sample.sampleName}”? Perubahan akan disimpan ke server.`)) return;
+    if (sample?.id && !window.confirm(`Hapus sampel “${sample.sampleName}”? Perubahan akan disimpan ke server.`)) return;
     remove(index);
   };
 
   return <div className="space-y-4">
-    <div className="flex items-center justify-between"><h3 className="text-sm font-semibold text-slate-800">2. Water Sample Measurement & Blank Test</h3><Button type="button" variant="outline" size="sm" onClick={addSample} className="h-8 gap-1.5"><Plus className="h-4 w-4" />Add Sample</Button></div>
-    <p className="text-xs text-muted-foreground">Kolom pengukuran mengikuti parameter calibration yang dipilih; Suhu selalu ditampilkan.</p>
+    <div className="flex items-center justify-between"><h3 className="text-sm font-semibold text-slate-800">Pengukuran Sampel Air dan Uji Blangko</h3><Button type="button" variant="outline" size="sm" onClick={addSample} className="h-8 gap-1.5"><Plus className="h-4 w-4" />Tambah Sampel</Button></div>
+    <p className="text-xs text-muted-foreground">Kolom pengukuran mengikuti parameter kalibrasi yang dipilih; suhu selalu ditampilkan.</p>
     <div className="overflow-x-auto rounded-md border bg-white">
       <Table style={{ minWidth: `${Math.max(560, 260 + visibleColumns.length * 120)}px` }}>
-        <TableHeader><TableRow className="bg-slate-50"><TableHead className="w-[190px] font-bold text-slate-700">Sample Type</TableHead>{visibleColumns.map((column) => <TableHead key={column.field} className="text-center font-bold text-slate-700">{column.label}</TableHead>)}<TableHead className="w-[56px] text-center">Action</TableHead></TableRow></TableHeader>
-        <TableBody>{fields.length === 0 ? <TableRow><TableCell colSpan={visibleColumns.length + 2} className="py-6 text-center text-muted-foreground">Belum ada water sample. Klik Add Sample untuk menambahkan.</TableCell></TableRow> : fields.map((field, index) => <TableRow key={field.id}>
+        <TableHeader><TableRow className="bg-slate-50"><TableHead className="w-[190px] font-bold text-slate-700">Jenis Sampel</TableHead>{visibleColumns.map((column) => <TableHead key={column.field} className="text-center font-bold text-slate-700">{column.label}</TableHead>)}<TableHead className="w-[56px] text-center">Tindakan</TableHead></TableRow></TableHeader>
+        <TableBody>{fields.length === 0 ? <TableRow><TableCell colSpan={visibleColumns.length + 2} className="py-6 text-center text-muted-foreground">Belum ada sampel air. Klik Tambah Sampel untuk menambahkan.</TableCell></TableRow> : fields.map((field, index) => <TableRow key={field.id}>
           <TableCell><Input className="h-8 text-xs font-semibold" {...register(`waterSamples.${index}.sampleName`)} /></TableCell>
           {visibleColumns.map((column) => {
             const fieldPath = `waterSamples.${index}.${column.field}` as Path<CalibrationFormValues>;

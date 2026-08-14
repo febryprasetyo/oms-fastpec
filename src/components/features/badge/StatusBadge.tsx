@@ -1,5 +1,6 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
+import { translateCalibrationStatus } from "@/lib/calibration-format";
 import { CalibrationStatus } from "@/types/calibration";
 
 interface StatusBadgeProps {
@@ -21,7 +22,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
 
   return (
     <Badge variant="outline" className={`font-semibold capitalize px-2.5 py-0.5 ${getBadgeStyle(status)}`}>
-      {status}
+      {translateCalibrationStatus(status)}
     </Badge>
   );
 };
