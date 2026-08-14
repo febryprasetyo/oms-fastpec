@@ -8,7 +8,15 @@ import { Printer, Download } from "lucide-react";
 import cmcIcon from "@/assets/img/cmc_icon.png";
 import { calibrationService } from "@/services/api/calibration";
 import { useCalibrationAuth } from "@/hook/useCalibration";
-import { formatCalibrationMeasurement } from "@/lib/calibration-format";
+import { toast } from "sonner";
+import {
+  formatCalibrationDate,
+  formatCalibrationDateRange,
+  formatCalibrationMeasurement,
+  formatCalibrationPlace,
+  formatCalibrationStandard,
+  translateCalibrationStatus,
+} from "@/lib/calibration-format";
 
 interface ReportPreviewProps {
   detail: CalibrationDetail;
@@ -18,37 +26,6 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
   const { token } = useCalibrationAuth();
   const calibratedParameters = new Set(detail.parameters.map((parameter) => parameter.parameterName.trim().toLowerCase()));
   const includesParameter = (...names: string[]) => names.some((name) => calibratedParameters.has(name));
-
-  const formatDate = (value: string) => {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = String(date.getFullYear());
-    return `${day}-${month}-${year}`;
-  };
-
-  const formatPlace = (value: string) => {
-    return value
-      .replace(/\b(kabupaten|kota)\b/gi, "")
-      .trim()
-      .replace(/\s+/g, " ")
-      .toLowerCase()
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  };
-
-  const displayUnit = (unit?: string) => {
-    if (!unit || unit.toLowerCase() === "ph") return "";
-    return ` ${unit}`;
-  };
-
-  const standardLabel = (name: string, value: number | null, unit?: string) => {
-    const displayValue = value === null ? name : formatCalibrationMeasurement(value);
-    if (/crm/i.test(name)) return `CRM ${displayValue}${displayUnit(unit)}`;
-    return `${displayValue}${displayUnit(unit)}`;
-  };
 
   const renderCoefficients = (param: CalibrationDetail["parameters"][number]) => {
     if (param.coefficients.length === 0) return "-";
@@ -73,11 +50,12 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
       const blob = await calibrationService.downloadPdf(detail.id, token);
       const link = document.createElement("a");
       link.href = window.URL.createObjectURL(blob);
-      link.download = `Calibration_Report_${detail.reportNo.replace(/\//g, "_")}.pdf`;
+      link.download = `Laporan_Kalibrasi_${detail.reportNo.replace(/\//g, "_")}.pdf`;
       link.click();
       window.URL.revokeObjectURL(link.href);
     } catch (error) {
-      console.error("Failed to download PDF", error);
+      console.error("Gagal mengunduh PDF laporan kalibrasi.", error);
+      toast.error("PDF laporan kalibrasi gagal diunduh.");
     }
   };
 
@@ -87,11 +65,11 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
       <div className="flex justify-end gap-3 print:hidden">
         <Button onClick={handlePrint} variant="outline" className="gap-2">
           <Printer className="h-4 w-4" />
-          <span>Print</span>
+          <span>Cetak</span>
         </Button>
         <Button onClick={handleDownloadPdf} className="gap-2">
           <Download className="h-4 w-4" />
-          <span>Download PDF</span>
+          <span>Unduh PDF</span>
         </Button>
       </div>
 
@@ -110,77 +88,77 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
               </div>
               <div className="max-w-[450px] text-[8px] leading-snug text-slate-500">
                 <div>
-                  <strong>Office:</strong> Komplek Majapahit Permai Blok A No.110 &amp; C No.105, Jl. Majapahit No.18-20-22, Jakarta Pusat 10160
+                  <strong>Kantor:</strong> Komplek Majapahit Permai Blok A No.110 &amp; C No.105, Jl. Majapahit No.18-20-22, Jakarta Pusat 10160
                 </div>
                 <div>
-                  <strong>Factory:</strong> Jalan Rawa Gelam II No.3, Kawasan Industri Pulogadung, Jakarta Timur
+                  <strong>Pabrik:</strong> Jalan Rawa Gelam II No.3, Kawasan Industri Pulogadung, Jakarta Timur
                 </div>
                 <div>
-                  <strong>Telp:</strong> 021-344 3456 <strong>(Hunting) Fax:</strong> 021-460 2340/460 2344
+                  <strong>Telepon:</strong> 021-344 3456 <strong>(Hunting) Faks:</strong> 021-460 2340/460 2344
                 </div>
                 <div>
-                  <strong>E-mail:</strong> info@cahayamascemerlang.com | <strong>Website:</strong> www.cahayamascemerlang.com
+                  <strong>Surel:</strong> info@cahayamascemerlang.com | <strong>Situs:</strong> www.cahayamascemerlang.com
                 </div>
               </div>
             </div>
           </div>
           <div className="text-right">
-            <div className="font-bold text-sm text-blue-900 tracking-wide">CALIBRATION REPORT</div>
-            <div className="mt-1 text-[10px] font-semibold text-slate-600">Report No: {detail.stationName}/{detail.reportNo}</div>
+            <div className="font-bold text-sm text-blue-900 tracking-wide">LAPORAN KALIBRASI</div>
+            <div className="mt-1 text-[10px] font-semibold text-slate-600">Nomor Laporan: {detail.stationName}/{detail.reportNo}</div>
           </div>
         </div>
 
         {/* Station details */}
         <div className="mb-4 grid grid-cols-2 gap-x-8 gap-y-2 border border-slate-300 bg-slate-50 p-3 text-[11px]">
           <div>
-            <span className="font-bold text-slate-700">Station Name</span> : {detail.stationName}
+            <span className="font-bold text-slate-700">Nama Stasiun</span> : {detail.stationName}
           </div>
           <div>
-            <span className="font-bold text-slate-700">Calibration Date</span> : {formatDate(detail.calibrationStartDate)} – {formatDate(detail.calibrationEndDate)}
+            <span className="font-bold text-slate-700">Tanggal Kalibrasi</span> : {formatCalibrationDateRange(detail.calibrationStartDate, detail.calibrationEndDate)}
           </div>
           <div>
-            <span className="font-bold text-slate-700">Address</span> : {detail.address}
+            <span className="font-bold text-slate-700">Alamat</span> : {detail.address}
           </div>
           <div>
-            <span className="font-bold text-slate-700">Coordinate</span> : LAT {detail.latitude} | LONG {detail.longitude}
+            <span className="font-bold text-slate-700">Koordinat</span> : Lintang {detail.latitude} | Bujur {detail.longitude}
           </div>
         </div>
 
         {/* Section 1 */}
         <div className="bg-slate-900 text-white font-bold px-3 py-1.5 uppercase tracking-wider mb-3">
-          1. Sensor Parameter Calibration & Register Adjustment
+          1. Kalibrasi Parameter Sensor dan Penyesuaian Register
         </div>
         <table className="mb-4 w-full border-collapse text-[10px]">
           <thead>
             <tr className="border-b bg-slate-100">
               <th className="w-[16%] border border-slate-300 p-2 text-center">Parameter</th>
-              <th className="w-[21%] border border-slate-300 p-2 text-center">Standart / CRM</th>
+              <th className="w-[21%] border border-slate-300 p-2 text-center">Standar / CRM</th>
               <th className="w-[20%] border border-slate-300 p-2 text-center">Hasil Pembacaan</th>
-              <th className="w-[25%] border border-slate-300 p-2 text-center">Internal Coeff (K / B)</th>
-              <th className="w-[12%] border border-slate-300 p-2 text-center">Result</th>
+              <th className="w-[25%] border border-slate-300 p-2 text-center">Koefisien Internal (K / B)</th>
+              <th className="w-[12%] border border-slate-300 p-2 text-center">Status</th>
             </tr>
           </thead>
           <tbody>
             {detail.parameters.map((param, index) => (
               <tr key={index} className="border-b hover:bg-slate-50">
-                <td className="border border-slate-300 p-2 font-bold">{param.parameterName} Calibration</td>
+                <td className="border border-slate-300 p-2 font-bold">{param.parameterName}</td>
                 <td className="border border-slate-300 p-2 text-center align-middle">
-                  {param.results.map((r, i) => <div key={r.id ?? i}>{standardLabel(r.standardName, r.standardValue, param.parameterUnit)}</div>)}
+                  {param.results.map((r, i) => <div key={r.id ?? i}>{formatCalibrationStandard(r.standardName, r.standardValue, param.parameterUnit)}</div>)}
                   {param.crmReferenceValue !== null && !param.results.some((result) => /crm/i.test(result.standardName)) && (
-                    <div>CRM {param.crmReferenceValue}{displayUnit(param.parameterUnit)}</div>
+                    <div>{formatCalibrationStandard("CRM", param.crmReferenceValue, param.parameterUnit)}</div>
                   )}
                 </td>
                 <td className="border border-slate-300 p-2 text-center align-middle">
                   {param.results.filter((result) => !/crm/i.test(result.standardName)).map((r, i) => <div key={r.id ?? i}>{formatCalibrationMeasurement(r.value)}</div>)}
                   {param.crmReadingValue !== null && (
-                    <div>{formatCalibrationMeasurement(param.crmReadingValue)}{displayUnit(param.parameterUnit)}</div>
+                    <div>{formatCalibrationStandard("", param.crmReadingValue, param.parameterUnit)}</div>
                   )}
                 </td>
                 <td className="border border-slate-300 p-2 text-center align-middle">
                   {renderCoefficients(param)}
                 </td>
                 <td className="border border-slate-300 p-2 text-center align-middle font-medium uppercase">
-                  <span className={param.status === "PASS" ? "border border-green-200 bg-green-50 px-1 py-0.5 font-bold text-green-700" : param.status === "FAILED" ? "border border-red-200 bg-red-50 px-1 py-0.5 font-bold text-red-700" : ""}>{param.status ?? "PENDING"}</span>
+                  <span className={param.status === "PASS" ? "border border-green-200 bg-green-50 px-1 py-0.5 font-bold text-green-700" : param.status === "FAILED" ? "border border-red-200 bg-red-50 px-1 py-0.5 font-bold text-red-700" : ""}>{translateCalibrationStatus(param.status ?? "PENDING")}</span>
                 </td>
               </tr>
             ))}
@@ -189,18 +167,18 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
 
         {/* Section 2 */}
         <div className="bg-slate-900 text-white font-bold px-3 py-1.5 uppercase tracking-wider mb-3">
-          2. Water Sample Measurement & Blank Test
+          2. Pengukuran Sampel Air dan Uji Blangko
         </div>
         <div className="mb-4 overflow-x-auto">
           <table className="w-full table-fixed border-collapse text-[6.5px]">
             <thead>
               <tr className="bg-blue-900 text-white border-b">
-                <th className="w-[15%] border p-1 text-left">Sample Type</th>
-                <th className="border p-1 text-center">Temp<br />(°C)</th>
+                <th className="w-[15%] border p-1 text-left">Jenis Sampel</th>
+                <th className="border p-1 text-center">Suhu<br />(°C)</th>
                 {includesParameter("do") && <th className="border p-1 text-center">DO<br />(mg/L)</th>}
                 {includesParameter("tds") && <th className="border p-1 text-center">TDS<br />(mg/L)</th>}
-                {includesParameter("turbidity") && <th className="border p-1 text-center">Turb<br />(NTU)</th>}
-                {includesParameter("ph") && <th className="border p-1 text-center">pH<br />Unit</th>}
+                {includesParameter("turbidity") && <th className="border p-1 text-center">Kekeruhan<br />(NTU)</th>}
+                {includesParameter("ph") && <th className="border p-1 text-center">pH<br />Satuan</th>}
                 {includesParameter("orp") && <th className="border p-1 text-center">ORP<br />(mV)</th>}
                 {includesParameter("cod") && <th className="border p-1 text-center">COD<br />(mg/L)</th>}
                 {includesParameter("bod") && <th className="border p-1 text-center">BOD<br />(mg/L)</th>}
@@ -236,15 +214,15 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
 
         {/* Notes */}
         <div className="border border-slate-300 bg-slate-50 p-3 rounded mb-4 text-[10px]">
-          <span className="font-bold text-slate-800">Notes:</span>
+          <span className="font-bold text-slate-800">Catatan:</span>
           <div className="calibration-notes-preview mt-1 text-slate-600" dangerouslySetInnerHTML={{ __html: detail.notes || "-" }} />
         </div>
 
         {/* Signatures */}
         <div className="mt-6 text-[11px]">
           <div className="text-left">
-            <p><strong>Place / Date:</strong> {formatPlace(detail.stationCity || detail.address)}, {formatDate(detail.calibrationEndDate)}</p>
-            <p><strong>Calibration Officer:</strong></p>
+            <p><strong>Tempat / Tanggal:</strong> {formatCalibrationPlace(detail.stationCity || detail.address)}, {formatCalibrationDate(detail.calibrationEndDate)}</p>
+            <p><strong>Petugas Kalibrasi:</strong></p>
             <div className="mt-2 inline-flex flex-col items-center">
               {detail.qrCodeDataUrl && (
                 <div className="bg-white p-1 border rounded-md inline-block">

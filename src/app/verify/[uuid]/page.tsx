@@ -6,7 +6,11 @@ import { useCalibrationVerify } from "@/hook/useCalibration";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, AlertTriangle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatCalibrationMeasurement } from "@/lib/calibration-format";
+import {
+  formatCalibrationDateRange,
+  formatCalibrationMeasurement,
+  translateCalibrationStatus,
+} from "@/lib/calibration-format";
 
 export default function VerificationPage() {
   const { uuid } = useParams() as { uuid: string };
@@ -15,7 +19,7 @@ export default function VerificationPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
-        <p className="text-slate-600 font-medium">Verifying report authenticity...</p>
+        <p className="text-slate-600 font-medium">Memverifikasi keaslian laporan...</p>
       </div>
     );
   }
@@ -28,10 +32,10 @@ export default function VerificationPage() {
             <div className="mx-auto bg-red-100 text-red-600 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-3">
               <AlertTriangle className="h-6 w-6" />
             </div>
-            <CardTitle className="text-lg font-bold text-red-800">Verification Failed</CardTitle>
+            <CardTitle className="text-lg font-bold text-red-800">Verifikasi Gagal</CardTitle>
           </CardHeader>
           <CardContent className="p-6 text-center text-sm text-slate-600 leading-relaxed">
-            This calibration certificate could not be verified. The document hash may have been altered, or it is not a valid certificate issued by PT Cahaya Mas Cemerlang.
+            Sertifikat kalibrasi ini tidak dapat diverifikasi. Hash dokumen mungkin telah diubah atau dokumen ini bukan sertifikat sah yang diterbitkan oleh PT Cahaya Mas Cemerlang.
           </CardContent>
         </Card>
       </div>
@@ -45,49 +49,49 @@ export default function VerificationPage() {
           <div className="mx-auto bg-green-100 text-green-600 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-3">
             <CheckCircle2 className="h-6 w-6" />
           </div>
-          <CardTitle className="text-xl font-bold text-green-800">Authentic Calibration Report</CardTitle>
-          <p className="text-xs text-green-600 font-semibold mt-1">Verified & Issued by PT Cahaya Mas Cemerlang</p>
+          <CardTitle className="text-xl font-bold text-green-800">Laporan Kalibrasi Autentik</CardTitle>
+          <p className="text-xs text-green-600 font-semibold mt-1">Terverifikasi dan diterbitkan oleh PT Cahaya Mas Cemerlang</p>
         </CardHeader>
         <CardContent className="p-6 space-y-6">
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div>
-              <span className="font-bold text-slate-500 block">Report Number</span>
+              <span className="font-bold text-slate-500 block">Nomor Laporan</span>
               <span className="text-slate-800 font-semibold">{detail.reportNo}</span>
             </div>
             <div>
-              <span className="font-bold text-slate-500 block">Station Name</span>
+              <span className="font-bold text-slate-500 block">Nama Stasiun</span>
               <span className="text-slate-800 font-semibold">{detail.stationName}</span>
             </div>
             <div>
-              <span className="font-bold text-slate-500 block">Calibration Date</span>
-              <span className="text-slate-800 font-semibold">{detail.calibrationStartDate} – {detail.calibrationEndDate}</span>
+              <span className="font-bold text-slate-500 block">Tanggal Kalibrasi</span>
+              <span className="text-slate-800 font-semibold">{formatCalibrationDateRange(detail.calibrationStartDate, detail.calibrationEndDate)}</span>
             </div>
             <div>
-              <span className="font-bold text-slate-500 block">Calibration Officer</span>
+              <span className="font-bold text-slate-500 block">Petugas Kalibrasi</span>
               <span className="text-slate-800 font-semibold">{detail.officer}</span>
             </div>
             <div>
-              <span className="font-bold text-slate-500 block">Address</span>
+              <span className="font-bold text-slate-500 block">Alamat</span>
               <span className="text-slate-800 font-semibold">{detail.address}</span>
             </div>
             <div>
-              <span className="font-bold text-slate-500 block">Coordinate</span>
+              <span className="font-bold text-slate-500 block">Koordinat</span>
               <span className="text-slate-800 font-semibold">{detail.latitude}, {detail.longitude}</span>
             </div>
           </div>
 
           <div className="space-y-2 text-sm">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">Notes</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">Catatan</h4>
             <div
               className="calibration-notes-preview rounded-md border bg-slate-50 p-3 text-slate-600"
               dangerouslySetInnerHTML={{ __html: detail.notes || "-" }}
             />
           </div>
 
-          <div className="space-y-3"><h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">Water Samples</h4><div className="overflow-x-auto rounded-md border"><Table><TableHeader><TableRow className="bg-slate-50"><TableHead>Sample</TableHead><TableHead>Temp</TableHead><TableHead>pH</TableHead><TableHead>DO</TableHead><TableHead>Turbidity</TableHead><TableHead>TDS</TableHead></TableRow></TableHeader><TableBody>{detail.waterSamples.length === 0 ? <TableRow><TableCell colSpan={6} className="py-4 text-center text-muted-foreground">Tidak ada sampel air.</TableCell></TableRow> : detail.waterSamples.map((sample) => <TableRow key={sample.id}><TableCell>{sample.sampleName}</TableCell><TableCell>{formatCalibrationMeasurement(sample.temperature)}</TableCell><TableCell>{formatCalibrationMeasurement(sample.ph)}</TableCell><TableCell>{formatCalibrationMeasurement(sample.doValue)}</TableCell><TableCell>{formatCalibrationMeasurement(sample.turbidity)}</TableCell><TableCell>{formatCalibrationMeasurement(sample.tds)}</TableCell></TableRow>)}</TableBody></Table></div></div>
+          <div className="space-y-3"><h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">Sampel Air</h4><div className="overflow-x-auto rounded-md border"><Table><TableHeader><TableRow className="bg-slate-50"><TableHead>Sampel</TableHead><TableHead>Suhu</TableHead><TableHead>pH</TableHead><TableHead>DO</TableHead><TableHead>Kekeruhan</TableHead><TableHead>TDS</TableHead></TableRow></TableHeader><TableBody>{detail.waterSamples.length === 0 ? <TableRow><TableCell colSpan={6} className="py-4 text-center text-muted-foreground">Tidak ada sampel air.</TableCell></TableRow> : detail.waterSamples.map((sample) => <TableRow key={sample.id}><TableCell>{sample.sampleName}</TableCell><TableCell>{formatCalibrationMeasurement(sample.temperature)}</TableCell><TableCell>{formatCalibrationMeasurement(sample.ph)}</TableCell><TableCell>{formatCalibrationMeasurement(sample.doValue)}</TableCell><TableCell>{formatCalibrationMeasurement(sample.turbidity)}</TableCell><TableCell>{formatCalibrationMeasurement(sample.tds)}</TableCell></TableRow>)}</TableBody></Table></div></div>
 
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Calibration Parameters Status</h4>
+            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Status Parameter Kalibrasi</h4>
             <div className="border rounded-md overflow-hidden">
               <Table>
                 <TableHeader>
@@ -102,7 +106,7 @@ export default function VerificationPage() {
                       <TableCell className="font-semibold text-xs text-slate-800">{p.parameterName}</TableCell>
                       <TableCell className="text-center">
                         <span className="text-[10px] font-bold bg-green-100 text-green-800 px-2 py-0.5 rounded border border-green-200 uppercase">
-                          {p.status}
+                          {translateCalibrationStatus(p.status)}
                         </span>
                       </TableCell>
                     </TableRow>
