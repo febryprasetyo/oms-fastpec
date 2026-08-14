@@ -7,19 +7,19 @@ const nullableNumber = z.preprocess(
 );
 
 export const WaterSampleSchema = z.object({
-  id: z.string().optional(), sampleName: z.string().nullish().transform((value) => value?.trim() || "Water Sample"),
+  id: z.string().optional(), sampleName: z.string().nullish().transform((value) => value?.trim() || "Sampel Air"),
   temperature: optionalNumber, ph: optionalNumber, doValue: optionalNumber, tds: optionalNumber,
   turbidity: optionalNumber, cod: optionalNumber, bod: optionalNumber, tss: optionalNumber,
   nh3: optionalNumber, no3: optionalNumber, no2: optionalNumber, orp: optionalNumber, depth: optionalNumber,
 });
 
 export const ParameterCalibrationSchema = z.object({
-  id: z.number().int().positive(), parameterId: z.string(), parameterName: z.string().nullish().transform((value) => value || "Parameter"),
+  id: z.number().int().positive(), parameterId: z.string(), parameterName: z.string().nullish().transform((value) => value?.trim() || "Parameter"),
   parameterUnit: z.string().nullish().transform((value) => value || undefined), spec: z.string().nullish().transform((value) => value || ""), coeffType: z.enum(["K/B", "K1-K6"]).nullish().transform((value) => value || undefined),
   crmReferenceValue: optionalNumber.nullable(), crmReadingValue: optionalNumber.nullable(),
   remark: z.string().nullable().optional(),
   results: z.array(z.object({
-    id: z.number().int().positive(), standardName: z.string().nullish().transform((value) => value || "Standard"), standardValue: nullableNumber,
+    id: z.number().int().positive(), standardName: z.string().nullish().transform((value) => value?.trim() || "Standar"), standardValue: nullableNumber,
     minAcceptable: nullableNumber, maxAcceptable: nullableNumber, value: z.string().nullish().transform((value) => value ?? ""),
   })),
   coefficients: z.array(z.object({ key: z.string().nullish().transform((value) => value || "K"), value: optionalNumber })),

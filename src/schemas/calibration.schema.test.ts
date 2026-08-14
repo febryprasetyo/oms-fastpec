@@ -1,0 +1,50 @@
+import { describe, expect, it } from "vitest";
+import { toUpdateCalibrationPayload } from "@/lib/calibration-payload";
+import { CalibrationSchema } from "./calibration.schema";
+
+describe("CalibrationSchema", () => {
+  it("menyediakan fallback bahasa Indonesia untuk label formulir yang kosong", () => {
+    const formValues = CalibrationSchema.parse({
+      stationId: "1",
+      stationName: "Stasiun Uji",
+      address: "Jakarta",
+      latitude: -6.2,
+      longitude: 106.8,
+      calibrationStartDate: new Date("2026-08-10T00:00:00"),
+      calibrationEndDate: new Date("2026-08-12T00:00:00"),
+      officer: "Budi Santoso",
+      parameters: [{
+        id: 7,
+        parameterId: "999",
+        parameterName: "  ",
+        parameterUnit: "mg/L",
+        spec: "",
+        coeffType: null,
+        crmReferenceValue: null,
+        crmReadingValue: null,
+        remark: null,
+        results: [{
+          id: 8,
+          standardName: "  ",
+          standardValue: 0,
+          minAcceptable: null,
+          maxAcceptable: null,
+          value: "",
+        }],
+        coefficients: [],
+        status: null,
+      }],
+      waterSamples: [{ sampleName: "  " }],
+      notes: "",
+    });
+
+    expect(formValues.parameters[0].parameterName).toBe("Parameter");
+    expect(formValues.parameters[0].results[0].standardName).toBe("Standar");
+    expect(formValues.waterSamples[0].sampleName).toBe("Sampel Air");
+
+    const payload = toUpdateCalibrationPayload(formValues);
+
+    expect(payload.details?.[0].standards[0].crm_name).toBe("Standar");
+    expect(payload.waterSamples?.[0].sample_name).toBe("Sampel Air");
+  });
+});

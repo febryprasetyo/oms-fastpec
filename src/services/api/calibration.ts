@@ -104,12 +104,12 @@ const nullableApiNumber = (value: number | string | null | undefined): number | 
 
 const toParameter = (parameterId: string, parameterName?: string): Parameter => {
   const config = getCalibrationParameterConfig(parameterId);
-  return { id: parameterId, name: parameterName ?? config?.name ?? "", spec: "" };
+  return { id: parameterId, name: parameterName?.trim() || config?.name || "", spec: "" };
 };
 
 const mapWaterSample = (sample: CalibrationApiWaterSample): WaterSample => ({
   ...(sample.id ? { id: String(sample.id) } : {}),
-  sampleName: sample.sample_name ?? "Water Sample",
+  sampleName: sample.sample_name?.trim() || "Sampel Air",
   temperature: sample.suhu ?? undefined,
   ph: sample.ph ?? undefined,
   doValue: sample.do ?? undefined,
@@ -180,7 +180,7 @@ export const mapCalibrationDetail = (calibration: ApiCalibrationRecord): Calibra
       remark: detail.remark,
       results: detail.standards.map((standard) => ({
         id: standard.id,
-        standardName: standard.crm_name ?? String(standard.crm_standard_value ?? standard.id),
+        standardName: standard.crm_name?.trim() || "Standar",
         standardValue: nullableApiNumber(standard.crm_standard_value),
         minAcceptable: nullableApiNumber(standard.min_acceptable),
         maxAcceptable: nullableApiNumber(standard.max_acceptable),
