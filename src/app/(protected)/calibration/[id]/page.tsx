@@ -19,9 +19,9 @@ export default function CalibrationDetailPage() {
   const handleApprove = async () => {
     try {
       await approveMutation.mutateAsync(id);
-      toast.success("Calibration report approved!");
+      toast.success("Laporan kalibrasi berhasil disetujui.");
     } catch {
-      toast.error("Failed to approve calibration report");
+      toast.error("Laporan kalibrasi tidak dapat disetujui.");
     }
   };
 
@@ -30,7 +30,7 @@ export default function CalibrationDetailPage() {
   }
 
   if (!detail) {
-    return <div className="p-8 text-center text-red-500">Calibration report not found.</div>;
+    return <div className="p-8 text-center text-red-500">Laporan kalibrasi tidak ditemukan.</div>;
   }
 
   return (
@@ -48,7 +48,7 @@ export default function CalibrationDetailPage() {
           {role === "adm" && detail.status === "Submitted" && (
             <Button onClick={handleApprove} className="w-full gap-2 text-white bg-green-600 hover:bg-green-700">
               <CheckCircle className="h-4 w-4" />
-              <span>Approve Calibration</span>
+              <span>Setujui Kalibrasi</span>
             </Button>
           )}
         </div>
