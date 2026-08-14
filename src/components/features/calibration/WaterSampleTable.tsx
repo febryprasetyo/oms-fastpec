@@ -1,126 +1,61 @@
 import React from "react";
-import { UseFormReturn, useFieldArray } from "react-hook-form";
-import { CalibrationFormValues } from "@/schemas/calibration.schema";
+import { type Path, type UseFormReturn, useFieldArray, useWatch } from "react-hook-form";
+import { Plus, Trash2 } from "lucide-react";
+import type { CalibrationFormValues } from "@/schemas/calibration.schema";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
 
-interface WaterSampleTableProps {
-  form: UseFormReturn<CalibrationFormValues>;
-}
+interface WaterSampleTableProps { form: UseFormReturn<CalibrationFormValues>; }
+
+type SampleField = "temperature" | "doValue" | "tds" | "turbidity" | "ph" | "cod" | "bod" | "tss" | "nh3" | "no3" | "no2" | "orp" | "depth";
+type SampleColumn = { field: SampleField; label: string; parameterNames?: string[] };
+
+const sampleColumns: SampleColumn[] = [
+  { field: "temperature", label: "Temp (°C)" },
+  { field: "doValue", label: "DO (mg/L)", parameterNames: ["do"] },
+  { field: "tds", label: "TDS (mg/L)", parameterNames: ["tds"] },
+  { field: "turbidity", label: "Turb (NTU)", parameterNames: ["turbidity"] },
+  { field: "ph", label: "pH Unit", parameterNames: ["ph"] },
+  { field: "cod", label: "COD (mg/L)", parameterNames: ["cod"] },
+  { field: "bod", label: "BOD (mg/L)", parameterNames: ["bod"] },
+  { field: "tss", label: "TSS (mg/L)", parameterNames: ["tss"] },
+  { field: "nh3", label: "NH3-N (mg/L)", parameterNames: ["amonia", "nh3"] },
+  { field: "no3", label: "NO3-N (mg/L)", parameterNames: ["nitrat", "no3"] },
+  { field: "no2", label: "NO2-N (mg/L)", parameterNames: ["nitrit", "no2"] },
+  { field: "orp", label: "ORP (mV)", parameterNames: ["orp"] },
+  { field: "depth", label: "Kedalaman (m)", parameterNames: ["kedalaman", "level", "depth"] },
+];
 
 export const WaterSampleTable: React.FC<WaterSampleTableProps> = ({ form }) => {
   const { control, register } = form;
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "waterSamples",
-  });
+  const { fields, append, remove } = useFieldArray({ control, name: "waterSamples" });
+  const parameters = useWatch({ control, name: "parameters" }) ?? [];
+  const selectedNames = new Set(parameters.map((parameter) => parameter.parameterName.trim().toLowerCase()));
+  const visibleColumns = sampleColumns.filter((column) => !column.parameterNames || column.parameterNames.some((name) => selectedNames.has(name)));
 
-  const handleAddSample = () => {
-    append({
-      sampleName: `Water Sample (River #${fields.length + 1})`,
-      temperature: undefined,
-      ph: undefined,
-      doValue: undefined,
-      conductivity: undefined,
-      tds: undefined,
-      salinity: undefined,
-      turbidity: undefined,
-      cod: undefined,
-      bod: undefined,
-      tss: undefined,
-      nh3: undefined,
-      no3: undefined,
-      orp: undefined,
-    });
+  const addSample = () => append({ sampleName: `Water Sample (River #${fields.length + 1})` });
+  const deleteSample = (index: number) => {
+    const sample = form.getValues(`waterSamples.${index}`);
+    if (sample?.id && !window.confirm(`Hapus sample “${sample.sampleName}”? Perubahan akan disimpan ke server.`)) return;
+    remove(index);
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-800">2. Water Sample Measurement & Blank Test</h3>
-        <Button type="button" variant="outline" size="sm" onClick={handleAddSample} className="h-8 gap-1.5">
-          <Plus className="h-4 w-4" />
-          <span>Add Sample</span>
-        </Button>
-      </div>
-
-      <div className="border rounded-md overflow-x-auto bg-white">
-        <Table className="min-w-[1000px]">
-          <TableHeader>
-            <TableRow className="bg-slate-50">
-              <TableHead className="w-[180px] font-bold text-slate-700">Sample Type</TableHead>
-              <TableHead className="font-bold text-slate-700 text-center">Temp (°C)</TableHead>
-              <TableHead className="font-bold text-slate-700 text-center">DO (mg/L)</TableHead>
-              <TableHead className="font-bold text-slate-700 text-center">TDS (mg/L)</TableHead>
-              <TableHead className="font-bold text-slate-700 text-center">Turb (NTU)</TableHead>
-              <TableHead className="font-bold text-slate-700 text-center">pH Unit</TableHead>
-              <TableHead className="font-bold text-slate-700 text-center">COD (mg/L)</TableHead>
-              <TableHead className="font-bold text-slate-700 text-center">BOD (mg/L)</TableHead>
-              <TableHead className="font-bold text-slate-700 text-center">TSS (mg/L)</TableHead>
-              <TableHead className="font-bold text-slate-700 text-center">NH3-N (mg/L)</TableHead>
-              <TableHead className="font-bold text-slate-700 text-center">NO3-N (mg/L)</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {fields.map((field, index) => (
-              <TableRow key={field.id}>
-                <TableCell>
-                  <Input
-                    className="h-8 text-xs font-semibold"
-                    {...register(`waterSamples.${index}.sampleName` as const)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Input type="number" step="any" className="h-8 text-xs text-center mx-auto" {...register(`waterSamples.${index}.temperature` as const)} />
-                </TableCell>
-                <TableCell>
-                  <Input type="number" step="any" className="h-8 text-xs text-center mx-auto" {...register(`waterSamples.${index}.doValue` as const)} />
-                </TableCell>
-                <TableCell>
-                  <Input type="number" step="any" className="h-8 text-xs text-center mx-auto" {...register(`waterSamples.${index}.tds` as const)} />
-                </TableCell>
-                <TableCell>
-                  <Input type="number" step="any" className="h-8 text-xs text-center mx-auto" {...register(`waterSamples.${index}.turbidity` as const)} />
-                </TableCell>
-                <TableCell>
-                  <Input type="number" step="any" className="h-8 text-xs text-center mx-auto" {...register(`waterSamples.${index}.ph` as const)} />
-                </TableCell>
-                <TableCell>
-                  <Input type="number" step="any" className="h-8 text-xs text-center mx-auto" {...register(`waterSamples.${index}.cod` as const)} />
-                </TableCell>
-                <TableCell>
-                  <Input type="number" step="any" className="h-8 text-xs text-center mx-auto" {...register(`waterSamples.${index}.bod` as const)} />
-                </TableCell>
-                <TableCell>
-                  <Input type="number" step="any" className="h-8 text-xs text-center mx-auto" {...register(`waterSamples.${index}.tss` as const)} />
-                </TableCell>
-                <TableCell>
-                  <Input type="number" step="any" className="h-8 text-xs text-center mx-auto" {...register(`waterSamples.${index}.nh3` as const)} />
-                </TableCell>
-                <TableCell>
-                  <Input type="number" step="any" className="h-8 text-xs text-center mx-auto" {...register(`waterSamples.${index}.no3` as const)} />
-                </TableCell>
-                <TableCell>
-                  {fields.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => remove(index)}
-                      className="h-8 w-8 text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+  return <div className="space-y-4">
+    <div className="flex items-center justify-between"><h3 className="text-sm font-semibold text-slate-800">2. Water Sample Measurement & Blank Test</h3><Button type="button" variant="outline" size="sm" onClick={addSample} className="h-8 gap-1.5"><Plus className="h-4 w-4" />Add Sample</Button></div>
+    <p className="text-xs text-muted-foreground">Kolom pengukuran mengikuti parameter calibration yang dipilih; Suhu selalu ditampilkan.</p>
+    <div className="overflow-x-auto rounded-md border bg-white">
+      <Table style={{ minWidth: `${Math.max(560, 260 + visibleColumns.length * 120)}px` }}>
+        <TableHeader><TableRow className="bg-slate-50"><TableHead className="w-[190px] font-bold text-slate-700">Sample Type</TableHead>{visibleColumns.map((column) => <TableHead key={column.field} className="text-center font-bold text-slate-700">{column.label}</TableHead>)}<TableHead className="w-[56px] text-center">Action</TableHead></TableRow></TableHeader>
+        <TableBody>{fields.length === 0 ? <TableRow><TableCell colSpan={visibleColumns.length + 2} className="py-6 text-center text-muted-foreground">Belum ada water sample. Klik Add Sample untuk menambahkan.</TableCell></TableRow> : fields.map((field, index) => <TableRow key={field.id}>
+          <TableCell><Input className="h-8 text-xs font-semibold" {...register(`waterSamples.${index}.sampleName`)} /></TableCell>
+          {visibleColumns.map((column) => {
+            const fieldPath = `waterSamples.${index}.${column.field}` as Path<CalibrationFormValues>;
+            return <TableCell key={column.field}><Input type="number" step="any" className="mx-auto h-8 text-center text-xs" {...register(fieldPath)} /></TableCell>;
+          })}
+          <TableCell className="text-center"><Button type="button" variant="ghost" size="icon" onClick={() => deleteSample(index)} className="h-8 w-8 text-red-500 hover:text-red-700" aria-label={`Hapus ${form.getValues(`waterSamples.${index}.sampleName`)}`}><Trash2 className="h-4 w-4" /></Button></TableCell>
+        </TableRow>)}</TableBody>
+      </Table>
     </div>
-  );
+  </div>;
 };

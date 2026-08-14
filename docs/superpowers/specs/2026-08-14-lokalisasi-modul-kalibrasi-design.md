@@ -15,7 +15,7 @@ Perubahan mencakup:
 - tampilan cetak, nama berkas unduhan, dan template/generator PDF;
 - formatter tanggal, rentang tanggal, angka desimal, nilai standar/CRM, satuan, tempat, dan status.
 
-Nama internal program, nama properti API, rute, payload, dan nilai status dari server tidak diterjemahkan. Singkatan ilmiah dan satuan baku seperti CRM, pH, DO, COD, BOD, TSS, mg/L, NTU, mV, dan °C tetap digunakan.
+Nama internal program, nama properti API, rute, payload, dan nilai status dari server tidak diterjemahkan. Singkatan ilmiah dan satuan baku seperti CRM, pH, DO, COD, BOD, TSS, Amonia. Nitrat dan Nitrit (jangan gunakan singkatan seperti no3, Nh3-n) mg/L, NTU, mV, dan °C tetap digunakan.
 
 ## Aturan Bahasa dan Istilah
 

@@ -1,172 +1,130 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalibrationSchema, CalibrationFormValues } from "@/schemas/calibration.schema";
-import { useStations, useCalibrationDetail, useUpdateCalibration, useSubmitCalibration } from "@/hook/useCalibration";
-import { CalibrationHeader } from "@/components/features/badge/CalibrationHeader";
+import { toast } from "sonner";
+import { CalibrationSchema, type CalibrationFormValues } from "@/schemas/calibration.schema";
+import { toUpdateCalibrationPayload } from "@/lib/calibration-payload";
+import { useCalibrationDetail, useParameters, useSubmitCalibration, useUpdateCalibration } from "@/hook/useCalibration";
 import { ParameterTable } from "@/components/features/calibration/ParameterTable";
 import { WaterSampleTable } from "@/components/features/calibration/WaterSampleTable";
 import { NotesEditor } from "@/components/features/calibration/NotesEditor";
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { CalibrationHeader } from "@/components/features/badge/CalibrationHeader";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { toUpdateCalibrationPayload } from "@/lib/calibration-payload";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-export default function EditCalibration() {
-  const router = useRouter();
+export default function EditCalibrationPage() {
   const { id } = useParams() as { id: string };
-  const { data: detail, isLoading } = useCalibrationDetail(id);
-  const { data: stations } = useStations();
+  const router = useRouter();
+  const { data: detail, isLoading, refetch } = useCalibrationDetail(id);
+  const { data: masterParameters = [] } = useParameters();
   const updateMutation = useUpdateCalibration();
   const submitMutation = useSubmitCalibration();
-  const [percentage, setPercentage] = useState(0);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const initialized = useRef(false);
+  const saving = useRef(false);
+  const activeSave = useRef<Promise<boolean> | null>(null);
+  const form = useForm<CalibrationFormValues>({ resolver: zodResolver(CalibrationSchema) });
+  const values = form.watch();
 
-  const form = useForm<CalibrationFormValues>({
-    resolver: zodResolver(CalibrationSchema),
-  });
-
-  const watchAll = form.watch();
-
-  // Populate data when detail query resolves
   useEffect(() => {
-    if (detail) {
-      form.reset({
-        stationId: detail.stationId,
-        stationName: detail.stationName,
-        address: detail.address,
-        latitude: detail.latitude,
-        longitude: detail.longitude,
-        calibrationDate: new Date(detail.calibrationDate),
-        contactPerson: detail.contactPerson,
-        phone: detail.phone,
-        officer: detail.officer,
-        parameters: detail.parameters,
-        waterSamples: detail.waterSamples,
-        notes: detail.notes,
-      });
-    }
-  }, [detail]);
+    if (!detail || (initialized.current && form.formState.isDirty)) return;
+    form.reset({
+      stationId: detail.stationId, stationName: detail.stationName, address: detail.address,
+      latitude: detail.latitude, longitude: detail.longitude,
+      calibrationStartDate: new Date(`${detail.calibrationStartDate}T00:00:00`),
+      calibrationEndDate: new Date(`${detail.calibrationEndDate}T00:00:00`), officer: detail.officer,
+      parameters: detail.parameters, waterSamples: detail.waterSamples, notes: detail.notes,
+    });
+    initialized.current = true;
+  }, [detail, form]);
 
-  // Progress calculator
+  const save = useCallback(async (showToast = false): Promise<boolean> => {
+    if (!detail || detail.status !== "Draft") return true;
+    if (activeSave.current) {
+      const previousSaveSucceeded = await activeSave.current;
+      if (!previousSaveSucceeded) return false;
+    }
+    if (!form.formState.isDirty) return true;
+    const parsed = CalibrationSchema.safeParse(form.getValues());
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      const field = issue?.path.length ? issue.path.join(".") : "form";
+      toast.error(`${field}: ${issue?.message ?? "Form belum valid"}`);
+      return false;
+    }
+    const snapshot = parsed.data;
+    const serializedSnapshot = JSON.stringify(snapshot);
+    const hasNewSamples = snapshot.waterSamples.some((sample) => !sample.id);
+    const request = (async () => {
+      saving.current = true; setSaveState("saving");
+      try {
+        await updateMutation.mutateAsync({ id, data: toUpdateCalibrationPayload(snapshot) });
+        const unchangedDuringSave = JSON.stringify(form.getValues()) === serializedSnapshot;
+        if (unchangedDuringSave) form.reset(snapshot);
+        setSaveState("saved");
+        if (hasNewSamples || unchangedDuringSave) {
+          if (unchangedDuringSave) initialized.current = false;
+          await refetch();
+        }
+        if (showToast) toast.success("Draft tersimpan.");
+        return true;
+      } catch { setSaveState("error"); return false; }
+      finally { saving.current = false; activeSave.current = null; }
+    })();
+    activeSave.current = request;
+    return request;
+  }, [detail, form, id, refetch, updateMutation]);
+
   useEffect(() => {
-    let filled = 0;
-    let total = 6;
-    if (watchAll.stationId) filled++;
-    if (watchAll.contactPerson) filled++;
-    if (watchAll.phone) filled++;
-    if (watchAll.parameters && watchAll.parameters.length > 0) filled++;
-    if (watchAll.waterSamples && watchAll.waterSamples.length > 0) filled++;
-    if (watchAll.notes) filled++;
+    if (!initialized.current || !form.formState.isDirty || detail?.status !== "Draft") return;
+    const timer = window.setTimeout(() => void save(false), 1500);
+    return () => window.clearTimeout(timer);
+  }, [values, form.formState.isDirty, detail?.status, save]);
 
-    setPercentage(Math.round((filled / total) * 100));
-  }, [watchAll]);
-
-  const handleStationChange = (id: string) => {
-    const selected = stations?.find((s) => s.id === id);
-    if (selected) {
-      form.setValue("stationId", selected.id);
-      form.setValue("stationName", selected.name);
-      form.setValue("address", selected.address);
-      form.setValue("latitude", selected.latitude);
-      form.setValue("longitude", selected.longitude);
-    }
-  };
-
-  const onSubmit = async (values: CalibrationFormValues) => {
+  const changeParameters = async (parameterId: string) => {
+    if (!detail || detail.status !== "Draft" || saving.current) return;
+    const current = form.getValues("parameters").map((parameter) => parameter.parameterId);
+    const next = current.includes(parameterId) ? current.filter((item) => item !== parameterId) : [...current, parameterId];
+    if (next.length === 0) return toast.error("Minimal satu parameter harus dipilih.");
+    saving.current = true; setSaveState("saving");
     try {
-      await updateMutation.mutateAsync({ id, data: toUpdateCalibrationPayload(values) });
-      await submitMutation.mutateAsync(id);
-      toast.success("Calibration successfully submitted!");
-      router.push(`/calibration/${id}`);
-    } catch {
-      toast.error("Failed to submit calibration sheet");
-    }
+      await updateMutation.mutateAsync({ id, data: { parameter_ids: next.map(Number) } });
+      initialized.current = false; await refetch(); setSaveState("saved");
+    } catch { setSaveState("error"); }
+    finally { saving.current = false; }
   };
 
-  const saveDraft = async () => {
-    const values = form.getValues();
-    try {
-      await updateMutation.mutateAsync({ id, data: toUpdateCalibrationPayload(values) });
-      toast.success("Draft saved successfully!");
-    } catch {
-      toast.error("Failed to save draft");
-    }
+  const submit = async () => {
+    const missing = form.getValues("parameters").some((parameter) => parameter.results.some((result) => result.value.trim() === ""));
+    if (missing) return toast.error("Seluruh hasil calibration standard wajib diisi.");
+    const missingCoefficients = form.getValues("parameters").some((parameter) => parameter.coeffType && parameter.coefficients.some((coefficient) => coefficient.value === undefined || !Number.isFinite(Number(coefficient.value))));
+    if (missingCoefficients) return toast.error("Seluruh K/B value hasil kalibrasi wajib diisi untuk parameter yang memiliki coefficient.");
+    if (activeSave.current && !(await activeSave.current)) return;
+    if (!(await save(false))) return;
+    try { await submitMutation.mutateAsync(id); toast.success("Calibration berhasil di-submit."); router.push(`/calibration/${id}`); } catch { /* interceptor handles message */ }
   };
 
-  if (isLoading) {
-    return <div className="p-8 text-center">Loading calibration detail...</div>;
-  }
+  if (isLoading) return <div className="p-8 text-center">Memuat calibration...</div>;
+  if (!detail) return <div className="p-8 text-center text-destructive">Calibration tidak ditemukan.</div>;
+  const editable = detail.status === "Draft";
+  const completion = values?.parameters?.length ? Math.round(values.parameters.flatMap((parameter) => parameter.results).filter((result) => result.value !== "").length / Math.max(1, values.parameters.flatMap((parameter) => parameter.results).length) * 100) : 0;
 
-  return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <CalibrationHeader
-          reportNo={detail?.reportNo || "Draft"}
-          officer={watchAll.officer}
-          calibrationDate={watchAll.calibrationDate?.toLocaleDateString() || ""}
-          status="Draft"
-          completionPercentage={percentage}
-        />
-
-        {/* Station Metadatas */}
-        <Card>
-          <CardContent className="p-6 grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Select Station</Label>
-              <Select onValueChange={handleStationChange} value={watchAll.stationId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose station..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {stations?.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Contact Person</Label>
-              <Input placeholder="Enter PIC name" {...form.register("contactPerson")} />
-            </div>
-            <div className="space-y-2">
-              <Label>Phone</Label>
-              <Input placeholder="Enter PIC phone" {...form.register("phone")} />
-            </div>
-            <div className="space-y-2">
-              <Label>Address</Label>
-              <Input disabled {...form.register("address")} className="bg-slate-50" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Section 1 */}
-        <h2 className="text-lg font-bold text-slate-800 border-b pb-2">
-          1. Sensor Parameter Calibration & Register Adjustment
-        </h2>
-        <ParameterTable form={form} />
-
-        {/* Section 2 */}
-        <WaterSampleTable form={form} />
-
-        {/* Notes */}
-        <NotesEditor value={watchAll.notes || ""} onChange={(val) => form.setValue("notes", val)} />
-
-        {/* Action Panel */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button type="button" variant="outline" onClick={saveDraft}>
-            Save Draft
-          </Button>
-          <Button type="submit">Submit Calibration</Button>
-        </div>
-      </form>
-    </div>
-  );
+  return <div className="mx-auto max-w-6xl space-y-6 p-6">
+    <CalibrationHeader reportNo={detail.reportNo} officer={detail.officer} calibrationDate={`${detail.calibrationStartDate} – ${detail.calibrationEndDate}`} status={detail.status} completionPercentage={completion} />
+    {!editable && <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm">Report berstatus {detail.status} dan tidak dapat diedit.</div>}
+    <Card><CardContent className="grid gap-4 p-6 md:grid-cols-2">
+      <div><Label>Station</Label><Input readOnly value={detail.stationName} /></div><div><Label>Officer</Label><Input readOnly value={detail.officer} /></div>
+      <div><Label>Address</Label><Input readOnly value={detail.address} /></div><div><Label>Coordinate</Label><Input readOnly value={`LAT ${detail.latitude} | LONG ${detail.longitude}`} /></div>
+      <div><Label>Tanggal Mulai</Label><Input disabled={!editable} type="date" value={values.calibrationStartDate ? values.calibrationStartDate.toISOString().slice(0, 10) : ""} onChange={(event) => form.setValue("calibrationStartDate", new Date(`${event.target.value}T00:00:00`), { shouldDirty: true })} /></div>
+      <div><Label>Tanggal Selesai</Label><Input disabled={!editable} type="date" value={values.calibrationEndDate ? values.calibrationEndDate.toISOString().slice(0, 10) : ""} onChange={(event) => form.setValue("calibrationEndDate", new Date(`${event.target.value}T00:00:00`), { shouldDirty: true })} /></div>
+    </CardContent></Card>
+    {editable && <Card><CardContent className="grid gap-2 p-4 sm:grid-cols-2 lg:grid-cols-5">{masterParameters.map((parameter) => <Button key={parameter.id} type="button" variant={values.parameters?.some((item) => item.parameterId === parameter.id) ? "default" : "outline"} onClick={() => void changeParameters(parameter.id)}>{parameter.name}</Button>)}</CardContent></Card>}
+    <fieldset disabled={!editable} className="space-y-6"><ParameterTable form={form} /><WaterSampleTable form={form} /><NotesEditor value={values.notes || ""} onChange={(notes) => form.setValue("notes", notes, { shouldDirty: true })} /></fieldset>
+    {editable && <div className="flex items-center justify-end gap-3 border-t pt-4"><span className="mr-auto text-xs text-muted-foreground">{saveState === "saving" ? "Menyimpan..." : saveState === "saved" ? "Tersimpan" : saveState === "error" ? "Gagal menyimpan" : ""}</span><Button variant="outline" onClick={() => void save(true)}>Save Draft</Button><Button onClick={() => void submit()} disabled={submitMutation.isPending}>Submit Calibration</Button></div>}
+  </div>;
 }

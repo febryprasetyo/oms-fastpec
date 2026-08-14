@@ -21,7 +21,7 @@ export default function CalibrationDashboard() {
   const { data, isLoading } = useCalibrations({ limit: pageSize, offset: page * pageSize, ...(status === "all" ? {} : { status }) });
   const deleteMutation = useDeleteCalibration();
   const approveMutation = useApproveCalibration();
-  const canApprove = role === "adm" || role === "eng";
+  const canApprove = role === "adm";
   const rows = useMemo(() => (data?.items ?? []).filter((item) => `${item.reportNo} ${item.stationName} ${item.officer}`.toLowerCase().includes(query.toLowerCase())), [data?.items, query]);
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / pageSize));
 

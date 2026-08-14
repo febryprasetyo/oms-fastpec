@@ -37,13 +37,14 @@ interface ApiCalibrationRecord {
   station_address?: string;
   station_coordinate?: string;
   station_city?: string;
-  calibration_date: string;
-  contact_person: string;
-  phone: string;
+  calibration_start_date: string;
+  calibration_end_date: string;
   officer_name?: string;
   status: CalibrationApiStatus;
   notes?: string | null;
   verification_uuid?: string;
+  verification_url?: string;
+  qr_code_data_url?: string;
   created_at: string;
   updated_at: string;
   details?: CalibrationApiDetail[];
@@ -61,6 +62,13 @@ interface StationListItem {
   latitude?: number | string;
   longitude?: number | string;
   coordinate?: string;
+}
+
+interface ParameterListItem {
+  id: number;
+  name: string;
+  unit: string;
+  standards: { crm_name: string; crm_standard_value: number }[];
 }
 
 const authHeaders = (accessToken: string) => ({ Authorization: `Bearer ${accessToken}` });
@@ -88,31 +96,33 @@ const parseCoefficients = (coefficients: CalibrationApiDetail["coefficients"]): 
   return coefficients;
 };
 
+const nullableApiNumber = (value: number | string | null | undefined): number | null => {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 const toParameter = (parameterId: string, parameterName?: string): Parameter => {
   const config = getCalibrationParameterConfig(parameterId);
-  const spec = config?.standards
-    .map((standard) => `${standard.minAcceptable}-${standard.maxAcceptable} ${config.unit}`)
-    .join(" | ") ?? "";
-
-  return { id: parameterId, name: parameterName ?? config?.name ?? "", spec };
+  return { id: parameterId, name: parameterName ?? config?.name ?? "", spec: "" };
 };
 
 const mapWaterSample = (sample: CalibrationApiWaterSample): WaterSample => ({
-  id: String(sample.id ?? ""),
-  sampleName: sample.sample_name,
+  ...(sample.id ? { id: String(sample.id) } : {}),
+  sampleName: sample.sample_name ?? "Water Sample",
   temperature: sample.suhu ?? undefined,
   ph: sample.ph ?? undefined,
   doValue: sample.do ?? undefined,
-  conductivity: undefined,
   tds: sample.tds ?? undefined,
-  salinity: undefined,
   turbidity: sample.tur ?? undefined,
   cod: sample.cod ?? undefined,
   bod: sample.bod ?? undefined,
   tss: sample.tss ?? undefined,
   nh3: sample.amonia ?? undefined,
   no3: sample.nitrat ?? undefined,
+  no2: sample.nitrit ?? undefined,
   orp: sample.orp ?? undefined,
+  depth: sample.kedalaman ?? undefined,
 });
 
 const mapCalibration = (calibration: ApiCalibrationRecord): Calibration => {
@@ -127,14 +137,17 @@ const mapCalibration = (calibration: ApiCalibrationRecord): Calibration => {
     stationCity: calibration.station_city,
     latitude: coordinate.latitude,
     longitude: coordinate.longitude,
-    calibrationDate: calibration.calibration_date,
-    contactPerson: calibration.contact_person,
-    phone: calibration.phone,
+    calibrationStartDate: calibration.calibration_start_date,
+    calibrationEndDate: calibration.calibration_end_date,
+    calibrationDate: `${calibration.calibration_start_date} – ${calibration.calibration_end_date}`,
+    contactPerson: "",
+    phone: "",
     officer: calibration.officer_name ?? "",
     status: displayStatus(calibration.status),
     createdAt: calibration.created_at,
     updatedAt: calibration.updated_at,
-    verificationUrl: calibration.verification_uuid ? `/verify/${calibration.verification_uuid}` : undefined,
+    verificationUrl: calibration.verification_url,
+    qrCodeDataUrl: calibration.qr_code_data_url,
     uuid: calibration.verification_uuid,
   };
 };
@@ -144,33 +157,41 @@ export const mapCalibrationDetail = (calibration: ApiCalibrationRecord): Calibra
   parameters: (calibration.details ?? []).map((detail) => {
     const parameter = toParameter(String(detail.parameter_id), detail.parameter_name);
     const coefficients = parseCoefficients(detail.coefficients);
+    const normalizedParameterName = parameter.name.trim().toLowerCase();
+    const inferredCoeffType = normalizedParameterName === "ph"
+      ? "K1-K6"
+      : ["nitrat", "nitrit", "no3", "no2"].includes(normalizedParameterName)
+        ? undefined
+        : "K/B";
+    const coeffType = detail.coeff_type ?? inferredCoeffType;
+    const coefficientKeys = coeffType === "K1-K6"
+      ? ["k1", "k2", "k3", "k4", "k5", "k6"]
+      : coeffType === "K/B" ? ["k", "b"] : [];
 
     return {
       id: detail.id,
       parameterId: parameter.id,
-      parameterName: parameter.name,
+      parameterName: parameter.name || `Parameter ${detail.parameter_id}`,
+      parameterUnit: detail.parameter_unit ?? undefined,
       spec: parameter.spec,
-      coeffType: detail.coeff_type ?? undefined,
+      coeffType,
+      crmReferenceValue: nullableApiNumber(detail.crm_reference_value),
+      crmReadingValue: nullableApiNumber(detail.crm_reading_value),
       remark: detail.remark,
-      results: (detail.standards.length > 0
-        ? detail.standards
-        : (getCalibrationParameterConfig(detail.parameter_id)?.standards ?? []).map((standard) => ({
-          crm_name: standard.crmName,
-            id: undefined,
-            crm_standard_value: standard.standardValue,
-            min_acceptable: standard.minAcceptable,
-            max_acceptable: standard.maxAcceptable,
-            calibration_result: null,
-          })))
-        .map((standard) => ({
+      results: detail.standards.map((standard) => ({
         id: standard.id,
-        standardName: standard.crm_name,
-        standardValue: standard.crm_standard_value,
-        minAcceptable: standard.min_acceptable,
-        maxAcceptable: standard.max_acceptable,
-        value: standard.calibration_result?.toString() ?? "",
+        standardName: standard.crm_name ?? String(standard.crm_standard_value ?? standard.id),
+        standardValue: nullableApiNumber(standard.crm_standard_value),
+        minAcceptable: nullableApiNumber(standard.min_acceptable),
+        maxAcceptable: nullableApiNumber(standard.max_acceptable),
+        value: standard.calibration_result === null || standard.calibration_result === undefined
+          ? ""
+          : Number(standard.calibration_result).toFixed(2),
       })),
-      coefficients: Object.entries(coefficients).map(([key, value]) => ({ key, value })),
+      coefficients: coefficientKeys.map((key) => ({
+        key,
+        value: coefficients[key] !== undefined && Number.isFinite(Number(coefficients[key])) ? Number(coefficients[key]) : undefined,
+      })),
       status: detail.calculation_result,
     };
   }),
@@ -202,8 +223,14 @@ export const calibrationService = {
     });
   },
 
-  async getMasterParameters(): Promise<Parameter[]> {
-    return calibrationParameterConfigs.map((config) => toParameter(config.id, config.name));
+  async getMasterParameters(accessToken: string): Promise<Parameter[]> {
+    const response = await axiosInstance.get<ApiResponse<ParameterListItem[]>>("/api/calibrations/parameters", {
+      headers: authHeaders(accessToken),
+    });
+    return response.data.data.map((parameter) => ({
+      id: String(parameter.id), name: parameter.name, unit: parameter.unit, spec: "",
+      standards: parameter.standards.map((standard) => ({ crmName: standard.crm_name, standardValue: standard.crm_standard_value })),
+    }));
   },
 
   async getCalibrations(accessToken: string, options: { limit: number; offset: number; status?: CalibrationApiStatus }): Promise<CalibrationListResult> {
@@ -237,13 +264,11 @@ export const calibrationService = {
     return mapCalibration(response.data.data);
   },
 
-  async updateCalibration(id: string, data: unknown, accessToken: string): Promise<Calibration> {
+  async updateCalibration(id: string, data: unknown, accessToken: string): Promise<void> {
     const payload: UpdateCalibrationPayload = UpdateCalibrationPayloadSchema.parse(data);
-    const response = await axiosInstance.put<ApiResponse<ApiCalibrationRecord>>(`/api/calibrations/${id}`, payload, {
+    await axiosInstance.put<ApiResponse<Pick<ApiCalibrationRecord, "id" | "status" | "updated_at">>>(`/api/calibrations/${id}`, payload, {
       headers: authHeaders(accessToken),
     });
-
-    return mapCalibration(response.data.data);
   },
 
   async submitCalibration(id: string, accessToken: string): Promise<void> {

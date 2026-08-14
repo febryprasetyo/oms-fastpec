@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./:/app:cached
+      - /app/node_modules
+    ports:
+      - "5170:5170"
+    environment:
+      - NODE_ENV=development
+    stdin_open: true
+    tty: true

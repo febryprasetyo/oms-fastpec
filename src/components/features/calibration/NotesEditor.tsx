@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 interface NotesEditorProps { value: string; onChange: (value: string) => void; }
 
 export const NotesEditor = ({ value, onChange }: NotesEditorProps) => {
-  const editor = useEditor({ extensions: [StarterKit, Underline], content: value, onUpdate: ({ editor: current }) => onChange(current.getHTML()), editorProps: { attributes: { class: "min-h-[140px] px-3 py-2 text-sm outline-none" } } });
+  const editor = useEditor({ extensions: [StarterKit, Underline], content: value, onUpdate: ({ editor: current }) => onChange(current.getHTML()), editorProps: { attributes: { class: "calibration-notes-editor min-h-[140px] px-3 py-2 text-sm outline-none" } } });
   useEffect(() => { if (editor && value !== editor.getHTML()) editor.commands.setContent(value || ""); }, [editor, value]);
   if (!editor) return null;
   const action = (label: string, icon: ReactNode, run: () => void, active = false) => <Button type="button" variant={active ? "secondary" : "outline"} size="icon" className="h-8 w-8" aria-label={label} onMouseDown={(event) => { event.preventDefault(); run(); }}>{icon}</Button>;

@@ -21,9 +21,11 @@ export const useStations = () => {
 };
 
 export const useParameters = () => {
+  const { token } = useCalibrationAuth();
   return useQuery({
     queryKey: ["master-parameters"],
-    queryFn: () => calibrationService.getMasterParameters(),
+    queryFn: () => calibrationService.getMasterParameters(token),
+    enabled: !!token,
   });
 };
 

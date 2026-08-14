@@ -10,59 +10,56 @@ export interface Station {
 
 export interface Parameter {
   id: string;
-  name: string; // e.g. "pH", "DO", "Turbidity"
-  spec: string; // e.g. "99-101 %" or "Accuracy ± 0.05"
+  name: string;
+  spec: string;
+  unit?: string;
+  standards?: { crmName: string; standardValue: number }[];
 }
 
-export interface CalibrationStandard {
-  id: string;
-  name: string; // e.g. "CRM 0 %", "Buffer pH 4.00"
-  standardValue?: number | null;
-  minAcceptable?: number | null;
-  maxAcceptable?: number | null;
-}
+export type CalibrationCoefficientType = "K/B" | "K1-K6";
 
 export interface ParameterCalibrationDetail {
-  id?: number;
+  id: number;
   parameterId: string;
   parameterName: string;
+  parameterUnit?: string;
   spec: string;
-  coeffType?: 'linear' | 'polynomial';
-  remark?: string | null;
+  coeffType?: CalibrationCoefficientType;
+  crmReferenceValue: number | null;
+  crmReadingValue: number | null;
+  remark: string | null;
   results: {
-    id?: number;
+    id: number;
     standardName: string;
-    standardValue?: number | null;
-    minAcceptable?: number | null;
-    maxAcceptable?: number | null;
+    standardValue: number | null;
+    minAcceptable: number | null;
+    maxAcceptable: number | null;
     value: string;
   }[];
-  coefficients: {
-    key: string;
-    value: number;
-  }[];
-  status: 'PASS' | 'FAILED' | null;
+  coefficients: { key: string; value?: number }[];
+  status: "PASS" | "FAILED" | null;
 }
 
 export interface WaterSample {
-  id: string;
+  id?: string;
   sampleName: string;
   temperature?: number;
   ph?: number;
   doValue?: number;
-  conductivity?: number;
   tds?: number;
-  salinity?: number;
   turbidity?: number;
   cod?: number;
   bod?: number;
   tss?: number;
   nh3?: number;
   no3?: number;
+  no2?: number;
   orp?: number;
+  depth?: number;
 }
 
-export type CalibrationStatus = 'Draft' | 'Submitted' | 'Approved';
+export type CalibrationStatus = "Draft" | "Submitted" | "Approved";
+export type CalibrationApiStatus = "draft" | "submitted" | "approved";
 
 export interface Calibration {
   id: string;
@@ -73,6 +70,9 @@ export interface Calibration {
   stationCity?: string;
   latitude: number;
   longitude: number;
+  calibrationStartDate: string;
+  calibrationEndDate: string;
+  /** Compatibility alias for older list/preview components. */
   calibrationDate: string;
   contactPerson: string;
   phone: string;
@@ -81,6 +81,7 @@ export interface Calibration {
   createdAt: string;
   updatedAt: string;
   verificationUrl?: string;
+  qrCodeDataUrl?: string;
   uuid?: string;
 }
 
@@ -90,10 +91,8 @@ export interface CalibrationDetail extends Calibration {
   notes: string;
 }
 
-export type CalibrationApiStatus = "draft" | "submitted" | "approved";
-
 export interface CalibrationApiStandard {
-  id?: number;
+  id: number;
   crm_name: string;
   crm_standard_value: number | null;
   min_acceptable: number | null;
@@ -105,8 +104,11 @@ export interface CalibrationApiDetail {
   id: number;
   parameter_id: number;
   parameter_name?: string;
-  coeff_type: "linear" | "polynomial" | null;
+  parameter_unit?: string;
+  coeff_type: CalibrationCoefficientType | null;
   coefficients: Record<string, number> | string | null;
+  crm_reference_value: number | null;
+  crm_reading_value: number | null;
   calculation_result: "PASS" | "FAILED" | null;
   remark: string | null;
   standards: CalibrationApiStandard[];

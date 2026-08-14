@@ -21,7 +21,7 @@ export const ParameterTable: React.FC<ParameterTableProps> = ({ form }) => {
       {fields.map((field, index) => {
         const paramName = form.watch(`parameters.${index}.parameterName`);
         const spec = form.watch(`parameters.${index}.spec`);
-        const isPh = paramName.toLowerCase() === "ph";
+        const coeffType = form.watch(`parameters.${index}.coeffType`);
 
         return (
           <Card key={field.id} className="shadow-sm">
@@ -51,14 +51,15 @@ export const ParameterTable: React.FC<ParameterTableProps> = ({ form }) => {
               </div>
 
               {/* Coefficients */}
-              <div className="border-t pt-3">
+              {coeffType && <div className="border-t pt-3">
                 <Label className="text-xs font-bold text-slate-600 block mb-2">
-                  Internal Coefficients ({isPh ? "K1 - K4" : "K / B"})
+                  K / B Value Hasil Kalibrasi ({coeffType})
                 </Label>
+                <p className="mb-2 text-[11px] text-muted-foreground">Masukkan nilai coefficient hasil proses kalibrasi.</p>
                 <div className="grid grid-cols-2 gap-2">
                   {form.watch(`parameters.${index}.coefficients`)?.map((coeff, coeffIndex) => (
                     <div key={coeffIndex} className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-500 w-8">{coeff.key}:</span>
+                      <span className="w-8 text-xs font-semibold uppercase text-slate-500">{coeff.key}:</span>
                       <Input
                         type="number"
                         step="any"
@@ -68,6 +69,10 @@ export const ParameterTable: React.FC<ParameterTableProps> = ({ form }) => {
                     </div>
                   ))}
                 </div>
+              </div>}
+              <div className="grid grid-cols-2 gap-3 border-t pt-3">
+                <div><Label className="text-xs">CRM Reference</Label><Input type="number" step="any" disabled={paramName.toLowerCase() === "ph"} {...register(`parameters.${index}.crmReferenceValue` as const)} /></div>
+                <div><Label className="text-xs">CRM Reading</Label><Input type="number" step="any" disabled={paramName.toLowerCase() === "ph"} {...register(`parameters.${index}.crmReadingValue` as const)} /></div>
               </div>
             </CardContent>
           </Card>

@@ -1,66 +1,38 @@
-import { z } from 'zod';
+import { z } from "zod";
+
+const optionalNumber = z.preprocess((value) => value === "" || value == null ? undefined : value, z.coerce.number().finite().optional());
+const nullableNumber = z.preprocess(
+  (value) => value === "" || value == null ? null : value,
+  z.coerce.number().finite().nullable(),
+);
 
 export const WaterSampleSchema = z.object({
-  id: z.string().optional(),
-  sampleName: z.string().min(1, 'Sample name is required'),
-  temperature: z.coerce.number().optional(),
-  ph: z.coerce.number().optional(),
-  doValue: z.coerce.number().optional(),
-  conductivity: z.coerce.number().optional(),
-  tds: z.coerce.number().optional(),
-  salinity: z.coerce.number().optional(),
-  turbidity: z.coerce.number().optional(),
-  cod: z.coerce.number().optional(),
-  bod: z.coerce.number().optional(),
-  tss: z.coerce.number().optional(),
-  nh3: z.coerce.number().optional(),
-  no3: z.coerce.number().optional(),
-  orp: z.coerce.number().optional(),
-});
-
-export const CoefficientSchema = z.object({
-  key: z.string(),
-  value: z.coerce.number(),
-});
-
-export const ResultSchema = z.object({
-  id: z.number().int().positive().optional(),
-  standardName: z.string(),
-  standardValue: z.coerce.number().nullable().optional(),
-  minAcceptable: z.coerce.number().nullable().optional(),
-  maxAcceptable: z.coerce.number().nullable().optional(),
-  value: z.string().min(1, 'Value is required'),
+  id: z.string().optional(), sampleName: z.string().nullish().transform((value) => value?.trim() || "Water Sample"),
+  temperature: optionalNumber, ph: optionalNumber, doValue: optionalNumber, tds: optionalNumber,
+  turbidity: optionalNumber, cod: optionalNumber, bod: optionalNumber, tss: optionalNumber,
+  nh3: optionalNumber, no3: optionalNumber, no2: optionalNumber, orp: optionalNumber, depth: optionalNumber,
 });
 
 export const ParameterCalibrationSchema = z.object({
-  id: z.number().int().positive().optional(),
-  parameterId: z.string(),
-  parameterName: z.string(),
-  spec: z.string(),
-  coeffType: z.enum(['linear', 'polynomial']).optional(),
+  id: z.number().int().positive(), parameterId: z.string(), parameterName: z.string().nullish().transform((value) => value || "Parameter"),
+  parameterUnit: z.string().nullish().transform((value) => value || undefined), spec: z.string().nullish().transform((value) => value || ""), coeffType: z.enum(["K/B", "K1-K6"]).nullish().transform((value) => value || undefined),
+  crmReferenceValue: optionalNumber.nullable(), crmReadingValue: optionalNumber.nullable(),
   remark: z.string().nullable().optional(),
-  results: z.array(ResultSchema),
-  coefficients: z.array(CoefficientSchema),
-  status: z.enum(['PASS', 'FAILED']).nullable().default('PASS'),
+  results: z.array(z.object({
+    id: z.number().int().positive(), standardName: z.string().nullish().transform((value) => value || "Standard"), standardValue: nullableNumber,
+    minAcceptable: nullableNumber, maxAcceptable: nullableNumber, value: z.string().nullish().transform((value) => value ?? ""),
+  })),
+  coefficients: z.array(z.object({ key: z.string().nullish().transform((value) => value || "K"), value: optionalNumber })),
+  status: z.enum(["PASS", "FAILED"]).nullable(),
 });
 
 export const CalibrationSchema = z.object({
-  stationId: z.string().min(1, 'Station is required'),
-  stationName: z.string(),
-  address: z.string(),
-  latitude: z.coerce.number(),
-  longitude: z.coerce.number(),
-  calibrationDate: z.date({
-    required_error: 'Calibration date is required',
-  }),
-  contactPerson: z.string().min(1, 'Contact person is required'),
-  phone: z.string().min(1, 'Phone is required'),
-  officer: z.string().min(1, 'Officer is required'),
-  parameters: z.array(ParameterCalibrationSchema).min(1, 'Select at least one parameter'),
-  waterSamples: z.array(WaterSampleSchema),
-  notes: z.string().optional(),
+  stationId: z.string().min(1), stationName: z.string().nullish().transform((value) => value || ""), address: z.string().nullish().transform((value) => value || ""), latitude: z.coerce.number(), longitude: z.coerce.number(),
+  calibrationStartDate: z.date(), calibrationEndDate: z.date(), officer: z.string().nullish().transform((value) => value || ""),
+  parameters: z.array(ParameterCalibrationSchema).min(1), waterSamples: z.array(WaterSampleSchema), notes: z.string().nullish().transform((value) => value || ""),
+}).refine((value) => value.calibrationEndDate >= value.calibrationStartDate, {
+  message: "Tanggal selesai harus sama atau setelah tanggal mulai", path: ["calibrationEndDate"],
 });
 
 export type CalibrationFormValues = z.infer<typeof CalibrationSchema>;
 export type WaterSampleFormValues = z.infer<typeof WaterSampleSchema>;
-export type ParameterCalibrationFormValues = z.infer<typeof ParameterCalibrationSchema>;

@@ -3,13 +3,18 @@ import fs from 'fs/promises';
 import puppeteer from 'puppeteer';
 import { CalibrationDetail } from '@/types/calibration';
 import { JSDOM } from 'jsdom';
+import qrcode from 'qrcode-generator';
+import { getCalibrationVerificationUrl } from '@/lib/calibration-verification';
 
 /**
  * Generate a PDF Buffer for a given calibration detail.
  * It loads the static HTML template located at `.agents/Calibration_Report.html`,
  * injects the calibration data into the DOM, and uses Puppeteer to render a PDF.
  */
-export async function generateCalibrationPdf(detail: CalibrationDetail): Promise<Buffer> {
+export async function generateCalibrationPdf(
+  detail: CalibrationDetail,
+  publicAppUrl = process.env.CALIBRATION_PUBLIC_URL ?? process.env.NEXT_PUBLIC_APP_URL,
+): Promise<Buffer> {
   // Resolve the path of the HTML template (relative to project root)
   const templatePath = path.resolve(process.cwd(), '.agents', 'Calibration_Report.html');
   const html = await fs.readFile(templatePath, { encoding: 'utf-8' });
@@ -17,6 +22,22 @@ export async function generateCalibrationPdf(detail: CalibrationDetail): Promise
   // Use JSDOM to manipulate the HTML and replace placeholders.
   const dom = new JSDOM(html);
   const document = dom.window.document;
+
+  // The PDF service owns the QR image. It must use the verification UUID, not
+  // the database ID or a request/browser origin, so it stays stable over time.
+  const qrContainer = document.querySelector('[data-calibration-qr]');
+  if (qrContainer && detail.uuid) {
+    if (!publicAppUrl) {
+      throw new Error('CALIBRATION_PUBLIC_URL must be configured before generating a calibration PDF.');
+    }
+
+    const verificationUrl = getCalibrationVerificationUrl(detail.uuid, publicAppUrl);
+    const qr = qrcode(0, 'M');
+    qr.addData(verificationUrl);
+    qr.make();
+    qrContainer.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+    qrContainer.setAttribute('data-verification-url', verificationUrl);
+  }
 
   // Helper to set innerText safely (fallback to empty string)
   const setText = (selector: string, value: string | number | undefined) => {

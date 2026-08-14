@@ -21,4 +21,4 @@ export const apiAuthPrefix = "/api";
 
 export const DEFAULT_LOGIN_REDIRECT = "/dashboard";
 
-export const unprotectedRoutes = ["monitoring", "newmonit"];
+export const unprotectedRoutes = ["monitoring", "newmonit", "verify"];

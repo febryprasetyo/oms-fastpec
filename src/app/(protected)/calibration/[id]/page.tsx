@@ -43,9 +43,9 @@ export default function CalibrationDetailPage() {
 
         {/* Info & Side Panel (Hidden on print) */}
         <div className="w-full md:w-auto space-y-4 shrink-0 print:hidden">
-          {detail.uuid && <QRCodeCard uuid={detail.uuid} />}
+          {detail.qrCodeDataUrl && <QRCodeCard dataUrl={detail.qrCodeDataUrl} verificationUrl={detail.verificationUrl} reportNo={detail.reportNo} />}
 
-          {role === "ADMIN" && detail.status === "Submitted" && (
+          {role === "adm" && detail.status === "Submitted" && (
             <Button onClick={handleApprove} className="w-full gap-2 text-white bg-green-600 hover:bg-green-700">
               <CheckCircle className="h-4 w-4" />
               <span>Approve Calibration</span>
