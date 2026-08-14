@@ -1,5 +1,5 @@
 import React from "react";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { Toaster } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { calibrationService } from "@/services/api/calibration";
@@ -46,6 +46,14 @@ const calibrationDetail: CalibrationDetail = {
           standardValue: 0,
           minAcceptable: null,
           maxAcceptable: null,
+          value: "0",
+        },
+        {
+          id: 2,
+          standardName: "1.005",
+          standardValue: 1.005,
+          minAcceptable: null,
+          maxAcceptable: null,
           value: "1.005",
         },
       ],
@@ -56,7 +64,14 @@ const calibrationDetail: CalibrationDetail = {
       status: "PASS",
     },
   ],
-  waterSamples: [],
+  waterSamples: [
+    {
+      id: "sample-1",
+      sampleName: "Sampel uji",
+      temperature: 0,
+      doValue: 1.005,
+    },
+  ],
   notes: "Kalibrasi dilakukan sesuai prosedur.",
 };
 
@@ -92,8 +107,18 @@ describe("ReportPreview", () => {
       screen.getByText(/Morowali Utara, 12 Agustus 2026/),
     ).toBeInTheDocument();
     expect(screen.getByText("0,00 mg/L")).toBeInTheDocument();
-    expect(screen.getAllByText("1,01")).toHaveLength(2);
+    expect(screen.getByText("1,01 mg/L")).toBeInTheDocument();
+    expect(screen.getAllByText("1,01")).toHaveLength(3);
+    expect(
+      screen
+        .getByText("Hasil Pembacaan")
+        .closest("table")
+        ?.querySelector("tbody tr td:nth-child(3)"),
+    ).toHaveTextContent("1,01");
     expect(screen.getByText(/K:/).closest("div")).toHaveTextContent("K: 1,01");
+    expect(
+      within(screen.getByText("Jenis Sampel").closest("table")!).getByText("1,01"),
+    ).toBeInTheDocument();
     expect(screen.getByText(/B:/).closest("div")).toHaveTextContent("B: 5,40");
     expect(screen.getByText("Standar/CRM")).toBeInTheDocument();
     expect(screen.getByAltText("Logo CMC")).toBeInTheDocument();
