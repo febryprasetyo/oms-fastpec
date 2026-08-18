@@ -1,5 +1,5 @@
 import React from "react";
-import { cleanup, render, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CalibrationDetail } from "@/types/calibration";
 import EditCalibrationPage from "./page";
@@ -81,5 +81,38 @@ describe("EditCalibrationPage", () => {
       const dateInputs = Array.from(document.querySelectorAll<HTMLInputElement>('input[type="date"]'));
       expect(dateInputs.map((input) => input.value)).toEqual(["2026-08-12", "2026-08-14"]);
     });
+  });
+
+  it("memungkinkan laporan diajukan disimpan kembali tanpa mengajukan ulang", async () => {
+    useCalibrationDetail.mockReturnValue({
+      data: { ...calibrationDetail, status: "Submitted" },
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+
+    render(<EditCalibrationPage />);
+
+    await waitFor(() => {
+      expect(document.querySelector<HTMLInputElement>('input[type="date"]')).toBeEnabled();
+    });
+    expect(screen.getByRole("button", { name: "Simpan Perubahan" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ajukan Kalibrasi" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/tidak dapat diedit/)).not.toBeInTheDocument();
+  });
+
+  it("mengunci laporan yang sudah disetujui", async () => {
+    useCalibrationDetail.mockReturnValue({
+      data: { ...calibrationDetail, status: "Approved" },
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+
+    render(<EditCalibrationPage />);
+
+    await waitFor(() => {
+      expect(document.querySelector<HTMLInputElement>('input[type="date"]')).toBeDisabled();
+    });
+    expect(screen.getByText("Laporan berstatus Disetujui dan tidak dapat diedit.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Simpan/ })).not.toBeInTheDocument();
   });
 });

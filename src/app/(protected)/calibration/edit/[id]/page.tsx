@@ -46,7 +46,7 @@ export default function EditCalibrationPage() {
   }, [detail, form]);
 
   const save = useCallback(async (showToast = false): Promise<boolean> => {
-    if (!detail || detail.status !== "Draft") return true;
+    if (!detail || detail.status === "Approved") return true;
     if (activeSave.current) {
       const previousSaveSucceeded = await activeSave.current;
       if (!previousSaveSucceeded) return false;
@@ -71,7 +71,7 @@ export default function EditCalibrationPage() {
           if (unchangedDuringSave) initialized.current = false;
           await refetch();
         }
-        if (showToast) toast.success("Draf tersimpan.");
+        if (showToast) toast.success(detail.status === "Draft" ? "Draf tersimpan." : "Perubahan laporan tersimpan.");
         return true;
       } catch { setSaveState("error"); return false; }
       finally { saving.current = false; activeSave.current = null; }
@@ -81,13 +81,13 @@ export default function EditCalibrationPage() {
   }, [detail, form, id, refetch, updateMutation]);
 
   useEffect(() => {
-    if (!initialized.current || !form.formState.isDirty || detail?.status !== "Draft") return;
+    if (!initialized.current || !form.formState.isDirty || detail?.status === "Approved") return;
     const timer = window.setTimeout(() => void save(false), 1500);
     return () => window.clearTimeout(timer);
   }, [values, form.formState.isDirty, detail?.status, save]);
 
   const changeParameters = async (parameterId: string) => {
-    if (!detail || detail.status !== "Draft" || saving.current) return;
+    if (!detail || detail.status === "Approved" || saving.current) return;
     const current = form.getValues("parameters").map((parameter) => parameter.parameterId);
     const next = current.includes(parameterId) ? current.filter((item) => item !== parameterId) : [...current, parameterId];
     if (next.length === 0) return toast.error("Minimal satu parameter harus dipilih.");
@@ -111,7 +111,7 @@ export default function EditCalibrationPage() {
 
   if (isLoading) return <div className="p-8 text-center">Memuat kalibrasi...</div>;
   if (!detail) return <div className="p-8 text-center text-destructive">Kalibrasi tidak ditemukan.</div>;
-  const editable = detail.status === "Draft";
+  const editable = detail.status !== "Approved";
   const completion = values?.parameters?.length ? Math.round(values.parameters.flatMap((parameter) => parameter.results).filter((result) => result.value !== "").length / Math.max(1, values.parameters.flatMap((parameter) => parameter.results).length) * 100) : 0;
 
   return <div className="mx-auto max-w-6xl space-y-6 p-6">
@@ -125,6 +125,6 @@ export default function EditCalibrationPage() {
     </CardContent></Card>
     {editable && <Card><CardContent className="grid gap-2 p-4 sm:grid-cols-2 lg:grid-cols-5">{masterParameters.map((parameter) => <Button key={parameter.id} type="button" variant={values.parameters?.some((item) => item.parameterId === parameter.id) ? "default" : "outline"} onClick={() => void changeParameters(parameter.id)}>{formatCalibrationParameterName(parameter.name)}</Button>)}</CardContent></Card>}
     <fieldset disabled={!editable} className="space-y-6"><ParameterTable form={form} /><WaterSampleTable form={form} /><NotesEditor value={values.notes || ""} onChange={(notes) => form.setValue("notes", notes, { shouldDirty: true })} /></fieldset>
-    {editable && <div className="flex items-center justify-end gap-3 border-t pt-4"><span className="mr-auto text-xs text-muted-foreground">{saveState === "saving" ? "Menyimpan..." : saveState === "saved" ? "Tersimpan" : saveState === "error" ? "Gagal menyimpan" : ""}</span><Button variant="outline" onClick={() => void save(true)}>Simpan Draf</Button><Button onClick={() => void submit()} disabled={submitMutation.isPending}>Ajukan Kalibrasi</Button></div>}
+    {editable && <div className="flex items-center justify-end gap-3 border-t pt-4"><span className="mr-auto text-xs text-muted-foreground">{saveState === "saving" ? "Menyimpan..." : saveState === "saved" ? "Tersimpan" : saveState === "error" ? "Gagal menyimpan" : ""}</span><Button variant="outline" onClick={() => void save(true)}>{detail.status === "Draft" ? "Simpan Draf" : "Simpan Perubahan"}</Button>{detail.status === "Draft" && <Button onClick={() => void submit()} disabled={submitMutation.isPending}>Ajukan Kalibrasi</Button>}</div>}
   </div>;
 }

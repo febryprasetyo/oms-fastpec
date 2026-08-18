@@ -69,7 +69,10 @@ describe("CalibrationDashboard", () => {
     expect(screen.getByText("Diajukan")).toBeInTheDocument();
     expect(screen.getByText("Disetujui")).toBeInTheDocument();
     expect(screen.getAllByText("10–12 Agustus 2026")).toHaveLength(3);
-    expect(screen.getByRole("link", { name: "Edit kalibrasi" })).toHaveAttribute("href", "/calibration/edit/1");
+    expect(screen.getAllByRole("link", { name: "Edit kalibrasi" }).map((link) => link.getAttribute("href"))).toEqual([
+      "/calibration/edit/1",
+      "/calibration/edit/2",
+    ]);
     expect(screen.getByRole("button", { name: "Hapus kalibrasi" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Setujui kalibrasi" })).toBeInTheDocument();
     expect(screen.queryByText(/^(Draft|Submitted|Approved)$/)).not.toBeInTheDocument();
