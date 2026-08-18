@@ -65,11 +65,13 @@ export default function EditCalibrationPage() {
     saving.current = true; setSaveState("saving");
     try {
       await updateMutation.mutateAsync({ id, data: toUpdateCalibrationPayload(snapshot) });
-      if (JSON.stringify(form.getValues()) === serializedSnapshot) {
-        form.reset(snapshot);
-        initialized.current = false;
-        await refetch();
+      if (JSON.stringify(form.getValues()) !== serializedSnapshot) {
+        setSaveState("idle");
+        return false;
       }
+      form.reset(snapshot);
+      initialized.current = false;
+      await refetch();
       setSaveState("saved");
       if (showToast) toast.success(detail.status === "Draft" ? "Draf tersimpan." : "Perubahan laporan tersimpan.");
       return true;

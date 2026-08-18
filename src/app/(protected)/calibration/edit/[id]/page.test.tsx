@@ -183,6 +183,22 @@ describe("EditCalibrationPage", () => {
     await act(async () => resolveSave());
 
     expect(document.querySelectorAll<HTMLInputElement>('input[type="date"]')[0]).toHaveValue("2026-08-14");
+    expect(screen.queryByText("Tersimpan")).not.toBeInTheDocument();
+  });
+
+  it("tidak mengajukan snapshot lama ketika formulir berubah selama penyimpanan", async () => {
+    let resolveSave!: () => void;
+    updateMutateAsync.mockReturnValue(new Promise<void>((resolve) => { resolveSave = resolve; }));
+    render(<EditCalibrationPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Ajukan Kalibrasi" })).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Ajukan Kalibrasi" }));
+    await waitFor(() => expect(updateMutateAsync).toHaveBeenCalledTimes(1));
+    fireEvent.change(document.querySelectorAll<HTMLInputElement>('input[type="date"]')[0], { target: { value: "2026-08-13" } });
+    await act(async () => resolveSave());
+
+    expect(submitMutateAsync).not.toHaveBeenCalled();
+    expect(routerPush).not.toHaveBeenCalled();
   });
 
   it("membatalkan perubahan tanpa menyimpan dan kembali ke detail", async () => {
