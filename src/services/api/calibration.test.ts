@@ -50,9 +50,10 @@ describe("calibration documentation service", () => {
       size: 4,
     });
     expect(config).toEqual({
-      headers: { Authorization: "Bearer access-token" },
+      headers: { Authorization: "Bearer access-token", "Content-Type": undefined },
       onUploadProgress,
     });
+    expect(config?.headers).toHaveProperty("Content-Type", undefined);
     expect(result.previewUrl).toBe("https://api.example.test/media/doc-uploaded?signature=ready");
   });
 

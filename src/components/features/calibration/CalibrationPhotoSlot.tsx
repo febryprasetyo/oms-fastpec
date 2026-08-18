@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { ImagePlus, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CALIBRATION_PHOTO_ACCEPT, compressCalibrationPhoto } from "@/lib/calibration-photo";
+import { getCalibrationDocumentationErrorMessage } from "@/lib/calibration-documentation-error";
 import type { CalibrationDocumentation } from "@/types/calibration";
 
 type Phase = "idle" | "compressing" | "uploading" | "deleting" | "error";
@@ -70,7 +71,7 @@ export function CalibrationPhotoSlot({
       retryFile.current = undefined;
     } catch (uploadError) {
       setOperationPhase("error");
-      setError(uploadError instanceof Error ? uploadError.message : "Foto gagal diunggah.");
+      setError(getCalibrationDocumentationErrorMessage(uploadError, "Foto gagal diunggah. Coba lagi."));
     }
   };
 
@@ -81,10 +82,12 @@ export function CalibrationPhotoSlot({
       setOperationPhase("deleting");
       await onDelete();
       clearLocalPreview();
+      retryFile.current = undefined;
+      setProgress(undefined);
       setOperationPhase("idle");
     } catch (deleteError) {
       setOperationPhase("error");
-      setError(deleteError instanceof Error ? deleteError.message : "Foto gagal dihapus.");
+      setError(getCalibrationDocumentationErrorMessage(deleteError, "Foto gagal dihapus. Coba lagi."));
     }
   };
 

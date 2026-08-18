@@ -195,6 +195,29 @@ describe("EditCalibrationPage", () => {
     expect(refetch).toHaveBeenCalled();
   });
 
+  it("menggabungkan permintaan penyimpanan detail yang berjalan bersamaan", async () => {
+    let resolveSave!: () => void;
+    updateMutateAsync.mockReturnValue(new Promise<void>((resolve) => { resolveSave = resolve; }));
+    const persistedTds = {
+      ...calibrationDetail.parameters[0], id: 22, parameterId: "2", parameterName: "TDS", documentation: {},
+    };
+    const refetch = vi.fn().mockResolvedValue({
+      data: { ...calibrationDetail, parameters: [...calibrationDetail.parameters, persistedTds] },
+    });
+    useCalibrationDetail.mockReturnValue({ data: calibrationDetail, isLoading: false, refetch });
+    render(<EditCalibrationPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "TDS" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "TDS" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Upload 2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Upload 2" }));
+    await waitFor(() => expect(updateMutateAsync).toHaveBeenCalled());
+
+    expect(updateMutateAsync).toHaveBeenCalledTimes(1);
+    await act(async () => resolveSave());
+    await waitFor(() => expect(resolvedDetailId).toHaveBeenCalledTimes(2));
+  });
+
   it("mempertahankan pilihan parameter lokal ketika data laporan diperbarui di latar belakang", async () => {
     const { rerender } = render(<EditCalibrationPage />);
     await waitFor(() => expect(screen.getByRole("button", { name: "TDS" })).toBeInTheDocument());

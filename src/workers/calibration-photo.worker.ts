@@ -21,9 +21,14 @@ export interface ProcessedCalibrationPhoto {
   height: number;
 }
 
-const browserDependencies: CalibrationPhotoWorkerDependencies = {
-  createImageBitmap: (file, options) => globalThis.createImageBitmap(file, options),
-  createCanvas: (width, height) => new OffscreenCanvas(width, height) as unknown as WorkerCanvas,
+const getBrowserDependencies = (): CalibrationPhotoWorkerDependencies => {
+  if (typeof globalThis.createImageBitmap !== "function" || typeof globalThis.OffscreenCanvas !== "function") {
+    throw new Error("Browser perangkat ini belum mendukung kompresi foto WebP.");
+  }
+  return {
+    createImageBitmap: (file, options) => globalThis.createImageBitmap(file, options),
+    createCanvas: (width, height) => new OffscreenCanvas(width, height) as unknown as WorkerCanvas,
+  };
 };
 
 const containedDimensions = (width: number, height: number, maxDimension: number) => {
@@ -36,16 +41,17 @@ const containedDimensions = (width: number, height: number, maxDimension: number
 
 export const processCalibrationPhoto = async (
   file: File,
-  dependencies: CalibrationPhotoWorkerDependencies = browserDependencies,
+  dependencies?: CalibrationPhotoWorkerDependencies | null,
 ): Promise<ProcessedCalibrationPhoto> => {
   validateCalibrationPhotoFile(file);
-  const bitmap = await dependencies.createImageBitmap(file, { imageOrientation: "from-image" });
+  const workerDependencies = dependencies ?? getBrowserDependencies();
+  const bitmap = await workerDependencies.createImageBitmap(file, { imageOrientation: "from-image" });
   const results: ProcessedCalibrationPhoto[] = [];
 
   try {
     for (const attempt of getCompressionAttempts()) {
       const dimensions = containedDimensions(bitmap.width, bitmap.height, attempt.maxDimension);
-      const canvas = dependencies.createCanvas(dimensions.width, dimensions.height);
+      const canvas = workerDependencies.createCanvas(dimensions.width, dimensions.height);
       const context = canvas.getContext("2d");
       if (!context) throw new Error("Perangkat tidak dapat memproses foto ini.");
       context.drawImage(bitmap, 0, 0, dimensions.width, dimensions.height);

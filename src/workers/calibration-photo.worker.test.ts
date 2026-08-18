@@ -2,6 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import { processCalibrationPhoto } from "./calibration-photo.worker";
 
 describe("calibration photo worker processing", () => {
+  it("reports an understandable compatibility error when worker image APIs are unavailable", async () => {
+    await expect(processCalibrationPhoto(
+      new File(["jpeg"], "field.jpg", { type: "image/jpeg" }),
+      null,
+    )).rejects.toThrow("Browser perangkat ini belum mendukung kompresi foto WebP.");
+  });
   it("normalizes orientation, contains dimensions, strips source metadata, and releases decoding resources", async () => {
     const close = vi.fn();
     const bitmap = { width: 4000, height: 3000, close } as unknown as ImageBitmap;

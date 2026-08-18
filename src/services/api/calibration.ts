@@ -331,7 +331,10 @@ export const calibrationService = {
     const response = await axiosInstance.post<ApiResponse<CalibrationApiDocumentation>>(
       `/api/calibrations/${calibrationId}/details/${detailId}/documentation/${photoType}`,
       body,
-      { headers: authHeaders(accessToken), onUploadProgress },
+      {
+        headers: { ...authHeaders(accessToken), "Content-Type": undefined },
+        onUploadProgress,
+      },
     );
     return mapCalibrationDocumentation(response.data.data);
   },

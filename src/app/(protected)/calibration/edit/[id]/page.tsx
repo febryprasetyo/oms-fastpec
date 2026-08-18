@@ -32,6 +32,7 @@ export default function EditCalibrationPage() {
   const initialized = useRef(false);
   const initializedSnapshot = useRef("");
   const saving = useRef(false);
+  const saveInFlight = useRef<Promise<boolean> | null>(null);
   const authoritativeDetail = useRef<CalibrationDetail>();
   const [documentationBusyKeys, setDocumentationBusyKeys] = useState<Set<string>>(() => new Set());
   const [invalidDocumentationParameterIds, setInvalidDocumentationParameterIds] = useState<string[]>([]);
@@ -56,7 +57,7 @@ export default function EditCalibrationPage() {
 
   const selectedParameterIds = values.parameters?.map((parameter) => parameter.parameterId) ?? [];
 
-  const save = async (showToast = false): Promise<boolean> => {
+  const performSave = async (showToast = false): Promise<boolean> => {
     if (!detail || detail.status === "Approved") return true;
     if (selectedParameterIds.length === 0) {
       toast.error("Minimal satu parameter harus dipilih.");
@@ -86,6 +87,16 @@ export default function EditCalibrationPage() {
       return true;
     } catch { setSaveState("error"); return false; }
     finally { saving.current = false; }
+  };
+
+  const save = (showToast = false): Promise<boolean> => {
+    if (saveInFlight.current) return saveInFlight.current;
+    const operation = performSave(showToast);
+    saveInFlight.current = operation;
+    void operation.finally(() => {
+      if (saveInFlight.current === operation) saveInFlight.current = null;
+    });
+    return operation;
   };
 
   const ensurePersistedDetail = async (parameterId: string): Promise<number> => {
