@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { CalibrationDetailSkeleton } from "@/components/features/calibration/CalibrationSkeleton";
+import { CalibrationDocumentationReadOnly } from "@/components/features/calibration/CalibrationDocumentationReadOnly";
 
 export default function CalibrationDetailPage() {
   const { id } = useParams() as { id: string };
@@ -53,6 +54,7 @@ export default function CalibrationDetailPage() {
           )}
         </div>
       </div>
+      <CalibrationDocumentationReadOnly parameters={detail.parameters} />
     </div>
   );
 }
