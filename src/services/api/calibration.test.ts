@@ -20,6 +20,55 @@ describe("calibrationService.downloadPdf", () => {
   });
 });
 
+describe("calibration documentation service", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("uploads a WebP file to the exact parameter documentation slot", async () => {
+    const file = new File(["webp"], "before.webp", { type: "image/webp" });
+    const onUploadProgress = vi.fn();
+    const post = vi.spyOn(axiosInstance, "post").mockResolvedValue({
+      data: { data: {
+        id: "doc-uploaded", calibration_detail_id: 54, parameter_id: 7, photo_type: "before",
+        preview_url: "https://api.example.test/media/doc-uploaded?signature=ready", mime_type: "image/webp",
+        file_size: 4, uploaded_at: "2026-08-18T10:00:00.000Z",
+      } },
+    });
+
+    const result = await calibrationService.uploadDocumentation({
+      calibrationId: "cal-1", detailId: 54, photoType: "before", file,
+      accessToken: "access-token", onUploadProgress,
+    });
+
+    const [path, body, config] = post.mock.calls[0];
+    expect(path).toBe("/api/calibrations/cal-1/details/54/documentation/before");
+    expect(body).toBeInstanceOf(FormData);
+    expect((body as FormData).get("file")).toMatchObject({
+      name: "before.webp",
+      type: "image/webp",
+      size: 4,
+    });
+    expect(config).toEqual({
+      headers: { Authorization: "Bearer access-token" },
+      onUploadProgress,
+    });
+    expect(result.previewUrl).toBe("https://api.example.test/media/doc-uploaded?signature=ready");
+  });
+
+  it("deletes only the requested parameter documentation slot", async () => {
+    const remove = vi.spyOn(axiosInstance, "delete").mockResolvedValue({ data: undefined });
+
+    await calibrationService.deleteDocumentation({
+      calibrationId: "cal-1", detailId: 54, photoType: "after", accessToken: "access-token",
+    });
+
+    expect(remove).toHaveBeenCalledWith("/api/calibrations/cal-1/details/54/documentation/after", {
+      headers: { Authorization: "Bearer access-token" },
+    });
+  });
+});
+
 describe("mapCalibrationDetail", () => {
   it("maps signed documentation metadata without rebuilding the preview URL", () => {
     const detail = mapCalibrationDetail({

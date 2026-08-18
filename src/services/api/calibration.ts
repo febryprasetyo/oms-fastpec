@@ -1,4 +1,5 @@
 import { calibrationParameterConfigs, getCalibrationParameterConfig } from "@/config/calibration-parameters";
+import type { AxiosProgressEvent } from "axios";
 import { axiosInstance } from "@/lib/axiosInstance";
 import {
   CreateCalibrationDraftPayloadSchema,
@@ -14,6 +15,7 @@ import type {
   CalibrationApiWaterSample,
   CalibrationDetail,
   CalibrationDocumentation,
+  CalibrationPhotoType,
   ParameterCalibrationDetail,
   Parameter,
   Station,
@@ -307,6 +309,48 @@ export const calibrationService = {
 
   async approveCalibration(id: string, accessToken: string): Promise<void> {
     await axiosInstance.post(`/api/calibrations/${id}/approve`, {}, { headers: authHeaders(accessToken) });
+  },
+
+  async uploadDocumentation({
+    calibrationId,
+    detailId,
+    photoType,
+    file,
+    accessToken,
+    onUploadProgress,
+  }: {
+    calibrationId: string;
+    detailId: number;
+    photoType: CalibrationPhotoType;
+    file: File;
+    accessToken: string;
+    onUploadProgress?: (event: AxiosProgressEvent) => void;
+  }): Promise<CalibrationDocumentation> {
+    const body = new FormData();
+    body.append("file", file, file.name);
+    const response = await axiosInstance.post<ApiResponse<CalibrationApiDocumentation>>(
+      `/api/calibrations/${calibrationId}/details/${detailId}/documentation/${photoType}`,
+      body,
+      { headers: authHeaders(accessToken), onUploadProgress },
+    );
+    return mapCalibrationDocumentation(response.data.data);
+  },
+
+  async deleteDocumentation({
+    calibrationId,
+    detailId,
+    photoType,
+    accessToken,
+  }: {
+    calibrationId: string;
+    detailId: number;
+    photoType: CalibrationPhotoType;
+    accessToken: string;
+  }): Promise<void> {
+    await axiosInstance.delete(
+      `/api/calibrations/${calibrationId}/details/${detailId}/documentation/${photoType}`,
+      { headers: authHeaders(accessToken) },
+    );
   },
 
   async downloadPdf(id: string, accessToken: string): Promise<Blob> {
