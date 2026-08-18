@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { CalibrationSchema, formatCalibrationValidationError, type CalibrationFormValues } from "@/schemas/calibration.schema";
+import type { CalibrationDetail, CalibrationPhotoType } from "@/types/calibration";
 import { toUpdateCalibrationPayload } from "@/lib/calibration-payload";
 import { formatCalibrationDateInput, formatCalibrationParameterName, translateCalibrationStatus } from "@/lib/calibration-format";
 import { useCalibrationDetail, useParameters, useSubmitCalibration, useUpdateCalibration } from "@/hook/useCalibration";
@@ -30,17 +31,21 @@ export default function EditCalibrationPage() {
   const initialized = useRef(false);
   const initializedSnapshot = useRef("");
   const saving = useRef(false);
+  const authoritativeDetail = useRef<CalibrationDetail>();
+  const [documentationBusyKeys, setDocumentationBusyKeys] = useState<Set<string>>(() => new Set());
   const form = useForm<CalibrationFormValues>({ resolver: zodResolver(CalibrationSchema) });
   const values = form.watch();
 
   useEffect(() => {
+    authoritativeDetail.current = detail;
     if (!detail || (initialized.current && JSON.stringify(form.getValues()) !== initializedSnapshot.current)) return;
     const initialValues: CalibrationFormValues = {
       stationId: detail.stationId, stationName: detail.stationName, address: detail.address,
       latitude: detail.latitude, longitude: detail.longitude,
       calibrationStartDate: new Date(`${detail.calibrationStartDate}T00:00:00`),
       calibrationEndDate: new Date(`${detail.calibrationEndDate}T00:00:00`), officer: detail.officer,
-      parameters: detail.parameters, waterSamples: detail.waterSamples, notes: detail.notes,
+      parameters: detail.parameters.map(({ documentation: _documentation, ...parameter }) => parameter),
+      waterSamples: detail.waterSamples, notes: detail.notes,
     };
     form.reset(initialValues);
     initializedSnapshot.current = JSON.stringify(initialValues);
@@ -65,18 +70,43 @@ export default function EditCalibrationPage() {
     saving.current = true; setSaveState("saving");
     try {
       await updateMutation.mutateAsync({ id, data: toUpdateCalibrationPayload(snapshot) });
-      if (JSON.stringify(form.getValues()) !== serializedSnapshot) {
+      const currentValues = CalibrationSchema.safeParse(form.getValues());
+      if (!currentValues.success || JSON.stringify(currentValues.data) !== serializedSnapshot) {
         setSaveState("idle");
         return false;
       }
       form.reset(snapshot);
       initialized.current = false;
-      await refetch();
+      const refreshed = await refetch();
+      if (refreshed.data) authoritativeDetail.current = refreshed.data;
       setSaveState("saved");
       if (showToast) toast.success(detail.status === "Draft" ? "Draf tersimpan." : "Perubahan laporan tersimpan.");
       return true;
     } catch { setSaveState("error"); return false; }
     finally { saving.current = false; }
+  };
+
+  const ensurePersistedDetail = async (parameterId: string): Promise<number> => {
+    const current = form.getValues("parameters").find((parameter) => parameter.parameterId === parameterId);
+    if (current && current.id > 0) return current.id;
+    if (!(await save(false))) throw new Error("Parameter belum berhasil disimpan. Coba lagi.");
+    let persisted = authoritativeDetail.current?.parameters.find((parameter) => parameter.parameterId === parameterId);
+    if (!persisted || persisted.id <= 0) {
+      const refreshed = await refetch();
+      if (refreshed.data) authoritativeDetail.current = refreshed.data;
+      persisted = refreshed.data?.parameters.find((parameter) => parameter.parameterId === parameterId);
+    }
+    if (!persisted || persisted.id <= 0) throw new Error("ID parameter belum tersedia setelah penyimpanan.");
+    return persisted.id;
+  };
+
+  const setDocumentationBusy = (parameterId: string, photoType: CalibrationPhotoType, busy: boolean) => {
+    const key = `${parameterId}:${photoType}`;
+    setDocumentationBusyKeys((current) => {
+      const next = new Set(current);
+      if (busy) next.add(key); else next.delete(key);
+      return next;
+    });
   };
 
   const changeParameters = async (parameterId: string) => {
@@ -130,7 +160,14 @@ export default function EditCalibrationPage() {
       <div><Label>Tanggal Selesai</Label><Input disabled={!editable} type="date" value={values.calibrationEndDate ? formatCalibrationDateInput(values.calibrationEndDate) : ""} onChange={(event) => form.setValue("calibrationEndDate", new Date(`${event.target.value}T00:00:00`), { shouldDirty: true })} /></div>
     </CardContent></Card>
     {editable && <Card className="min-w-0"><CardContent className="grid min-w-0 gap-2 p-4 sm:grid-cols-2 lg:grid-cols-5">{masterParameters.map((parameter) => <Button key={parameter.id} type="button" variant={selectedParameterIds.includes(parameter.id) ? "default" : "outline"} onClick={() => void changeParameters(parameter.id)}>{formatCalibrationParameterName(parameter.name)}</Button>)}</CardContent></Card>}
-    <fieldset disabled={!editable} className="space-y-6"><ParameterTable form={form} /><WaterSampleTable form={form} /><NotesEditor value={values.notes || ""} onChange={(notes) => form.setValue("notes", notes, { shouldDirty: true })} /></fieldset>
+    <fieldset disabled={!editable} className="space-y-6"><ParameterTable
+      form={form}
+      calibrationId={id}
+      status={detail.status}
+      documentationByParameter={Object.fromEntries(detail.parameters.map((parameter) => [parameter.parameterId, parameter.documentation]))}
+      ensurePersistedDetail={ensurePersistedDetail}
+      onDocumentationBusyChange={setDocumentationBusy}
+    /><WaterSampleTable form={form} /><NotesEditor value={values.notes || ""} onChange={(notes) => form.setValue("notes", notes, { shouldDirty: true })} /></fieldset>
     {editable && <div className="flex flex-wrap items-center justify-end gap-3 border-t pt-4"><span className="mr-auto text-xs text-muted-foreground">{saveState === "saving" ? "Menyimpan..." : saveState === "saved" ? "Tersimpan" : saveState === "error" ? "Gagal menyimpan" : ""}</span><Button variant="outline" onClick={cancel}>Batalkan</Button><Button variant="outline" onClick={() => void save(true)} disabled={saving.current}>{detail.status === "Draft" ? "Simpan Draf" : "Simpan Perubahan"}</Button>{detail.status === "Draft" && <Button onClick={() => void submit()} disabled={submitMutation.isPending || saving.current}>Ajukan Kalibrasi</Button>}</div>}
   </div>;
 }

@@ -12,6 +12,7 @@ const {
   routerPush,
   updateMutateAsync,
   submitMutateAsync,
+  resolvedDetailId,
 } = vi.hoisted(() => ({
   useCalibrationDetail: vi.fn(),
   useParameters: vi.fn(),
@@ -20,6 +21,7 @@ const {
   routerPush: vi.fn(),
   updateMutateAsync: vi.fn(),
   submitMutateAsync: vi.fn(),
+  resolvedDetailId: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -37,6 +39,10 @@ vi.mock("@/hook/useCalibration", () => ({
 vi.mock("@/components/features/calibration/WaterSampleTable", () => ({ WaterSampleTable: () => null }));
 vi.mock("@/components/features/calibration/NotesEditor", () => ({ NotesEditor: () => null }));
 vi.mock("@/components/features/badge/CalibrationHeader", () => ({ CalibrationHeader: () => null }));
+vi.mock("@/components/features/calibration/CalibrationDocumentation", () => ({
+  CalibrationDocumentation: ({ parameterId, ensurePersistedDetail }: { parameterId: string; ensurePersistedDetail: (id: string) => Promise<number> }) =>
+    <button type="button" onClick={async () => resolvedDetailId(await ensurePersistedDetail(parameterId))}>Upload {parameterId}</button>,
+}));
 
 const calibrationDetail: CalibrationDetail = {
   id: "calibration-1",
@@ -71,6 +77,9 @@ describe("EditCalibrationPage", () => {
 
   beforeEach(() => {
     process.env.TZ = "Asia/Jakarta";
+    updateMutateAsync.mockReset().mockResolvedValue(undefined);
+    submitMutateAsync.mockReset().mockResolvedValue(undefined);
+    resolvedDetailId.mockReset();
     useCalibrationDetail.mockReturnValue({ data: calibrationDetail, isLoading: false, refetch: vi.fn() });
     useParameters.mockReturnValue({ data: [
       { id: "1", name: "DO", spec: "", standards: [{ crmName: "0", standardValue: 0 }] },
@@ -157,6 +166,25 @@ describe("EditCalibrationPage", () => {
         details: expect.arrayContaining([expect.objectContaining({ parameter_id: 2 })]),
       }),
     })));
+  });
+
+  it("menyimpan parameter baru otomatis sebelum upload untuk memperoleh detail ID", async () => {
+    const persistedTds = {
+      ...calibrationDetail.parameters[0], id: 22, parameterId: "2", parameterName: "TDS", documentation: {},
+    };
+    const refetch = vi.fn().mockResolvedValue({
+      data: { ...calibrationDetail, parameters: [...calibrationDetail.parameters, persistedTds] },
+    });
+    useCalibrationDetail.mockReturnValue({ data: calibrationDetail, isLoading: false, refetch });
+    render(<EditCalibrationPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "TDS" })).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "TDS" }));
+    fireEvent.click(screen.getByRole("button", { name: "Upload 2" }));
+
+    await waitFor(() => expect(updateMutateAsync).toHaveBeenCalledOnce());
+    await waitFor(() => expect(resolvedDetailId).toHaveBeenCalledWith(22));
+    expect(refetch).toHaveBeenCalled();
   });
 
   it("mempertahankan pilihan parameter lokal ketika data laporan diperbarui di latar belakang", async () => {
