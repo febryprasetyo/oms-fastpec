@@ -40,8 +40,10 @@ vi.mock("@/components/features/calibration/WaterSampleTable", () => ({ WaterSamp
 vi.mock("@/components/features/calibration/NotesEditor", () => ({ NotesEditor: () => null }));
 vi.mock("@/components/features/badge/CalibrationHeader", () => ({ CalibrationHeader: () => null }));
 vi.mock("@/components/features/calibration/CalibrationDocumentation", () => ({
-  CalibrationDocumentation: ({ parameterId, ensurePersistedDetail }: { parameterId: string; ensurePersistedDetail: (id: string) => Promise<number> }) =>
-    <button type="button" onClick={async () => resolvedDetailId(await ensurePersistedDetail(parameterId))}>Upload {parameterId}</button>,
+  CalibrationDocumentation: ({ parameterId, ensurePersistedDetail, onBusyChange }: { parameterId: string; ensurePersistedDetail: (id: string) => Promise<number>; onBusyChange?: (type: "before", busy: boolean) => void }) => <>
+    <button type="button" onClick={async () => resolvedDetailId(await ensurePersistedDetail(parameterId))}>Upload {parameterId}</button>
+    <button type="button" onClick={() => onBusyChange?.("before", true)}>Mulai upload {parameterId}</button>
+  </>,
 }));
 
 const calibrationDetail: CalibrationDetail = {
@@ -66,7 +68,13 @@ const calibrationDetail: CalibrationDetail = {
     id: 11, parameterId: "1", parameterName: "DO", parameterUnit: "mg/L", spec: "",
     coeffType: "K/B", crmReferenceValue: null, crmReadingValue: null, remark: null,
     results: [{ id: 21, standardName: "0", standardValue: 0, minAcceptable: null, maxAcceptable: null, value: "0" }],
-    coefficients: [{ key: "k", value: 1 }, { key: "b", value: 0 }], status: "PASS", documentation: {},
+    coefficients: [{ key: "k", value: 1 }, { key: "b", value: 0 }], status: "PASS", documentation: {
+      before: {
+        id: "doc-before", calibrationDetailId: 11, parameterId: "1", photoType: "before",
+        previewUrl: "https://api.test/before", mimeType: "image/webp", size: 100,
+        uploadedAt: "2026-08-18T00:00:00.000Z",
+      },
+    },
   }],
   waterSamples: [],
   notes: "",
@@ -227,6 +235,36 @@ describe("EditCalibrationPage", () => {
 
     expect(submitMutateAsync).not.toHaveBeenCalled();
     expect(routerPush).not.toHaveBeenCalled();
+  });
+
+  it("menolak submit dan memfokuskan parameter pertama tanpa foto Before", async () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    useCalibrationDetail.mockReturnValue({
+      data: { ...calibrationDetail, parameters: [{ ...calibrationDetail.parameters[0], documentation: {} }] },
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+    render(<EditCalibrationPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Ajukan Kalibrasi" })).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Ajukan Kalibrasi" }));
+
+    const card = document.querySelector<HTMLElement>('[data-calibration-parameter-id="1"]');
+    expect(updateMutateAsync).not.toHaveBeenCalled();
+    expect(submitMutateAsync).not.toHaveBeenCalled();
+    expect(scrollIntoView).toHaveBeenCalled();
+    expect(card).toHaveFocus();
+  });
+
+  it("menonaktifkan submit ketika proses foto masih berjalan", async () => {
+    render(<EditCalibrationPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Mulai upload 1" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Mulai upload 1" }));
+
+    expect(screen.getByRole("button", { name: "Ajukan Kalibrasi" })).toBeDisabled();
+    expect(updateMutateAsync).not.toHaveBeenCalled();
+    expect(submitMutateAsync).not.toHaveBeenCalled();
   });
 
   it("membatalkan perubahan tanpa menyimpan dan kembali ke detail", async () => {

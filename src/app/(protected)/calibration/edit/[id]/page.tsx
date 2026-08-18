@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { CalibrationSchema, formatCalibrationValidationError, type CalibrationFormValues } from "@/schemas/calibration.schema";
 import type { CalibrationDetail, CalibrationPhotoType } from "@/types/calibration";
 import { toUpdateCalibrationPayload } from "@/lib/calibration-payload";
+import { validateCalibrationDocumentationForSubmit } from "@/lib/calibration-documentation";
 import { formatCalibrationDateInput, formatCalibrationParameterName, translateCalibrationStatus } from "@/lib/calibration-format";
 import { useCalibrationDetail, useParameters, useSubmitCalibration, useUpdateCalibration } from "@/hook/useCalibration";
 import { ParameterTable } from "@/components/features/calibration/ParameterTable";
@@ -33,6 +34,7 @@ export default function EditCalibrationPage() {
   const saving = useRef(false);
   const authoritativeDetail = useRef<CalibrationDetail>();
   const [documentationBusyKeys, setDocumentationBusyKeys] = useState<Set<string>>(() => new Set());
+  const [invalidDocumentationParameterIds, setInvalidDocumentationParameterIds] = useState<string[]>([]);
   const form = useForm<CalibrationFormValues>({ resolver: zodResolver(CalibrationSchema) });
   const values = form.watch();
 
@@ -137,6 +139,26 @@ export default function EditCalibrationPage() {
   };
 
   const submit = async () => {
+    const currentParameterIds = form.getValues("parameters").map((parameter) => parameter.parameterId);
+    const documentationValidation = validateCalibrationDocumentationForSubmit(
+      currentParameterIds.map((parameterId) => ({
+        parameterId,
+        documentation: detail?.parameters.find((parameter) => parameter.parameterId === parameterId)?.documentation ?? {},
+      })),
+      documentationBusyKeys.size > 0,
+    );
+    setInvalidDocumentationParameterIds(documentationValidation.missingBeforeParameterIds);
+    if (!documentationValidation.valid) {
+      toast.error(documentationValidation.reason);
+      const firstMissingId = documentationValidation.missingBeforeParameterIds[0];
+      if (firstMissingId) {
+        const card = document.querySelector<HTMLElement>(`[data-calibration-parameter-id="${CSS.escape(firstMissingId)}"]`);
+        const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+        card?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "center" });
+        card?.focus({ preventScroll: true });
+      }
+      return;
+    }
     const missing = form.getValues("parameters").some((parameter) => parameter.results.some((result) => result.value.trim() === ""));
     if (missing) return toast.error("Seluruh hasil kalibrasi standar wajib diisi.");
     const missingCoefficients = form.getValues("parameters").some((parameter) => parameter.coeffType && parameter.coefficients.some((coefficient) => coefficient.value === undefined || !Number.isFinite(Number(coefficient.value))));
@@ -167,7 +189,8 @@ export default function EditCalibrationPage() {
       documentationByParameter={Object.fromEntries(detail.parameters.map((parameter) => [parameter.parameterId, parameter.documentation]))}
       ensurePersistedDetail={ensurePersistedDetail}
       onDocumentationBusyChange={setDocumentationBusy}
+      invalidDocumentationParameterIds={invalidDocumentationParameterIds}
     /><WaterSampleTable form={form} /><NotesEditor value={values.notes || ""} onChange={(notes) => form.setValue("notes", notes, { shouldDirty: true })} /></fieldset>
-    {editable && <div className="flex flex-wrap items-center justify-end gap-3 border-t pt-4"><span className="mr-auto text-xs text-muted-foreground">{saveState === "saving" ? "Menyimpan..." : saveState === "saved" ? "Tersimpan" : saveState === "error" ? "Gagal menyimpan" : ""}</span><Button variant="outline" onClick={cancel}>Batalkan</Button><Button variant="outline" onClick={() => void save(true)} disabled={saving.current}>{detail.status === "Draft" ? "Simpan Draf" : "Simpan Perubahan"}</Button>{detail.status === "Draft" && <Button onClick={() => void submit()} disabled={submitMutation.isPending || saving.current}>Ajukan Kalibrasi</Button>}</div>}
+    {editable && <div className="flex flex-wrap items-center justify-end gap-3 border-t pt-4"><span className="mr-auto text-xs text-muted-foreground">{saveState === "saving" ? "Menyimpan..." : saveState === "saved" ? "Tersimpan" : saveState === "error" ? "Gagal menyimpan" : ""}</span><Button variant="outline" onClick={cancel}>Batalkan</Button><Button variant="outline" onClick={() => void save(true)} disabled={saving.current}>{detail.status === "Draft" ? "Simpan Draf" : "Simpan Perubahan"}</Button>{detail.status === "Draft" && <Button onClick={() => void submit()} disabled={submitMutation.isPending || saving.current || documentationBusyKeys.size > 0}>Ajukan Kalibrasi</Button>}</div>}
   </div>;
 }
