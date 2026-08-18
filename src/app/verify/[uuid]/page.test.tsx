@@ -48,6 +48,7 @@ const calibrationDetail: CalibrationDetail = {
       results: [],
       coefficients: [],
       status: "PASS",
+      documentation: {},
     },
   ],
   waterSamples: [

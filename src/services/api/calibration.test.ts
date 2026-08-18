@@ -21,6 +21,89 @@ describe("calibrationService.downloadPdf", () => {
 });
 
 describe("mapCalibrationDetail", () => {
+  it("maps signed documentation metadata without rebuilding the preview URL", () => {
+    const detail = mapCalibrationDetail({
+      id: "calibration-docs",
+      report_no: "KAL/2026/DOC",
+      station_id: 1,
+      calibration_start_date: "2026-08-18",
+      calibration_end_date: "2026-08-18",
+      status: "draft",
+      created_at: "2026-08-18T00:00:00.000Z",
+      updated_at: "2026-08-18T00:00:00.000Z",
+      details: [{
+        id: 54,
+        parameter_id: 7,
+        parameter_name: "pH",
+        coeff_type: null,
+        coefficients: null,
+        crm_reference_value: null,
+        crm_reading_value: null,
+        calculation_result: null,
+        remark: null,
+        standards: [],
+        documentation: [{
+          id: "doc-1",
+          calibration_detail_id: 54,
+          parameter_id: 7,
+          photo_type: "before",
+          preview_url: "https://api.example.test/media/calibration/doc-1?signature=signed",
+          mime_type: "image/webp",
+          file_size: 128000,
+          width: 1200,
+          height: 900,
+          checksum: "sha256:abc",
+          uploaded_at: "2026-08-18T10:00:00.000Z",
+        }],
+      }],
+      waterSamples: [],
+    });
+
+    expect(detail.parameters[0].documentation).toEqual({
+      before: {
+        id: "doc-1",
+        calibrationDetailId: 54,
+        parameterId: "7",
+        photoType: "before",
+        previewUrl: "https://api.example.test/media/calibration/doc-1?signature=signed",
+        mimeType: "image/webp",
+        size: 128000,
+        width: 1200,
+        height: 900,
+        checksum: "sha256:abc",
+        uploadedAt: "2026-08-18T10:00:00.000Z",
+      },
+    });
+  });
+
+  it("maps a parameter without documentation to empty documentation slots", () => {
+    const detail = mapCalibrationDetail({
+      id: "calibration-without-docs",
+      report_no: "KAL/2026/EMPTY",
+      station_id: 1,
+      calibration_start_date: "2026-08-18",
+      calibration_end_date: "2026-08-18",
+      status: "draft",
+      created_at: "2026-08-18T00:00:00.000Z",
+      updated_at: "2026-08-18T00:00:00.000Z",
+      details: [{
+        id: 55,
+        parameter_id: 8,
+        parameter_name: "DO",
+        coeff_type: null,
+        coefficients: null,
+        crm_reference_value: null,
+        crm_reading_value: null,
+        calculation_result: null,
+        remark: null,
+        standards: [],
+      }],
+      waterSamples: [],
+    });
+
+    expect(detail.parameters[0].documentation).toEqual({});
+  });
+
   it("menormalkan label API yang hilang atau kosong ke bahasa Indonesia", () => {
     const detail = mapCalibrationDetail({
       id: "calibration-1",

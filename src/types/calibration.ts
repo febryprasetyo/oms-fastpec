@@ -18,6 +18,24 @@ export interface Parameter {
 
 export type CalibrationCoefficientType = "K/B" | "K1-K6";
 
+export type CalibrationPhotoType = "before" | "after";
+
+export interface CalibrationDocumentation {
+  id: string;
+  calibrationDetailId: number;
+  parameterId: string;
+  photoType: CalibrationPhotoType;
+  previewUrl: string;
+  mimeType: string;
+  size: number;
+  width?: number;
+  height?: number;
+  checksum?: string;
+  uploadedAt: string;
+}
+
+export type ParameterCalibrationDocumentation = Partial<Record<CalibrationPhotoType, CalibrationDocumentation>>;
+
 export interface ParameterCalibrationDetail {
   id: number;
   parameterId: string;
@@ -38,6 +56,7 @@ export interface ParameterCalibrationDetail {
   }[];
   coefficients: { key: string; value?: number }[];
   status: "PASS" | "FAILED" | null;
+  documentation: ParameterCalibrationDocumentation;
 }
 
 export interface WaterSample {
@@ -112,6 +131,21 @@ export interface CalibrationApiDetail {
   calculation_result: "PASS" | "FAILED" | null;
   remark: string | null;
   standards: CalibrationApiStandard[];
+  documentation?: CalibrationApiDocumentation[];
+}
+
+export interface CalibrationApiDocumentation {
+  id: string;
+  calibration_detail_id: number;
+  parameter_id: number;
+  photo_type: CalibrationPhotoType;
+  preview_url: string;
+  mime_type: string;
+  file_size: number;
+  width?: number;
+  height?: number;
+  checksum?: string;
+  uploaded_at: string;
 }
 
 export interface CalibrationApiWaterSample {

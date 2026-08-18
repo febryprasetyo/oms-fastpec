@@ -9,9 +9,12 @@ import {
 import type {
   Calibration,
   CalibrationApiDetail,
+  CalibrationApiDocumentation,
   CalibrationApiStatus,
   CalibrationApiWaterSample,
   CalibrationDetail,
+  CalibrationDocumentation,
+  ParameterCalibrationDetail,
   Parameter,
   Station,
   WaterSample,
@@ -125,6 +128,22 @@ const mapWaterSample = (sample: CalibrationApiWaterSample): WaterSample => ({
   depth: sample.kedalaman ?? undefined,
 });
 
+export const mapCalibrationDocumentation = (
+  documentation: CalibrationApiDocumentation,
+): CalibrationDocumentation => ({
+  id: documentation.id,
+  calibrationDetailId: documentation.calibration_detail_id,
+  parameterId: String(documentation.parameter_id),
+  photoType: documentation.photo_type,
+  previewUrl: documentation.preview_url,
+  mimeType: documentation.mime_type,
+  size: documentation.file_size,
+  ...(documentation.width === undefined ? {} : { width: documentation.width }),
+  ...(documentation.height === undefined ? {} : { height: documentation.height }),
+  ...(documentation.checksum === undefined ? {} : { checksum: documentation.checksum }),
+  uploadedAt: documentation.uploaded_at,
+});
+
 const mapCalibration = (calibration: ApiCalibrationRecord): Calibration => {
   const coordinate = parseCoordinate(calibration.station_coordinate);
 
@@ -193,6 +212,13 @@ export const mapCalibrationDetail = (calibration: ApiCalibrationRecord): Calibra
         value: coefficients[key] !== undefined && Number.isFinite(Number(coefficients[key])) ? Number(coefficients[key]) : undefined,
       })),
       status: detail.calculation_result,
+      documentation: (detail.documentation ?? []).reduce<ParameterCalibrationDetail["documentation"]>(
+        (mapped, documentation) => {
+          mapped[documentation.photo_type] = mapCalibrationDocumentation(documentation);
+          return mapped;
+        },
+        {},
+      ),
     };
   }),
   waterSamples: (calibration.waterSamples ?? []).map(mapWaterSample),

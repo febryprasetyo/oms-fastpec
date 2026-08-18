@@ -60,7 +60,7 @@ const calibrationDetail: CalibrationDetail = {
     id: 11, parameterId: "1", parameterName: "DO", parameterUnit: "mg/L", spec: "",
     coeffType: "K/B", crmReferenceValue: null, crmReadingValue: null, remark: null,
     results: [{ id: 21, standardName: "0", standardValue: 0, minAcceptable: null, maxAcceptable: null, value: "0" }],
-    coefficients: [{ key: "k", value: 1 }, { key: "b", value: 0 }], status: "PASS",
+    coefficients: [{ key: "k", value: 1 }, { key: "b", value: 0 }], status: "PASS", documentation: {},
   }],
   waterSamples: [],
   notes: "",
