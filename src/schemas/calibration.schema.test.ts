@@ -1,8 +1,27 @@
 import { describe, expect, it } from "vitest";
 import { toUpdateCalibrationPayload } from "@/lib/calibration-payload";
 import { CalibrationSchema, formatCalibrationValidationError } from "./calibration.schema";
+import { UpdateCalibrationPayloadSchema } from "./calibration-api.schema";
 
 describe("CalibrationSchema", () => {
+  it("menyerialisasi parameter baru tanpa id basis data", () => {
+    const formValues = CalibrationSchema.parse({
+      stationId: "1", stationName: "Stasiun Uji", address: "Jakarta", latitude: 0, longitude: 0,
+      calibrationStartDate: new Date("2026-08-10T00:00:00"), calibrationEndDate: new Date("2026-08-12T00:00:00"), officer: "Budi",
+      parameters: [{
+        id: 0, parameterId: "2", parameterName: "TDS", spec: "", coeffType: "K/B",
+        crmReferenceValue: null, crmReadingValue: null, remark: null,
+        results: [{ id: 0, standardName: "100", standardValue: 100, minAcceptable: null, maxAcceptable: null, value: "99,8" }],
+        coefficients: [{ key: "k", value: 1 }, { key: "b", value: 0 }], status: null,
+      }], waterSamples: [], notes: "",
+    });
+
+    const payload = UpdateCalibrationPayloadSchema.parse(toUpdateCalibrationPayload(formValues));
+    expect(payload.details?.[0]).toMatchObject({ parameter_id: 2 });
+    expect(payload.details?.[0]).not.toHaveProperty("id");
+    expect(payload.details?.[0].standards[0]).not.toHaveProperty("id");
+  });
+
   it("menampilkan label dan pesan validasi profesional tanpa path internal atau bahasa Inggris", () => {
     const invalidStation = CalibrationSchema.safeParse({
       stationId: "",

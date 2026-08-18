@@ -13,13 +13,14 @@ export const CreateCalibrationDraftPayloadSchema = z.object({
 });
 
 export const CalibrationStandardPayloadSchema = z.object({
-  id: z.number().int().positive(),
+  id: z.number().int().positive().optional(),
   crm_name: z.string().trim().min(1),
   calibration_result: numericValue.nullable(),
 });
 
 export const CalibrationDetailPayloadSchema = z.object({
-  id: z.number().int().positive(),
+  id: z.number().int().positive().optional(),
+  parameter_id: z.number().int().positive(),
   coeff_type: z.enum(["K/B", "K1-K6"]).optional(),
   coefficients: z.record(numericValue).optional(),
   crm_reference_value: numericValue.nullable(),

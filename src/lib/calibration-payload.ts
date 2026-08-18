@@ -21,14 +21,15 @@ export const toUpdateCalibrationPayload = (values: CalibrationFormValues): Updat
   notes: values.notes?.trim() || null,
   parameter_ids: values.parameters.map((parameter) => Number(parameter.parameterId)),
   details: values.parameters.map((parameter) => ({
-    id: parameter.id,
+    ...(parameter.id > 0 ? { id: parameter.id } : {}),
+    parameter_id: Number(parameter.parameterId),
     ...(parameter.coeffType ? { coeff_type: parameter.coeffType } : {}),
     ...(parameter.coeffType && parameter.coefficients.some(({ value }) => value !== undefined && Number.isFinite(Number(value)))
       ? { coefficients: Object.fromEntries(parameter.coefficients.filter(({ value }) => value !== undefined && Number.isFinite(Number(value))).map(({ key, value }) => [key, Number(value)])) }
       : {}),
     crm_reference_value: nullableNumber(parameter.crmReferenceValue),
     crm_reading_value: nullableNumber(parameter.crmReadingValue),
-    standards: parameter.results.map((result) => ({ id: result.id, crm_name: result.standardName, calibration_result: nullableNumber(result.value) })),
+    standards: parameter.results.map((result) => ({ ...(result.id > 0 ? { id: result.id } : {}), crm_name: result.standardName, calibration_result: nullableNumber(result.value) })),
   })),
   waterSamples: values.waterSamples.map((sample) => ({
     ...(sample.id ? { id: Number(sample.id) } : {}), sample_name: sample.sampleName.trim(),

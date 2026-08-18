@@ -27,31 +27,30 @@ export default function EditCalibrationPage() {
   const updateMutation = useUpdateCalibration();
   const submitMutation = useSubmitCalibration();
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [selectedParameterIds, setSelectedParameterIds] = useState<string[]>([]);
   const initialized = useRef(false);
+  const initializedSnapshot = useRef("");
   const saving = useRef(false);
   const form = useForm<CalibrationFormValues>({ resolver: zodResolver(CalibrationSchema) });
   const values = form.watch();
 
   useEffect(() => {
-    if (!detail || (initialized.current && form.formState.isDirty)) return;
-    form.reset({
+    if (!detail || (initialized.current && JSON.stringify(form.getValues()) !== initializedSnapshot.current)) return;
+    const initialValues: CalibrationFormValues = {
       stationId: detail.stationId, stationName: detail.stationName, address: detail.address,
       latitude: detail.latitude, longitude: detail.longitude,
       calibrationStartDate: new Date(`${detail.calibrationStartDate}T00:00:00`),
       calibrationEndDate: new Date(`${detail.calibrationEndDate}T00:00:00`), officer: detail.officer,
       parameters: detail.parameters, waterSamples: detail.waterSamples, notes: detail.notes,
-    });
-    setSelectedParameterIds(detail.parameters.map((parameter) => parameter.parameterId));
+    };
+    form.reset(initialValues);
+    initializedSnapshot.current = JSON.stringify(initialValues);
     initialized.current = true;
   }, [detail, form]);
 
-  const originalParameterIds = detail?.parameters.map((parameter) => parameter.parameterId) ?? [];
-  const parameterSelectionDirty = JSON.stringify(selectedParameterIds) !== JSON.stringify(originalParameterIds);
+  const selectedParameterIds = values.parameters?.map((parameter) => parameter.parameterId) ?? [];
 
   const save = async (showToast = false): Promise<boolean> => {
     if (!detail || detail.status === "Approved") return true;
-    if (!form.formState.isDirty && !parameterSelectionDirty) return true;
     if (selectedParameterIds.length === 0) {
       toast.error("Minimal satu parameter harus dipilih.");
       return false;
@@ -62,12 +61,15 @@ export default function EditCalibrationPage() {
       return false;
     }
     const snapshot = parsed.data;
+    const serializedSnapshot = JSON.stringify(snapshot);
     saving.current = true; setSaveState("saving");
     try {
-      await updateMutation.mutateAsync({ id, data: { ...toUpdateCalibrationPayload(snapshot), parameter_ids: selectedParameterIds.map(Number) } });
-      form.reset(snapshot);
-      initialized.current = false;
-      await refetch();
+      await updateMutation.mutateAsync({ id, data: toUpdateCalibrationPayload(snapshot) });
+      if (JSON.stringify(form.getValues()) === serializedSnapshot) {
+        form.reset(snapshot);
+        initialized.current = false;
+        await refetch();
+      }
       setSaveState("saved");
       if (showToast) toast.success(detail.status === "Draft" ? "Draf tersimpan." : "Perubahan laporan tersimpan.");
       return true;
@@ -77,14 +79,28 @@ export default function EditCalibrationPage() {
 
   const changeParameters = async (parameterId: string) => {
     if (!detail || detail.status === "Approved" || saving.current) return;
-    const next = selectedParameterIds.includes(parameterId) ? selectedParameterIds.filter((item) => item !== parameterId) : [...selectedParameterIds, parameterId];
-    if (next.length === 0) return toast.error("Minimal satu parameter harus dipilih.");
-    setSelectedParameterIds(next);
+    const current = form.getValues("parameters");
+    const existing = current.find((parameter) => parameter.parameterId === parameterId);
+    if (existing && current.length === 1) return toast.error("Minimal satu parameter harus dipilih.");
+    const master = masterParameters.find((parameter) => parameter.id === parameterId);
+    if (!existing && !master) return;
+    const normalizedName = master?.name.trim().toLowerCase() ?? "";
+    const coeffType = normalizedName === "ph" ? "K1-K6" as const
+      : ["nitrat", "nitrit", "no3", "no2"].includes(normalizedName) ? undefined
+        : "K/B" as const;
+    const next = existing ? current.filter((parameter) => parameter.parameterId !== parameterId) : [...current, {
+      id: 0, parameterId, parameterName: master!.name, parameterUnit: master!.unit, spec: master!.spec,
+      coeffType, crmReferenceValue: null, crmReadingValue: null, remark: null,
+      results: (master!.standards ?? []).map((standard) => ({ id: 0, standardName: standard.crmName, standardValue: standard.standardValue, minAcceptable: null, maxAcceptable: null, value: "" })),
+      coefficients: (coeffType === "K1-K6" ? ["k1", "k2", "k3", "k4", "k5", "k6"] : coeffType === "K/B" ? ["k", "b"] : []).map((key) => ({ key, value: undefined })),
+      status: null,
+    }];
+    form.setValue("parameters", next, { shouldDirty: true });
     setSaveState("idle");
   };
 
   const cancel = () => {
-    if ((form.formState.isDirty || parameterSelectionDirty) && !window.confirm("Batalkan seluruh perubahan yang belum disimpan?")) return;
+    if (form.formState.isDirty && !window.confirm("Batalkan seluruh perubahan yang belum disimpan?")) return;
     router.push(`/calibration/${id}`);
   };
 

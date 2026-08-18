@@ -1,5 +1,5 @@
 import React from "react";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CalibrationDetail } from "@/types/calibration";
 import EditCalibrationPage from "./page";
@@ -11,6 +11,7 @@ const {
   useUpdateCalibration,
   routerPush,
   updateMutateAsync,
+  submitMutateAsync,
 } = vi.hoisted(() => ({
   useCalibrationDetail: vi.fn(),
   useParameters: vi.fn(),
@@ -18,6 +19,7 @@ const {
   useUpdateCalibration: vi.fn(),
   routerPush: vi.fn(),
   updateMutateAsync: vi.fn(),
+  submitMutateAsync: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -32,7 +34,6 @@ vi.mock("@/hook/useCalibration", () => ({
   useUpdateCalibration,
 }));
 
-vi.mock("@/components/features/calibration/ParameterTable", () => ({ ParameterTable: () => null }));
 vi.mock("@/components/features/calibration/WaterSampleTable", () => ({ WaterSampleTable: () => null }));
 vi.mock("@/components/features/calibration/NotesEditor", () => ({ NotesEditor: () => null }));
 vi.mock("@/components/features/badge/CalibrationHeader", () => ({ CalibrationHeader: () => null }));
@@ -75,7 +76,7 @@ describe("EditCalibrationPage", () => {
       { id: "1", name: "DO", spec: "", standards: [{ crmName: "0", standardValue: 0 }] },
       { id: "2", name: "TDS", spec: "", standards: [{ crmName: "100", standardValue: 100 }] },
     ] });
-    useSubmitCalibration.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
+    useSubmitCalibration.mockReturnValue({ isPending: false, mutateAsync: submitMutateAsync });
     useUpdateCalibration.mockReturnValue({ mutateAsync: updateMutateAsync });
   });
 
@@ -146,12 +147,42 @@ describe("EditCalibrationPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "TDS" }));
     expect(updateMutateAsync).not.toHaveBeenCalled();
+    expect(screen.getByText("TDS Kalibrasi")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Simpan Draf" }));
 
     await waitFor(() => expect(updateMutateAsync).toHaveBeenCalledWith(expect.objectContaining({
       id: "calibration-1",
-      data: expect.objectContaining({ parameter_ids: [1, 2] }),
+      data: expect.objectContaining({
+        parameter_ids: [1, 2],
+        details: expect.arrayContaining([expect.objectContaining({ parameter_id: 2 })]),
+      }),
     })));
+  });
+
+  it("mempertahankan pilihan parameter lokal ketika data laporan diperbarui di latar belakang", async () => {
+    const { rerender } = render(<EditCalibrationPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "TDS" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "TDS" }));
+    expect(screen.getByText("TDS Kalibrasi")).toBeInTheDocument();
+
+    useCalibrationDetail.mockReturnValue({ data: { ...calibrationDetail, updatedAt: "2026-08-12T01:00:00.000Z" }, isLoading: false, refetch: vi.fn() });
+    rerender(<EditCalibrationPage />);
+
+    expect(screen.getByText("TDS Kalibrasi")).toBeInTheDocument();
+  });
+
+  it("tidak menimpa perubahan baru ketika penyimpanan sebelumnya masih berjalan", async () => {
+    let resolveSave!: () => void;
+    updateMutateAsync.mockReturnValue(new Promise<void>((resolve) => { resolveSave = resolve; }));
+    render(<EditCalibrationPage />);
+    await waitFor(() => expect(document.querySelectorAll<HTMLInputElement>('input[type="date"]')[0]).toHaveValue("2026-08-12"));
+
+    fireEvent.change(document.querySelectorAll<HTMLInputElement>('input[type="date"]')[0], { target: { value: "2026-08-13" } });
+    fireEvent.click(screen.getByRole("button", { name: "Simpan Draf" }));
+    fireEvent.change(document.querySelectorAll<HTMLInputElement>('input[type="date"]')[0], { target: { value: "2026-08-14" } });
+    await act(async () => resolveSave());
+
+    expect(document.querySelectorAll<HTMLInputElement>('input[type="date"]')[0]).toHaveValue("2026-08-14");
   });
 
   it("membatalkan perubahan tanpa menyimpan dan kembali ke detail", async () => {
