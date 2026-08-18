@@ -292,13 +292,4 @@ export const calibrationService = {
     return response.data as Blob;
   },
 
-  async getReportPreviewHtml(id: string, accessToken: string): Promise<string> {
-    const response = await axiosInstance.get(`/api/calibrations/${id}/print`, {
-      headers: authHeaders(accessToken),
-      params: { format: "html" },
-      responseType: "text",
-    });
-
-    return response.data as string;
-  },
 };

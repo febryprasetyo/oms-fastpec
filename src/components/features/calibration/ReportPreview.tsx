@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { Download, Printer } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useCalibrationAuth } from "@/hook/useCalibration";
 import { calibrationService } from "@/services/api/calibration";
@@ -15,17 +14,19 @@ interface ReportPreviewProps {
 export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
   const { token } = useCalibrationAuth();
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState(false);
 
   useEffect(() => {
     let active = true;
-    setPreviewHtml(null);
+    let objectUrl: string | null = null;
+    setPreviewUrl(null);
     setPreviewError(false);
 
-    calibrationService.getReportPreviewHtml(detail.id, token)
-      .then((html) => {
-        if (active) setPreviewHtml(html);
+    calibrationService.downloadPdf(detail.id, token)
+      .then((pdf) => {
+        objectUrl = window.URL.createObjectURL(pdf);
+        if (active) setPreviewUrl(objectUrl);
       })
       .catch((error) => {
         console.error("Gagal memuat pratinjau laporan kalibrasi.", error);
@@ -34,6 +35,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
 
     return () => {
       active = false;
+      if (objectUrl) window.URL.revokeObjectURL(objectUrl);
     };
   }, [detail.id, token]);
 
@@ -41,34 +43,28 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
     iframeRef.current?.contentWindow?.print();
   };
 
-  const handleDownloadPdf = async () => {
-    try {
-      const blob = await calibrationService.downloadPdf(detail.id, token);
-      const link = document.createElement("a");
-      link.href = window.URL.createObjectURL(blob);
-      link.download = `Laporan_Kalibrasi_${detail.reportNo.replace(/\//g, "_")}.pdf`;
-      link.click();
-      window.URL.revokeObjectURL(link.href);
-    } catch (error) {
-      console.error("Gagal mengunduh PDF laporan kalibrasi.", error);
-      toast.error("PDF laporan kalibrasi gagal diunduh.");
-    }
+  const handleDownloadPdf = () => {
+    if (!previewUrl) return;
+    const link = document.createElement("a");
+    link.href = previewUrl;
+    link.download = `Laporan_Kalibrasi_${detail.reportNo.replace(/\//g, "_")}.pdf`;
+    link.click();
   };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end gap-3 print:hidden">
-        <Button onClick={handlePrint} variant="outline" className="gap-2" disabled={!previewHtml}>
+        <Button onClick={handlePrint} variant="outline" className="gap-2" disabled={!previewUrl}>
           <Printer className="h-4 w-4" />
           <span>Cetak</span>
         </Button>
-        <Button onClick={handleDownloadPdf} className="gap-2">
+        <Button onClick={handleDownloadPdf} className="gap-2" disabled={!previewUrl}>
           <Download className="h-4 w-4" />
           <span>Unduh PDF</span>
         </Button>
       </div>
 
-      {!previewHtml && !previewError && (
+      {!previewUrl && !previewError && (
         <div className="rounded-md border border-slate-200 bg-white p-8 text-center text-sm text-slate-600">
           Memuat pratinjau laporan kalibrasi...
         </div>
@@ -80,12 +76,11 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
         </div>
       )}
 
-      {previewHtml && (
+      {previewUrl && (
         <iframe
           ref={iframeRef}
           title="Pratinjau laporan kalibrasi"
-          srcDoc={previewHtml}
-          sandbox="allow-same-origin allow-modals"
+          src={previewUrl}
           className="mx-auto min-h-[1123px] w-full max-w-[794px] border border-slate-200 bg-white shadow-sm"
         />
       )}
