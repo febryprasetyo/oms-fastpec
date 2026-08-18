@@ -15,21 +15,27 @@ export function CalibrationDocumentationReadOnly({ parameters }: { parameters: P
           <div className="space-y-2">
             <p className="text-xs font-medium text-slate-600">Before Calibration</p>
             {parameter.documentation.before
-              ? <img
+              ? <>{/* Backend-signed preview URLs are intentionally passed through unchanged. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                   src={parameter.documentation.before.previewUrl}
                   alt={`Before Calibration ${parameterName}`}
                   className="aspect-[4/3] w-full rounded-md border bg-slate-50 object-contain"
-                />
+                  />
+                </>
               : <div className="flex aspect-[4/3] items-center justify-center rounded-md border bg-slate-50 p-3 text-center text-xs text-slate-500">Before Calibration: tidak didokumentasikan</div>}
           </div>
           <div className="space-y-2">
             <p className="text-xs font-medium text-slate-600">After Calibration</p>
             {parameter.documentation.after
-              ? <img
+              ? <>{/* Backend-signed preview URLs are intentionally passed through unchanged. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                   src={parameter.documentation.after.previewUrl}
                   alt={`After Calibration ${parameterName}`}
                   className="aspect-[4/3] w-full rounded-md border bg-slate-50 object-contain"
-                />
+                  />
+                </>
               : <div className="flex aspect-[4/3] items-center justify-center rounded-md border bg-slate-50 p-3 text-center text-xs text-slate-500">After Calibration: tidak didokumentasikan</div>}
           </div>
         </div>

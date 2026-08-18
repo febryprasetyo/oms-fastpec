@@ -99,7 +99,10 @@ export function CalibrationPhotoSlot({
 
     <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-md border border-dashed bg-slate-50">
       {previewUrl
-        ? <img src={previewUrl} alt={`Pratinjau ${label}`} className="h-full w-full object-contain" />
+        ? <>{/* Signed and blob URLs must be rendered unchanged; Next Image cannot optimize them safely. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={previewUrl} alt={`Pratinjau ${label}`} className="h-full w-full object-contain" />
+          </>
         : <div className="px-3 text-center text-xs text-slate-500">Belum ada foto</div>}
     </div>
 
