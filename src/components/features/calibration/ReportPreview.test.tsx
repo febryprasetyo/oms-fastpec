@@ -1,5 +1,5 @@
 import React from "react";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { Toaster } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { calibrationService } from "@/services/api/calibration";
@@ -10,76 +10,20 @@ vi.mock("@/hook/useCalibration", () => ({
   useCalibrationAuth: () => ({ token: "test-token" }),
 }));
 
-const calibrationDetail: CalibrationDetail = {
+const calibrationDetail = {
   id: "calibration-1",
   reportNo: "KAL/2026/001",
-  stationId: "station-1",
-  stationName: "Stasiun Pemantauan Bahoea Reko-Reko",
-  address: "Kabupaten Morowali Utara",
-  stationCity: "  kota   morowali UTARA  ",
-  latitude: -2.1234,
-  longitude: 121.5678,
-  calibrationStartDate: "2026-08-10",
-  calibrationEndDate: "2026-08-12",
-  calibrationDate: "2026-08-10 – 2026-08-12",
-  contactPerson: "",
-  phone: "",
-  officer: "Budi Santoso",
-  status: "Approved",
-  createdAt: "2026-08-12T00:00:00.000Z",
-  updatedAt: "2026-08-12T00:00:00.000Z",
-  parameters: [
-    {
-      id: 1,
-      parameterId: "do",
-      parameterName: "DO",
-      parameterUnit: "mg/L",
-      spec: "",
-      coeffType: "K/B",
-      crmReferenceValue: null,
-      crmReadingValue: null,
-      remark: null,
-      results: [
-        {
-          id: 1,
-          standardName: "0",
-          standardValue: 0,
-          minAcceptable: null,
-          maxAcceptable: null,
-          value: "0",
-        },
-        {
-          id: 2,
-          standardName: "1.005",
-          standardValue: 1.005,
-          minAcceptable: null,
-          maxAcceptable: null,
-          value: "1.005",
-        },
-      ],
-      coefficients: [
-        { key: "k", value: 1.005 },
-        { key: "b", value: 5.4 },
-      ],
-      status: "PASS",
-    },
-  ],
-  waterSamples: [
-    {
-      id: "sample-1",
-      sampleName: "Sampel uji",
-      temperature: 0,
-      doValue: 1.005,
-    },
-  ],
-  notes: "Kalibrasi dilakukan sesuai prosedur.",
-};
+  parameters: [],
+  waterSamples: [],
+} as unknown as CalibrationDetail;
 
 describe("ReportPreview", () => {
+  const renderedHtml = "<!doctype html><html><body><h1>LAPORAN KALIBRASI</h1><p>10–12 Agustus 2026</p><p>0,00 mg/L</p></body></html>";
   let downloadedFilename: string | undefined;
 
   beforeEach(() => {
     downloadedFilename = undefined;
+    vi.spyOn(calibrationService, "getReportPreviewHtml").mockResolvedValue(renderedHtml);
     Object.defineProperty(URL, "createObjectURL", {
       configurable: true,
       value: vi.fn(() => "blob:calibration-report"),
@@ -98,66 +42,32 @@ describe("ReportPreview", () => {
     vi.restoreAllMocks();
   });
 
-  it("menampilkan laporan dengan tanggal, standar, dan istilah Indonesia", () => {
+  it("menampilkan dokumen HTML yang dirender backend tanpa memformat ulang data", async () => {
     render(<ReportPreview detail={calibrationDetail} />);
 
-    expect(screen.getByText("LAPORAN KALIBRASI")).toBeInTheDocument();
-    expect(screen.getByText(/10–12 Agustus 2026/)).toBeInTheDocument();
-    expect(
-      screen.getByText(/Morowali Utara, 12 Agustus 2026/),
-    ).toBeInTheDocument();
-    expect(screen.getByText("0,00 mg/L")).toBeInTheDocument();
-    expect(screen.getByText("1,01 mg/L")).toBeInTheDocument();
-    expect(screen.getAllByText("1,01")).toHaveLength(3);
-    expect(
-      screen
-        .getByText("Hasil Pembacaan")
-        .closest("table")
-        ?.querySelector("tbody tr td:nth-child(3)"),
-    ).toHaveTextContent("1,01");
-    expect(screen.getByText(/K:/).closest("div")).toHaveTextContent("K: 1,01");
-    expect(
-      within(screen.getByText("Jenis Sampel").closest("table")!).getByText("1,01"),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/B:/).closest("div")).toHaveTextContent("B: 5,40");
-    expect(screen.getByText("Standar/CRM")).toBeInTheDocument();
-    expect(screen.getByAltText("Logo CMC")).toBeInTheDocument();
-    expect(screen.queryByText("(Hunting)")).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(/Calibration|Report|Station|Standart|Notes|Print|Download/i),
-    ).not.toBeInTheDocument();
+    expect(screen.getByText("Memuat pratinjau laporan kalibrasi...")).toBeInTheDocument();
+    const iframe = await screen.findByTitle("Pratinjau laporan kalibrasi");
+
+    expect(iframe).toHaveAttribute("srcdoc", renderedHtml);
   });
 
-  it("membersihkan catatan berbahaya sambil mempertahankan pemformatan yang diizinkan", () => {
-    const { container } = render(
-      <ReportPreview
-        detail={{
-          ...calibrationDetail,
-          notes: '<p onclick="alert(1)">Aman <strong data-secret="x">tebal</strong><img src="x" onerror="alert(2)"><script>alert(3)</script><a href="javascript:alert(4)">tautan</a></p><ul style="color:red"><li>Butir</li></ul>',
-        }}
-      />,
-    );
+  it("mencetak dokumen laporan di dalam iframe", async () => {
+    render(<ReportPreview detail={calibrationDetail} />);
+    const iframe = await screen.findByTitle("Pratinjau laporan kalibrasi");
+    const print = vi.spyOn((iframe as HTMLIFrameElement).contentWindow!, "print").mockImplementation(() => undefined);
 
-    expect(screen.getByText("tebal").tagName).toBe("STRONG");
-    expect(screen.getByText("tebal")).not.toHaveAttribute("data-secret");
-    expect(screen.getByText("Aman", { exact: false }).closest("p")).not.toHaveAttribute("onclick");
-    expect(screen.getByText("Butir").closest("ul")).not.toHaveAttribute("style");
-    const notes = container.querySelector(".calibration-notes-preview");
-    expect(notes?.querySelector("script, img, a, svg")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Cetak" }));
+
+    expect(print).toHaveBeenCalledOnce();
   });
 
-  it("menampilkan nama kimia Indonesia beserta formula bakunya", () => {
-    const chemicalParameters = [
-      { ...calibrationDetail.parameters[0], id: 2, parameterId: "10", parameterName: "Amonia", results: [], coefficients: [] },
-      { ...calibrationDetail.parameters[0], id: 3, parameterId: "11", parameterName: "Nitrat", results: [], coefficients: [], coeffType: undefined },
-      { ...calibrationDetail.parameters[0], id: 4, parameterId: "12", parameterName: "Nitrit", results: [], coefficients: [], coeffType: undefined },
-    ];
+  it("menampilkan pesan saat HTML pratinjau gagal dimuat", async () => {
+    vi.mocked(calibrationService.getReportPreviewHtml).mockRejectedValue(new Error("Jaringan gagal"));
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
 
-    render(<ReportPreview detail={{ ...calibrationDetail, parameters: chemicalParameters }} />);
+    render(<ReportPreview detail={calibrationDetail} />);
 
-    expect(screen.getAllByText("Amonia (NH3-N)").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Nitrat (NO3-N)").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Nitrit (NO2-N)").length).toBeGreaterThan(0);
+    expect(await screen.findByText("Pratinjau laporan kalibrasi gagal dimuat.")).toBeInTheDocument();
   });
 
   it("mengunduh laporan dengan nama berkas Indonesia", async () => {

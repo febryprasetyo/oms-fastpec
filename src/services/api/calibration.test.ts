@@ -20,6 +20,27 @@ describe("calibrationService.downloadPdf", () => {
   });
 });
 
+describe("calibrationService.getReportPreviewHtml", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("returns the rendered HTML from the authenticated report endpoint", async () => {
+    const renderedHtml = "<!doctype html><html><body>LAPORAN KALIBRASI</body></html>";
+    const get = vi.spyOn(axiosInstance, "get").mockResolvedValue({ data: renderedHtml });
+
+    await expect(
+      calibrationService.getReportPreviewHtml("calibration-42", "access-token"),
+    ).resolves.toBe(renderedHtml);
+
+    expect(get).toHaveBeenCalledWith("/api/calibrations/calibration-42/print", {
+      headers: { Authorization: "Bearer access-token" },
+      params: { format: "html" },
+      responseType: "text",
+    });
+  });
+});
+
 describe("mapCalibrationDetail", () => {
   it("menormalkan label API yang hilang atau kosong ke bahasa Indonesia", () => {
     const detail = mapCalibrationDetail({
