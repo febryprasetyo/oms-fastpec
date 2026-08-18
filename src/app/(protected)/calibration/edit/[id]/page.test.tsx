@@ -1,5 +1,5 @@
 import React from "react";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CalibrationDetail } from "@/types/calibration";
 import EditCalibrationPage from "./page";
@@ -9,16 +9,20 @@ const {
   useParameters,
   useSubmitCalibration,
   useUpdateCalibration,
+  routerPush,
+  updateMutateAsync,
 } = vi.hoisted(() => ({
   useCalibrationDetail: vi.fn(),
   useParameters: vi.fn(),
   useSubmitCalibration: vi.fn(),
   useUpdateCalibration: vi.fn(),
+  routerPush: vi.fn(),
+  updateMutateAsync: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
   useParams: () => ({ id: "calibration-1" }),
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: routerPush }),
 }));
 
 vi.mock("@/hook/useCalibration", () => ({
@@ -51,7 +55,12 @@ const calibrationDetail: CalibrationDetail = {
   status: "Draft",
   createdAt: "2026-08-12T00:00:00.000Z",
   updatedAt: "2026-08-12T00:00:00.000Z",
-  parameters: [],
+  parameters: [{
+    id: 11, parameterId: "1", parameterName: "DO", parameterUnit: "mg/L", spec: "",
+    coeffType: "K/B", crmReferenceValue: null, crmReadingValue: null, remark: null,
+    results: [{ id: 21, standardName: "0", standardValue: 0, minAcceptable: null, maxAcceptable: null, value: "0" }],
+    coefficients: [{ key: "k", value: 1 }, { key: "b", value: 0 }], status: "PASS",
+  }],
   waterSamples: [],
   notes: "",
 };
@@ -62,9 +71,12 @@ describe("EditCalibrationPage", () => {
   beforeEach(() => {
     process.env.TZ = "Asia/Jakarta";
     useCalibrationDetail.mockReturnValue({ data: calibrationDetail, isLoading: false, refetch: vi.fn() });
-    useParameters.mockReturnValue({ data: [] });
+    useParameters.mockReturnValue({ data: [
+      { id: "1", name: "DO", spec: "", standards: [{ crmName: "0", standardValue: 0 }] },
+      { id: "2", name: "TDS", spec: "", standards: [{ crmName: "100", standardValue: 100 }] },
+    ] });
     useSubmitCalibration.mockReturnValue({ isPending: false, mutateAsync: vi.fn() });
-    useUpdateCalibration.mockReturnValue({ mutateAsync: vi.fn() });
+    useUpdateCalibration.mockReturnValue({ mutateAsync: updateMutateAsync });
   });
 
   afterEach(() => {
@@ -72,6 +84,7 @@ describe("EditCalibrationPage", () => {
     if (originalTimezone === undefined) delete process.env.TZ;
     else process.env.TZ = originalTimezone;
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   it("menyerialisasi nilai input tanggal dari kalender lokal tanpa bergeser ke UTC", async () => {
@@ -114,5 +127,42 @@ describe("EditCalibrationPage", () => {
     });
     expect(screen.getByText("Laporan berstatus Disetujui dan tidak dapat diedit.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Simpan/ })).not.toBeInTheDocument();
+  });
+
+  it("tidak menyimpan perubahan secara otomatis", async () => {
+    render(<EditCalibrationPage />);
+    await waitFor(() => expect(document.querySelector<HTMLInputElement>('input[type="date"]')).toHaveValue("2026-08-12"));
+    vi.useFakeTimers();
+
+    fireEvent.change(document.querySelectorAll<HTMLInputElement>('input[type="date"]')[0], { target: { value: "2026-08-13" } });
+    vi.advanceTimersByTime(3000);
+
+    expect(updateMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it("menyimpan perubahan formulir dan pilihan parameter hanya melalui tombol Simpan", async () => {
+    render(<EditCalibrationPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "TDS" })).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "TDS" }));
+    expect(updateMutateAsync).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Simpan Draf" }));
+
+    await waitFor(() => expect(updateMutateAsync).toHaveBeenCalledWith(expect.objectContaining({
+      id: "calibration-1",
+      data: expect.objectContaining({ parameter_ids: [1, 2] }),
+    })));
+  });
+
+  it("membatalkan perubahan tanpa menyimpan dan kembali ke detail", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(<EditCalibrationPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Batalkan" })).toBeInTheDocument());
+    fireEvent.change(document.querySelectorAll<HTMLInputElement>('input[type="date"]')[0], { target: { value: "2026-08-13" } });
+
+    fireEvent.click(screen.getByRole("button", { name: "Batalkan" }));
+
+    expect(updateMutateAsync).not.toHaveBeenCalled();
+    expect(routerPush).toHaveBeenCalledWith("/calibration/calibration-1");
   });
 });
