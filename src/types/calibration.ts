@@ -101,6 +101,7 @@ export interface Calibration {
   updatedAt: string;
   verificationUrl?: string;
   qrCodeDataUrl?: string;
+  coordinate?: string;
   uuid?: string;
 }
 
