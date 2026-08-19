@@ -12,6 +12,7 @@ const {
   routerPush,
   updateMutateAsync,
   submitMutateAsync,
+  resolvedDetailId,
 } = vi.hoisted(() => ({
   useCalibrationDetail: vi.fn(),
   useParameters: vi.fn(),
@@ -20,6 +21,7 @@ const {
   routerPush: vi.fn(),
   updateMutateAsync: vi.fn(),
   submitMutateAsync: vi.fn(),
+  resolvedDetailId: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -37,6 +39,12 @@ vi.mock("@/hook/useCalibration", () => ({
 vi.mock("@/components/features/calibration/WaterSampleTable", () => ({ WaterSampleTable: () => null }));
 vi.mock("@/components/features/calibration/NotesEditor", () => ({ NotesEditor: () => null }));
 vi.mock("@/components/features/badge/CalibrationHeader", () => ({ CalibrationHeader: () => null }));
+vi.mock("@/components/features/calibration/CalibrationDocumentation", () => ({
+  CalibrationDocumentation: ({ parameterId, ensurePersistedDetail, onBusyChange }: { parameterId: string; ensurePersistedDetail: (id: string) => Promise<number>; onBusyChange?: (type: "before", busy: boolean) => void }) => <>
+    <button type="button" onClick={async () => resolvedDetailId(await ensurePersistedDetail(parameterId))}>Upload {parameterId}</button>
+    <button type="button" onClick={() => onBusyChange?.("before", true)}>Mulai upload {parameterId}</button>
+  </>,
+}));
 
 const calibrationDetail: CalibrationDetail = {
   id: "calibration-1",
@@ -60,7 +68,13 @@ const calibrationDetail: CalibrationDetail = {
     id: 11, parameterId: "1", parameterName: "DO", parameterUnit: "mg/L", spec: "",
     coeffType: "K/B", crmReferenceValue: null, crmReadingValue: null, remark: null,
     results: [{ id: 21, standardName: "0", standardValue: 0, minAcceptable: null, maxAcceptable: null, value: "0" }],
-    coefficients: [{ key: "k", value: 1 }, { key: "b", value: 0 }], status: "PASS",
+    coefficients: [{ key: "k", value: 1 }, { key: "b", value: 0 }], status: "PASS", documentation: {
+      before: {
+        id: "doc-before", calibrationDetailId: 11, parameterId: "1", photoType: "before",
+        previewUrl: "https://api.test/before", mimeType: "image/webp", size: 100,
+        uploadedAt: "2026-08-18T00:00:00.000Z",
+      },
+    },
   }],
   waterSamples: [],
   notes: "",
@@ -71,6 +85,9 @@ describe("EditCalibrationPage", () => {
 
   beforeEach(() => {
     process.env.TZ = "Asia/Jakarta";
+    updateMutateAsync.mockReset().mockResolvedValue(undefined);
+    submitMutateAsync.mockReset().mockResolvedValue(undefined);
+    resolvedDetailId.mockReset();
     useCalibrationDetail.mockReturnValue({ data: calibrationDetail, isLoading: false, refetch: vi.fn() });
     useParameters.mockReturnValue({ data: [
       { id: "1", name: "DO", spec: "", standards: [{ crmName: "0", standardValue: 0 }] },
@@ -159,6 +176,48 @@ describe("EditCalibrationPage", () => {
     })));
   });
 
+  it("menyimpan parameter baru otomatis sebelum upload untuk memperoleh detail ID", async () => {
+    const persistedTds = {
+      ...calibrationDetail.parameters[0], id: 22, parameterId: "2", parameterName: "TDS", documentation: {},
+    };
+    const refetch = vi.fn().mockResolvedValue({
+      data: { ...calibrationDetail, parameters: [...calibrationDetail.parameters, persistedTds] },
+    });
+    useCalibrationDetail.mockReturnValue({ data: calibrationDetail, isLoading: false, refetch });
+    render(<EditCalibrationPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "TDS" })).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "TDS" }));
+    fireEvent.click(screen.getByRole("button", { name: "Upload 2" }));
+
+    await waitFor(() => expect(updateMutateAsync).toHaveBeenCalledOnce());
+    await waitFor(() => expect(resolvedDetailId).toHaveBeenCalledWith(22));
+    expect(refetch).toHaveBeenCalled();
+  });
+
+  it("menggabungkan permintaan penyimpanan detail yang berjalan bersamaan", async () => {
+    let resolveSave!: () => void;
+    updateMutateAsync.mockReturnValue(new Promise<void>((resolve) => { resolveSave = resolve; }));
+    const persistedTds = {
+      ...calibrationDetail.parameters[0], id: 22, parameterId: "2", parameterName: "TDS", documentation: {},
+    };
+    const refetch = vi.fn().mockResolvedValue({
+      data: { ...calibrationDetail, parameters: [...calibrationDetail.parameters, persistedTds] },
+    });
+    useCalibrationDetail.mockReturnValue({ data: calibrationDetail, isLoading: false, refetch });
+    render(<EditCalibrationPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "TDS" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "TDS" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Upload 2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Upload 2" }));
+    await waitFor(() => expect(updateMutateAsync).toHaveBeenCalled());
+
+    expect(updateMutateAsync).toHaveBeenCalledTimes(1);
+    await act(async () => resolveSave());
+    await waitFor(() => expect(resolvedDetailId).toHaveBeenCalledTimes(2));
+  });
+
   it("mempertahankan pilihan parameter lokal ketika data laporan diperbarui di latar belakang", async () => {
     const { rerender } = render(<EditCalibrationPage />);
     await waitFor(() => expect(screen.getByRole("button", { name: "TDS" })).toBeInTheDocument());
@@ -199,6 +258,36 @@ describe("EditCalibrationPage", () => {
 
     expect(submitMutateAsync).not.toHaveBeenCalled();
     expect(routerPush).not.toHaveBeenCalled();
+  });
+
+  it("menolak submit dan memfokuskan parameter pertama tanpa foto Before", async () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    useCalibrationDetail.mockReturnValue({
+      data: { ...calibrationDetail, parameters: [{ ...calibrationDetail.parameters[0], documentation: {} }] },
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+    render(<EditCalibrationPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Ajukan Kalibrasi" })).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Ajukan Kalibrasi" }));
+
+    const card = document.querySelector<HTMLElement>('[data-calibration-parameter-id="1"]');
+    expect(updateMutateAsync).not.toHaveBeenCalled();
+    expect(submitMutateAsync).not.toHaveBeenCalled();
+    expect(scrollIntoView).toHaveBeenCalled();
+    expect(card).toHaveFocus();
+  });
+
+  it("menonaktifkan submit ketika proses foto masih berjalan", async () => {
+    render(<EditCalibrationPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Mulai upload 1" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Mulai upload 1" }));
+
+    expect(screen.getByRole("button", { name: "Ajukan Kalibrasi" })).toBeDisabled();
+    expect(updateMutateAsync).not.toHaveBeenCalled();
+    expect(submitMutateAsync).not.toHaveBeenCalled();
   });
 
   it("membatalkan perubahan tanpa menyimpan dan kembali ke detail", async () => {

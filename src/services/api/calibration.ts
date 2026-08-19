@@ -1,4 +1,5 @@
 import { calibrationParameterConfigs, getCalibrationParameterConfig } from "@/config/calibration-parameters";
+import type { AxiosProgressEvent } from "axios";
 import { axiosInstance } from "@/lib/axiosInstance";
 import {
   CreateCalibrationDraftPayloadSchema,
@@ -9,9 +10,13 @@ import {
 import type {
   Calibration,
   CalibrationApiDetail,
+  CalibrationApiDocumentation,
   CalibrationApiStatus,
   CalibrationApiWaterSample,
   CalibrationDetail,
+  CalibrationDocumentation,
+  CalibrationPhotoType,
+  ParameterCalibrationDetail,
   Parameter,
   Station,
   WaterSample,
@@ -125,6 +130,22 @@ const mapWaterSample = (sample: CalibrationApiWaterSample): WaterSample => ({
   depth: sample.kedalaman ?? undefined,
 });
 
+export const mapCalibrationDocumentation = (
+  documentation: CalibrationApiDocumentation,
+): CalibrationDocumentation => ({
+  id: documentation.id,
+  calibrationDetailId: documentation.calibration_detail_id,
+  parameterId: String(documentation.parameter_id),
+  photoType: documentation.photo_type,
+  previewUrl: documentation.preview_url,
+  mimeType: documentation.mime_type,
+  size: documentation.file_size,
+  ...(documentation.width === undefined ? {} : { width: documentation.width }),
+  ...(documentation.height === undefined ? {} : { height: documentation.height }),
+  ...(documentation.checksum === undefined ? {} : { checksum: documentation.checksum }),
+  uploadedAt: documentation.uploaded_at,
+});
+
 const mapCalibration = (calibration: ApiCalibrationRecord): Calibration => {
   const coordinate = parseCoordinate(calibration.station_coordinate);
 
@@ -193,6 +214,13 @@ export const mapCalibrationDetail = (calibration: ApiCalibrationRecord): Calibra
         value: coefficients[key] !== undefined && Number.isFinite(Number(coefficients[key])) ? Number(coefficients[key]) : undefined,
       })),
       status: detail.calculation_result,
+      documentation: (detail.documentation ?? []).reduce<ParameterCalibrationDetail["documentation"]>(
+        (mapped, documentation) => {
+          mapped[documentation.photo_type] = mapCalibrationDocumentation(documentation);
+          return mapped;
+        },
+        {},
+      ),
     };
   }),
   waterSamples: (calibration.waterSamples ?? []).map(mapWaterSample),
@@ -281,6 +309,51 @@ export const calibrationService = {
 
   async approveCalibration(id: string, accessToken: string): Promise<void> {
     await axiosInstance.post(`/api/calibrations/${id}/approve`, {}, { headers: authHeaders(accessToken) });
+  },
+
+  async uploadDocumentation({
+    calibrationId,
+    detailId,
+    photoType,
+    file,
+    accessToken,
+    onUploadProgress,
+  }: {
+    calibrationId: string;
+    detailId: number;
+    photoType: CalibrationPhotoType;
+    file: File;
+    accessToken: string;
+    onUploadProgress?: (event: AxiosProgressEvent) => void;
+  }): Promise<CalibrationDocumentation> {
+    const body = new FormData();
+    body.append("file", file, file.name);
+    const response = await axiosInstance.post<ApiResponse<CalibrationApiDocumentation>>(
+      `/api/calibrations/${calibrationId}/details/${detailId}/documentation/${photoType}`,
+      body,
+      {
+        headers: { ...authHeaders(accessToken), "Content-Type": undefined },
+        onUploadProgress,
+      },
+    );
+    return mapCalibrationDocumentation(response.data.data);
+  },
+
+  async deleteDocumentation({
+    calibrationId,
+    detailId,
+    photoType,
+    accessToken,
+  }: {
+    calibrationId: string;
+    detailId: number;
+    photoType: CalibrationPhotoType;
+    accessToken: string;
+  }): Promise<void> {
+    await axiosInstance.delete(
+      `/api/calibrations/${calibrationId}/details/${detailId}/documentation/${photoType}`,
+      { headers: authHeaders(accessToken) },
+    );
   },
 
   async downloadPdf(id: string, accessToken: string): Promise<Blob> {

@@ -5,12 +5,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatCalibrationParameterName } from "@/lib/calibration-format";
+import { CalibrationDocumentation } from "./CalibrationDocumentation";
+import type { CalibrationPhotoType, CalibrationStatus, ParameterCalibrationDocumentation } from "@/types/calibration";
 
 interface ParameterTableProps {
   form: UseFormReturn<CalibrationFormValues>;
+  calibrationId?: string;
+  status?: CalibrationStatus;
+  ensurePersistedDetail?: (parameterId: string) => Promise<number>;
+  onDocumentationBusyChange?: (parameterId: string, photoType: CalibrationPhotoType, busy: boolean) => void;
+  invalidDocumentationParameterIds?: string[];
+  documentationByParameter?: Record<string, ParameterCalibrationDocumentation>;
 }
 
-export const ParameterTable: React.FC<ParameterTableProps> = ({ form }) => {
+export const ParameterTable: React.FC<ParameterTableProps> = ({
+  form,
+  calibrationId,
+  status = "Draft",
+  ensurePersistedDetail,
+  onDocumentationBusyChange,
+  invalidDocumentationParameterIds = [],
+  documentationByParameter = {},
+}) => {
   const { control, register } = form;
   const { fields } = useFieldArray({
     control,
@@ -21,11 +37,17 @@ export const ParameterTable: React.FC<ParameterTableProps> = ({ form }) => {
     <div role="region" aria-label="Input parameter kalibrasi" className="grid min-w-0 grid-cols-1 gap-6 overflow-x-auto 2xl:grid-cols-2">
       {fields.map((field, index) => {
         const paramName = form.watch(`parameters.${index}.parameterName`);
+        const detailId = form.watch(`parameters.${index}.id`);
         const spec = form.watch(`parameters.${index}.spec`);
         const coeffType = form.watch(`parameters.${index}.coeffType`);
 
         return (
-          <Card key={field.id} className="min-w-0 overflow-hidden shadow-sm">
+          <Card
+            key={field.id}
+            tabIndex={-1}
+            data-calibration-parameter-id={field.parameterId}
+            className={`min-w-0 overflow-hidden shadow-sm ${invalidDocumentationParameterIds.includes(field.parameterId) ? "border-red-500 ring-1 ring-red-500" : ""}`}
+          >
             <CardHeader className="bg-slate-50 border-b py-3 px-4">
               <CardTitle className="flex min-w-0 flex-wrap items-center justify-between gap-2 text-sm font-semibold text-slate-800">
                 <span>{formatCalibrationParameterName(paramName)} Kalibrasi</span>
@@ -78,6 +100,15 @@ export const ParameterTable: React.FC<ParameterTableProps> = ({ form }) => {
                 <div><Label className="text-xs">Nilai Referensi CRM</Label><Input type="number" step="any" disabled={paramName.toLowerCase() === "ph"} {...register(`parameters.${index}.crmReferenceValue` as const)} /></div>
                 <div><Label className="text-xs">Nilai Pembacaan CRM</Label><Input type="number" step="any" disabled={paramName.toLowerCase() === "ph"} {...register(`parameters.${index}.crmReadingValue` as const)} /></div>
               </div>
+              {calibrationId && ensurePersistedDetail && <CalibrationDocumentation
+                calibrationId={calibrationId}
+                parameterId={field.parameterId}
+                detailId={detailId}
+                documentation={documentationByParameter[field.parameterId] ?? {}}
+                readOnly={status === "Approved"}
+                ensurePersistedDetail={ensurePersistedDetail}
+                onBusyChange={(photoType, busy) => onDocumentationBusyChange?.(field.parameterId, photoType, busy)}
+              />}
             </CardContent>
           </Card>
         );

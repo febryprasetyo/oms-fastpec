@@ -101,4 +101,30 @@ describe("CalibrationDetailPage", () => {
 
     expect(screen.getByText("Laporan kalibrasi tidak ditemukan.")).toBeInTheDocument();
   });
+
+  it("menampilkan dokumentasi parameter tanpa kontrol upload", () => {
+    useCalibrationDetail.mockReturnValue({
+      data: {
+        ...calibrationDetail,
+        parameters: [{
+          id: 11, parameterId: "1", parameterName: "DO", spec: "", crmReferenceValue: null,
+          crmReadingValue: null, remark: null, results: [], coefficients: [], status: null,
+          documentation: {
+            before: {
+              id: "doc-before", calibrationDetailId: 11, parameterId: "1", photoType: "before",
+              previewUrl: "https://api.test/before?signed", mimeType: "image/webp", size: 100,
+              uploadedAt: "2026-08-18T00:00:00.000Z",
+            },
+          },
+        }],
+      },
+      isLoading: false,
+    });
+
+    render(<CalibrationDetailPage />);
+
+    expect(screen.getByRole("heading", { name: "Dokumentasi Kalibrasi DO" })).toBeInTheDocument();
+    expect(screen.getByText("After Calibration: tidak didokumentasikan")).toBeInTheDocument();
+    expect(screen.queryByText("Pilih dari galeri")).not.toBeInTheDocument();
+  });
 });

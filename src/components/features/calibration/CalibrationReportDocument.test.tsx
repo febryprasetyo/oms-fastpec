@@ -70,12 +70,24 @@ const mockDetail: CalibrationDetail = {
       ],
       status: "PASS",
       documentation: {
+        before: {
+          id: "doc-1",
+          calibrationDetailId: 1,
+          parameterId: "param-ph",
+          photoType: "before",
+          previewUrl: "https://example.com/photos/ph-before.jpg",
+          mimeType: "image/jpeg",
+          size: 12000,
+          uploadedAt: "2026-08-10T00:00:00.000Z",
+        },
         after: {
+          id: "doc-2",
+          calibrationDetailId: 1,
+          parameterId: "param-ph",
           photoType: "after",
           previewUrl: "https://example.com/photos/ph-after.jpg",
-          originalName: "ph-after.jpg",
           mimeType: "image/jpeg",
-          sizeBytes: 12000,
+          size: 13000,
           uploadedAt: "2026-08-10T00:00:00.000Z",
         },
       },
@@ -168,7 +180,8 @@ describe("CalibrationReportDocument", () => {
     expect(screen.getByRole("heading", { name: "LAMPIRAN DOKUMENTASI" })).toBeInTheDocument();
     expect(screen.getByText("Dokumentasi Parameter: pH")).toBeInTheDocument();
     expect(screen.getByText("Dokumentasi Parameter: DO")).toBeInTheDocument();
-    expect(screen.getAllByText("Tidak ada foto sebelum kalibrasi")).toHaveLength(2);
+    expect(screen.getAllByText("Tidak ada foto sebelum kalibrasi")).toHaveLength(1);
+    expect(screen.getAllByText("Tidak ada foto sesudah kalibrasi")).toHaveLength(1);
   });
 
   it("renders page footers with total page numbers", () => {

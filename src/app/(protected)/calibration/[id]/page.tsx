@@ -55,6 +55,8 @@ export default function CalibrationDetailPage() {
           )}
         </div>
       </div>
+
+      <CalibrationDocumentationReadOnly parameters={detail.parameters} />
     </div>
   );
 }

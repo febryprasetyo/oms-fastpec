@@ -428,3 +428,82 @@ Tabel preview dan PDF kini juga menampilkan kolom **ORP (mV)**, **NO2-N / Nitrit
 | Autosave pada non-draft | 400 | `Only drafts can be updated` |
 | Submit tanpa nilai result | 400 | `Calibration result for CRM standard '<nilai-standard>' is missing.` |
 | Submit tanpa parameter | 400 | `Cannot submit calibration with no parameters selected.` |
+
+## 9. Dokumentasi foto per parameter (backend requirement)
+
+> Status 18 Agustus 2026: kontrak frontend sudah didefinisikan, tetapi endpoint dan metadata berikut belum tersedia pada backend `/root/apps/service-iot`. Integrasi end-to-end belum selesai.
+
+Setiap item `details[]` pada `GET /calibrations/{id}` dan respons verifikasi harus memiliki array `documentation`. URL preview dibuat sepenuhnya oleh backend dan tidak dibangun frontend.
+
+```json
+{
+  "id": 54,
+  "parameter_id": 7,
+  "documentation": [
+    {
+      "id": "doc-uuid",
+      "calibration_detail_id": 54,
+      "parameter_id": 7,
+      "photo_type": "before",
+      "preview_url": "https://api.example.com/api/calibration-media/doc-uuid?expires=...&signature=...",
+      "mime_type": "image/webp",
+      "file_size": 128000,
+      "width": 1200,
+      "height": 900,
+      "checksum": "sha256:...",
+      "uploaded_at": "2026-08-18T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+Frontend hanya memasukkan `preview_url` ke `<img src>`. Frontend tidak memanipulasi signature, tidak menambahkan bearer token ke query string, tidak membangun URL storage, dan tidak menyimpan URL di localStorage.
+
+### Upload atau replace
+
+`POST /calibrations/{calibrationId}/details/{detailId}/documentation/{photoType}`
+
+- Authorization: bearer token yang sama dengan endpoint calibration lain.
+- `photoType`: hanya `before` atau `after`.
+- Content type: `multipart/form-data`; boundary dibuat otomatis oleh browser.
+- Field file: `file` berisi hasil WebP frontend.
+- Semantik: upsert slot, sehingga endpoint yang sama dipakai untuk upload pertama dan replace.
+- Status calibration yang dapat dimutasi: `draft` dan `submitted`; `approved` ditolak.
+
+Respons sukses:
+
+```json
+{
+  "success": true,
+  "message": "Foto dokumentasi kalibrasi berhasil disimpan.",
+  "data": {
+    "id": "doc-uuid",
+    "calibration_detail_id": 54,
+    "parameter_id": 7,
+    "photo_type": "before",
+    "preview_url": "https://api.example.com/api/calibration-media/doc-uuid?expires=...&signature=...",
+    "mime_type": "image/webp",
+    "file_size": 128000,
+    "width": 1200,
+    "height": 900,
+    "checksum": "sha256:...",
+    "uploaded_at": "2026-08-18T10:00:00.000Z"
+  }
+}
+```
+
+### Delete
+
+`DELETE /calibrations/{calibrationId}/details/{detailId}/documentation/{photoType}` menggunakan bearer token. Respons boleh envelope sukses atau HTTP `204`; frontend tidak bergantung pada body.
+
+### Error minimum
+
+| Kondisi | HTTP | Perilaku frontend |
+|---|---:|---|
+| File signature/MIME/dimensi/ukuran tidak valid | 400 atau 422 | Pesan aman backend ditampilkan pada slot terkait. |
+| Tidak terautentikasi/tidak berwenang | 401 atau 403 | Interceptor dan pesan slot menangani kegagalan. |
+| Calibration/detail tidak ditemukan atau tidak berelasi | 404 | Upload berhenti; detail lain tidak berubah. |
+| Status Approved | 409 atau 422 | Aksi mutasi tidak ditampilkan frontend dan backend tetap menolak. |
+| Quota local disk tidak aman | 507 | Tampilkan bahwa kapasitas penyimpanan dokumentasi hampir penuh. |
+
+Saat submit, backend harus mengembalikan validasi final jika salah satu detail tidak memiliki `before`. `after` tidak pernah diwajibkan.

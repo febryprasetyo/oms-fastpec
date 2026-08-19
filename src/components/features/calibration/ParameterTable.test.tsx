@@ -1,9 +1,14 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { useForm } from "react-hook-form";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CalibrationFormValues } from "@/schemas/calibration.schema";
 import { ParameterTable } from "./ParameterTable";
+
+vi.mock("./CalibrationDocumentation", () => ({
+  CalibrationDocumentation: ({ parameterId, detailId, readOnly }: { parameterId: string; detailId: number; readOnly: boolean }) =>
+    <div data-testid={`documentation-${parameterId}`} data-detail-id={detailId} data-read-only={String(readOnly)} />,
+}));
 
 const values = {
   parameters: [{
@@ -16,10 +21,16 @@ const values = {
 
 const Harness = () => {
   const form = useForm<CalibrationFormValues>({ defaultValues: values });
-  return <ParameterTable form={form} />;
+  return <ParameterTable
+    form={form}
+    calibrationId="cal-1"
+    status="Draft"
+    ensurePersistedDetail={vi.fn().mockResolvedValue(11)}
+  />;
 };
 
 describe("ParameterTable", () => {
+  afterEach(cleanup);
   it("membatasi lebar card dan input kalibrasi di dalam area responsif", () => {
     render(<Harness />);
 
@@ -29,5 +40,12 @@ describe("ParameterTable", () => {
     expect(region).toHaveClass("min-w-0", "overflow-x-auto");
     expect(measurement).not.toHaveAttribute("size");
     expect(measurement).toHaveClass("min-w-0", "w-full");
+  });
+
+  it("attaches documentation and a focus anchor to each parameter card", () => {
+    render(<Harness />);
+
+    expect(screen.getByTestId("documentation-1")).toHaveAttribute("data-detail-id", "11");
+    expect(document.querySelector('[data-calibration-parameter-id="1"]')).toHaveAttribute("tabindex", "-1");
   });
 });
