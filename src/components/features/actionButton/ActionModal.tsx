@@ -21,9 +21,10 @@ type props = {
   action: "edit" | "add";
   type: "user" | "device" | "station" | "inventory" | "pengajuan" | "pengajuan-internet" | "pengajuan-listrik";
   data?: TableData;
+  defaultRole?: "usr" | "eng" | "adm";
 };
 
-export default function ActionModal({ action, data, type }: props) {
+export default function ActionModal({ action, data, type, defaultRole }: props) {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <Dialog open={isOpen}>
@@ -71,6 +72,7 @@ export default function ActionModal({ action, data, type }: props) {
             action={action}
             setIsOpen={setIsOpen}
             value={data as UserTableData}
+            defaultRole={defaultRole}
           />
         ) : type === "device" ? (
           <DeviceForm

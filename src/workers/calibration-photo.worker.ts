@@ -3,7 +3,7 @@ import {
   getCompressionAttempts,
   selectCompressedPhoto,
   validateCalibrationPhotoFile,
-} from "@/lib/calibration-photo";
+} from "@/lib/calibration-photo-common";
 
 interface WorkerCanvas {
   getContext(contextId: "2d"): { drawImage: (image: ImageBitmap, x: number, y: number, width: number, height: number) => void } | null;
