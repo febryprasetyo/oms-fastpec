@@ -20,6 +20,7 @@ import type {
 
 interface CalibrationReportDocumentProps {
   detail: CalibrationDetail;
+  hideIndicator?: boolean;
 }
 
 type WaterSampleColumnDef = {
@@ -172,6 +173,7 @@ function formatCoefficients(param: ParameterCalibrationDetail): React.ReactNode 
 
 export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps> = ({
   detail,
+  hideIndicator = false,
 }) => {
   const formattedDateRange = formatCalibrationDateRange(
     detail.calibrationStartDate,
@@ -203,24 +205,26 @@ export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps>
   return (
     <div className="space-y-4">
       {/* Action Header / Document Indicator */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-4 dark:border-blue-900/40 dark:bg-blue-950/20 print:hidden">
-        <div>
-          <h3 className="text-sm font-bold text-blue-950 dark:text-blue-200">
-            Pratinjau Dokumen Frontend (Native Render)
-          </h3>
-          <p className="text-xs text-blue-700 dark:text-blue-400">
-            Tampilan dokumen resmi kalibrasi yang dirender langsung di browser tanpa ketergantungan PDF engine.
-          </p>
+      {!hideIndicator && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-4 dark:border-blue-900/40 dark:bg-blue-950/20 print:hidden">
+          <div>
+            <h3 className="text-sm font-bold text-blue-950 dark:text-blue-200">
+              Pratinjau Dokumen Frontend (Native Render)
+            </h3>
+            <p className="text-xs text-blue-700 dark:text-blue-400">
+              Tampilan dokumen resmi kalibrasi yang dirender langsung di browser tanpa ketergantungan PDF engine.
+            </p>
+          </div>
+          <Button
+            onClick={handlePrint}
+            variant="outline"
+            className="gap-2 bg-white hover:bg-slate-50 text-slate-800 border-slate-300 shadow-sm"
+          >
+            <Printer className="h-4 w-4" />
+            <span>Cetak Dokumen</span>
+          </Button>
         </div>
-        <Button
-          onClick={handlePrint}
-          variant="outline"
-          className="gap-2 bg-white hover:bg-slate-50 text-slate-800 border-slate-300 shadow-sm"
-        >
-          <Printer className="h-4 w-4" />
-          <span>Cetak Dokumen</span>
-        </Button>
-      </div>
+      )}
 
       {/* Main Document Paper (A4 Style) */}
       <div
