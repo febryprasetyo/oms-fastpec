@@ -15,6 +15,10 @@ cd "$PROJECT_DIR" || exit
 echo "Installing dependencies..."
 # npm install
 
+# Clean previous build artifacts
+echo "Cleaning previous build artifacts..."
+rm -rf .next
+
 # Build the project
 echo "Building the project..."
 npm run build
