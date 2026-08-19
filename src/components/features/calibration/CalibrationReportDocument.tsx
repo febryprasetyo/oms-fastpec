@@ -489,7 +489,7 @@ export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps>
 
           {/* Page 1 Document Footer */}
           <div className="mt-8 pt-3 border-t border-slate-300 flex justify-between items-center text-[9.5px] text-slate-500 font-sans">
-            <span>PT CAHAYA MAS CEMERLANG — LAPORAN KALIBRASI RESMI</span>
+            <span>PT CAHAYA MAS CEMERLANG — LAPORAN KALIBRASI</span>
             <span>Halaman 1 dari {detail.parameters && detail.parameters.length > 0 ? "2" : "1"}</span>
           </div>
         </section>
@@ -604,7 +604,7 @@ export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps>
 
             {/* Page 2 Document Footer */}
             <div className="mt-8 pt-3 border-t border-slate-300 flex justify-between items-center text-[9.5px] text-slate-500 font-sans">
-              <span>PT CAHAYA MAS CEMERLANG — LAPORAN KALIBRASI RESMI</span>
+              <span>PT CAHAYA MAS CEMERLANG — LAPORAN KALIBRASI</span>
               <span>Halaman 2 dari 2</span>
             </div>
           </section>
