@@ -1,9 +1,10 @@
 interface UserTableData {
   id: number;
   username: string;
-  api_key: string;
-  secret_key: string;
+  api_key?: string;
+  secret_key?: string;
   nama_dinas: string;
+  role_id?: string;
 }
 
 interface UserResponse {
@@ -12,7 +13,7 @@ interface UserResponse {
     values?: UserTableData[];
     user?: UserTableData[];
     engineering?: UserTableData[];
-    total: string;
+    total: string | number;
   };
   statusCode?: number;
 }

@@ -38,3 +38,8 @@ next-env.d.ts
 
 /.agents/
 /.worktrees/
+!/docs/
+/docs/*
+!/docs/PRD_OMS_FASTPEC.md
+!/docs/TECH_SRS_OMS_FASTPEC.md
+/migrations/

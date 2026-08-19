@@ -4,7 +4,7 @@
 
 **Goal:** Menyamakan preview dan PDF unduhan serta mengubah seluruh teks modul kalibrasi menjadi bahasa Indonesia profesional dengan format tanggal dan desimal Indonesia.
 
-**Architecture:** Semua aturan presentasi ditempatkan pada fungsi murni di `src/lib/calibration-format.ts`. Komponen daftar, formulir, laporan, verifikasi, dan generator PDF menggunakan fungsi yang sama; nilai mentah dan kontrak JSON API tidak diubah. PDF yang diunduh tetap dilayani endpoint `GET /api/calibrations/{id}/print`, sehingga generator endpoint tersebut harus menerapkan kontrak format yang sama.
+**Architecture:** Semua aturan presentasi ditempatkan pada fungsi murni di `src/lib/calibration-format.ts`. Komponen daftar, formulir, laporan, verifikasi, dan generator PDF menggunakan fungsi yang sama; nilai mentah dan kontrak JSON API tidak diubah. PDF yang diunduh tetap dilayani endpoint `GET /api/calibrations/{id}/ print`, sehingga generator endpoint tersebut harus menerapkan kontrak format yang sama.
 
 **Tech Stack:** Next.js 14, React 18, TypeScript, Vitest, Testing Library, JSDOM, Puppeteer.
 

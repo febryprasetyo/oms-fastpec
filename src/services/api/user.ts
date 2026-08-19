@@ -21,8 +21,9 @@ type AddUserRequest = {
   username: string;
   password: string;
   nama_dinas: string;
-  api_key: string;
-  secret_key: string;
+  api_key?: string;
+  secret_key?: string;
+  role_id?: string;
 };
 
 type AddUserResponse = MutateDataResponse | undefined;
@@ -57,8 +58,9 @@ type EditUserRequest = {
   username: string;
   password: string;
   nama_dinas: string;
-  api_key: string;
-  secret_key: string;
+  api_key?: string;
+  secret_key?: string;
+  role_id?: string;
 };
 
 export const editUserList = async (

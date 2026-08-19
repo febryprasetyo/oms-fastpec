@@ -29,6 +29,8 @@ const nextConfig = {
     ],
   },
   allowedDevOrigins: [
+    "http://103.84.206.53:5170",
+    "http://localhost:5170",
     "http://103.84.206.53:5160",
     "http://localhost:5160",
     "https://oms.cahayamascemerlang.co.id",
