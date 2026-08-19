@@ -96,13 +96,12 @@ describe("salinan komponen kalibrasi", () => {
       screen.getByText("Pengukuran Sampel Air dan Uji Blangko"),
     ).toBeInTheDocument();
     expect(screen.getByText("Tambah Sampel")).toBeInTheDocument();
-    expect(screen.getByText("Draf")).toBeInTheDocument();
-    expect(screen.getByText("Amonia (NH3-N) Kalibrasi")).toBeInTheDocument();
-    expect(screen.getByText("Nitrat (NO3-N) Kalibrasi")).toBeInTheDocument();
-    expect(screen.getByText("Nitrit (NO2-N) Kalibrasi")).toBeInTheDocument();
-    expect(screen.getByText("Amonia (NH3-N) (mg/L)")).toBeInTheDocument();
-    expect(screen.getByText("Nitrat (NO3-N) (mg/L)")).toBeInTheDocument();
-    expect(screen.getByText("Nitrit (NO2-N) (mg/L)")).toBeInTheDocument();
+    expect(screen.getByText("Amonia Kalibrasi")).toBeInTheDocument();
+    expect(screen.getByText("Nitrat Kalibrasi")).toBeInTheDocument();
+    expect(screen.getByText("Nitrit Kalibrasi")).toBeInTheDocument();
+    expect(screen.getByText("Amonia (mg/L)")).toBeInTheDocument();
+    expect(screen.getByText("Nitrat (mg/L)")).toBeInTheDocument();
+    expect(screen.getByText("Nitrit (mg/L)")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Tambah Sampel" }));
 

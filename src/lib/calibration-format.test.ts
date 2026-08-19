@@ -72,12 +72,12 @@ describe("formatter kalibrasi Indonesia", () => {
   });
 
   it.each([
-    ["Amonia", "Amonia (NH3-N)"],
-    ["NH3-N", "Amonia (NH3-N)"],
-    ["Nitrat", "Nitrat (NO3-N)"],
-    ["NO3", "Nitrat (NO3-N)"],
-    ["Nitrit", "Nitrit (NO2-N)"],
-    ["NO2-N", "Nitrit (NO2-N)"],
+    ["Amonia", "Amonia"],
+    ["NH3-N", "Amonia"],
+    ["Nitrat", "Nitrat"],
+    ["NO3", "Nitrat"],
+    ["Nitrit", "Nitrit"],
+    ["NO2-N", "Nitrit"],
     ["DO", "DO"],
   ])("menampilkan nama parameter %s sebagai %s", (value, expected) => {
     expect(formatCalibrationParameterName(value)).toBe(expected);

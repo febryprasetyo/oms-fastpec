@@ -486,6 +486,12 @@ export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps>
               </div>
             </div>
           </div>
+
+          {/* Page 1 Document Footer */}
+          <div className="mt-8 pt-3 border-t border-slate-300 flex justify-between items-center text-[9.5px] text-slate-500 font-sans">
+            <span>PT CAHAYA MAS CEMERLANG — LAPORAN KALIBRASI RESMI</span>
+            <span>Halaman 1 dari {detail.parameters && detail.parameters.length > 0 ? "2" : "1"}</span>
+          </div>
         </section>
 
         {/* ================= HALAMAN 2: LAMPIRAN DOKUMENTASI FOTO ================= */}
@@ -536,7 +542,6 @@ export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps>
             <div className="space-y-4 my-3">
               {detail.parameters.map((param) => {
                 const paramTitle = formatCalibrationParameterName(param.parameterName);
-                const unitSuffix = param.parameterUnit ? ` (${param.parameterUnit})` : "";
                 const beforeDoc = param.documentation?.before;
                 const afterDoc = param.documentation?.after;
 
@@ -547,7 +552,6 @@ export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps>
                   >
                     <div className="font-bold text-[#0f2942] text-xs border-l-4 border-[#1e3a8a] pl-2 py-0.5 border-b border-slate-100 pb-1">
                       Dokumentasi Parameter: {paramTitle}
-                      {unitSuffix}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -596,6 +600,12 @@ export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps>
                   </div>
                 );
               })}
+            </div>
+
+            {/* Page 2 Document Footer */}
+            <div className="mt-8 pt-3 border-t border-slate-300 flex justify-between items-center text-[9.5px] text-slate-500 font-sans">
+              <span>PT CAHAYA MAS CEMERLANG — LAPORAN KALIBRASI RESMI</span>
+              <span>Halaman 2 dari 2</span>
             </div>
           </section>
         )}

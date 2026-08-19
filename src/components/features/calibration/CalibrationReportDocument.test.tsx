@@ -167,8 +167,15 @@ describe("CalibrationReportDocument", () => {
     render(<CalibrationReportDocument detail={mockDetail} />);
 
     expect(screen.getByRole("heading", { name: "LAMPIRAN DOKUMENTASI" })).toBeInTheDocument();
-    expect(screen.getByText(/Dokumentasi Parameter: pH/)).toBeInTheDocument();
-    expect(screen.getByText(/Dokumentasi Parameter: DO/)).toBeInTheDocument();
-    expect(screen.getByText("Tidak ada foto sebelum kalibrasi")).toBeInTheDocument();
+    expect(screen.getByText("Dokumentasi Parameter: pH")).toBeInTheDocument();
+    expect(screen.getByText("Dokumentasi Parameter: DO")).toBeInTheDocument();
+    expect(screen.getAllByText("Tidak ada foto sebelum kalibrasi")).toHaveLength(2);
+  });
+
+  it("renders page footers with total page numbers", () => {
+    render(<CalibrationReportDocument detail={mockDetail} />);
+
+    expect(screen.getByText("Halaman 1 dari 2")).toBeInTheDocument();
+    expect(screen.getByText("Halaman 2 dari 2")).toBeInTheDocument();
   });
 });

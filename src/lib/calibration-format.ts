@@ -142,23 +142,26 @@ export const formatCalibrationPlace = (value: string): string =>
     .join(" ");
 
 const CALIBRATION_PARAMETER_LABELS: Record<string, string> = {
-  AMONIA: "Amonia (NH3-N)",
-  "AMONIA (NH3-N)": "Amonia (NH3-N)",
-  NH3: "Amonia (NH3-N)",
-  "NH3-N": "Amonia (NH3-N)",
-  NITRAT: "Nitrat (NO3-N)",
-  "NITRAT (NO3-N)": "Nitrat (NO3-N)",
-  NO3: "Nitrat (NO3-N)",
-  "NO3-N": "Nitrat (NO3-N)",
-  NITRIT: "Nitrit (NO2-N)",
-  "NITRIT (NO2-N)": "Nitrit (NO2-N)",
-  NO2: "Nitrit (NO2-N)",
-  "NO2-N": "Nitrit (NO2-N)",
+  AMONIA: "Amonia",
+  "AMONIA (NH3-N)": "Amonia",
+  NH3: "Amonia",
+  "NH3-N": "Amonia",
+  NITRAT: "Nitrat",
+  "NITRAT (NO3-N)": "Nitrat",
+  NO3: "Nitrat",
+  "NO3-N": "Nitrat",
+  NITRIT: "Nitrit",
+  "NITRIT (NO2-N)": "Nitrit",
+  NO2: "Nitrit",
+  "NO2-N": "Nitrit",
 };
 
 export const formatCalibrationParameterName = (value: string): string => {
   const trimmedValue = value.trim();
-  return CALIBRATION_PARAMETER_LABELS[trimmedValue.toUpperCase()] ?? trimmedValue;
+  if (CALIBRATION_PARAMETER_LABELS[trimmedValue.toUpperCase()]) {
+    return CALIBRATION_PARAMETER_LABELS[trimmedValue.toUpperCase()];
+  }
+  return trimmedValue.replace(/\s*\([A-Za-z0-9\-\+]+\)/g, "").trim() || trimmedValue;
 };
 
 const CALIBRATION_STATUS_LABELS: Record<string, string> = {
