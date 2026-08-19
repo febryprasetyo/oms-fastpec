@@ -36,10 +36,12 @@ describe("ReportPreview", () => {
   const pdf = new Blob(["%PDF-1.7"], { type: "application/pdf" });
   let downloadedFilename: string | undefined;
   let downloadedHref: string | undefined;
+  let printSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     downloadedFilename = undefined;
     downloadedHref = undefined;
+    printSpy = vi.fn();
     vi.spyOn(calibrationService, "downloadPdf").mockResolvedValue(pdf);
     Object.defineProperty(URL, "createObjectURL", {
       configurable: true,
@@ -53,7 +55,9 @@ describe("ReportPreview", () => {
       downloadedFilename = this.download;
       downloadedHref = this.href;
     });
-    vi.spyOn(window, "print").mockImplementation(() => undefined);
+    vi.spyOn(HTMLIFrameElement.prototype, "contentWindow", "get").mockReturnValue({
+      print: printSpy,
+    } as any);
   });
 
   afterEach(() => {
@@ -69,12 +73,14 @@ describe("ReportPreview", () => {
     expect(screen.getByText("2. Pengukuran Sampel Air dan Uji Blangko")).toBeInTheDocument();
   });
 
-  it("mencetak dokumen kalibrasi via window.print", async () => {
+  it("mencetak dokumen kalibrasi backend via hidden iframe print", async () => {
     render(<ReportPreview detail={calibrationDetail} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Cetak" }));
 
-    expect(window.print).toHaveBeenCalledOnce();
+    await waitFor(() => {
+      expect(printSpy).toHaveBeenCalled();
+    });
   });
 
   it("mengunduh artefak PDF dari backend saat tombol Unduh PDF diklik", async () => {
