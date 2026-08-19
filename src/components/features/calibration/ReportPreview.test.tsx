@@ -9,10 +9,28 @@ vi.mock("@/hook/useCalibration", () => ({
   useCalibrationAuth: () => ({ token: "test-token" }),
 }));
 
-const calibrationDetail = {
+const calibrationDetail: CalibrationDetail = {
   id: "calibration-1",
   reportNo: "KAL/2026/001",
-} as CalibrationDetail;
+  stationId: "station-1",
+  stationName: "Stasiun Bahoea Reko-Reko",
+  address: "Kabupaten Morowali Utara",
+  stationCity: "Kabupaten Morowali Utara",
+  latitude: -2.1234,
+  longitude: 121.5678,
+  calibrationStartDate: "2026-08-10",
+  calibrationEndDate: "2026-08-12",
+  calibrationDate: "2026-08-10 – 2026-08-12",
+  contactPerson: "Dinas LH",
+  phone: "08123456789",
+  officer: "Budi Santoso",
+  status: "Submitted",
+  createdAt: "2026-08-10T00:00:00.000Z",
+  updatedAt: "2026-08-12T00:00:00.000Z",
+  parameters: [],
+  waterSamples: [],
+  notes: "Catatan pengujian",
+};
 
 describe("ReportPreview", () => {
   const pdf = new Blob(["%PDF-1.7"], { type: "application/pdf" });
@@ -35,6 +53,7 @@ describe("ReportPreview", () => {
       downloadedFilename = this.download;
       downloadedHref = this.href;
     });
+    vi.spyOn(window, "print").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -42,43 +61,30 @@ describe("ReportPreview", () => {
     vi.restoreAllMocks();
   });
 
-  it("menampilkan PDF backend yang sama sebagai pratinjau", async () => {
+  it("menampilkan dokumen kalibrasi secara native di frontend", async () => {
     render(<ReportPreview detail={calibrationDetail} />);
 
-    expect(screen.getByText("Memuat pratinjau laporan kalibrasi...")).toBeInTheDocument();
-    const iframe = await screen.findByTitle("Pratinjau laporan kalibrasi");
-
-    expect(iframe).toHaveAttribute("src", "blob:shared-calibration-report");
+    expect(screen.getAllByText("PT Cahaya Mas Cemerlang")).toHaveLength(2);
+    expect(screen.getByText("1. Kalibrasi Parameter Sensor")).toBeInTheDocument();
+    expect(screen.getByText("2. Pengukuran Sampel Air dan Uji Blangko")).toBeInTheDocument();
   });
 
-  it("mencetak PDF laporan di dalam iframe", async () => {
+  it("mencetak dokumen kalibrasi via window.print", async () => {
     render(<ReportPreview detail={calibrationDetail} />);
-    const iframe = await screen.findByTitle("Pratinjau laporan kalibrasi");
-    const print = vi.spyOn((iframe as HTMLIFrameElement).contentWindow!, "print").mockImplementation(() => undefined);
 
     fireEvent.click(screen.getByRole("button", { name: "Cetak" }));
 
-    expect(print).toHaveBeenCalledOnce();
+    expect(window.print).toHaveBeenCalledOnce();
   });
 
-  it("mengunduh artefak PDF yang sedang ditampilkan", async () => {
+  it("mengunduh artefak PDF dari backend saat tombol Unduh PDF diklik", async () => {
     render(<ReportPreview detail={calibrationDetail} />);
-    const iframe = await screen.findByTitle("Pratinjau laporan kalibrasi");
 
     fireEvent.click(screen.getByRole("button", { name: "Unduh PDF" }));
 
     await waitFor(() => {
       expect(downloadedFilename).toBe("Laporan_Kalibrasi_KAL_2026_001.pdf");
-      expect(downloadedHref).toBe(iframe.getAttribute("src"));
+      expect(downloadedHref).toBe("blob:shared-calibration-report");
     });
-  });
-
-  it("menampilkan pesan saat PDF laporan gagal dimuat", async () => {
-    vi.mocked(calibrationService.downloadPdf).mockRejectedValue(new Error("Jaringan gagal"));
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
-
-    render(<ReportPreview detail={calibrationDetail} />);
-
-    expect(await screen.findByText("Pratinjau laporan kalibrasi gagal dimuat.")).toBeInTheDocument();
   });
 });

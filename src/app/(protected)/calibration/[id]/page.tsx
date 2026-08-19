@@ -38,7 +38,7 @@ export default function CalibrationDetailPage() {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row gap-6 items-start">
-        {/* Report Preview */}
+        {/* Report Preview with Native Frontend Document Render */}
         <div className="flex-1 w-full">
           <ReportPreview detail={detail} />
         </div>
@@ -54,11 +54,6 @@ export default function CalibrationDetailPage() {
             </Button>
           )}
         </div>
-      </div>
-
-      {/* Native Frontend Calibration Document Render */}
-      <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
-        <CalibrationReportDocument detail={detail} />
       </div>
     </div>
   );
