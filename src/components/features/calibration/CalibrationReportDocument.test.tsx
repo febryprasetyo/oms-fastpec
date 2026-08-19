@@ -1,39 +1,40 @@
 import React from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { CalibrationReportDocument } from "./CalibrationReportDocument";
 import type { CalibrationDetail } from "@/types/calibration";
+import { CalibrationReportDocument } from "./CalibrationReportDocument";
 
 const mockDetail: CalibrationDetail = {
-  id: "cal-100",
+  id: "cal-uuid-1",
   reportNo: "KAL/2026/08/001",
-  stationId: "st-1",
+  stationId: "stat-1",
   stationName: "Stasiun Bahoea Reko-Reko",
-  address: "Kabupaten Morowali Utara",
   stationCity: "Kabupaten Morowali Utara",
+  address: "Kabupaten Morowali Utara",
+  coordinate: "LAT -2.1234 | LONG 121.5678",
   latitude: -2.1234,
   longitude: 121.5678,
+  contactPerson: "Budi Santoso",
+  phone: "081234567890",
+  officer: "Budi Santoso",
+  calibrationDate: "2026-08-10 – 2026-08-12",
   calibrationStartDate: "2026-08-10",
   calibrationEndDate: "2026-08-12",
-  calibrationDate: "2026-08-10 – 2026-08-12",
-  contactPerson: "Dinas LH",
-  phone: "08123456789",
-  officer: "Budi Santoso",
-  status: "Submitted",
+  notes: "<p>Kalibrasi sensor berhasil dilakukan dengan akurat.</p>",
+  qrCodeDataUrl: "data:image/png;base64,mockqrdata",
+  verificationUrl: "https://example.com/verify/cal-uuid-1",
+  status: "Approved",
   createdAt: "2026-08-10T00:00:00.000Z",
   updatedAt: "2026-08-12T00:00:00.000Z",
-  qrCodeDataUrl: "data:image/png;base64,mockqrcode",
-  verificationUrl: "https://oms.cahayamascemerlang.co.id/verify/uuid-123",
-  notes: "<p>Kalibrasi sensor berhasil dilakukan dengan akurat.</p>",
   parameters: [
     {
       id: 1,
       parameterId: "param-ph",
       parameterName: "pH",
-      parameterUnit: "",
+      parameterUnit: "Satuan",
       spec: "",
       crmReferenceValue: 7.0,
-      crmReadingValue: 7.02,
+      crmReadingValue: 7.01,
       remark: null,
       results: [
         {
@@ -42,7 +43,7 @@ const mockDetail: CalibrationDetail = {
           standardValue: 4.01,
           minAcceptable: null,
           maxAcceptable: null,
-          value: "4.00",
+          value: "4.02",
         },
         {
           id: 102,
@@ -52,31 +53,29 @@ const mockDetail: CalibrationDetail = {
           maxAcceptable: null,
           value: "7.01",
         },
+        {
+          id: 103,
+          standardName: "Buffer 10.01",
+          standardValue: 10.01,
+          minAcceptable: null,
+          maxAcceptable: null,
+          value: "10.03",
+        },
       ],
       coefficients: [
-        { key: "k1", value: -58.78 },
-        { key: "k2", value: -58.78 },
+        { key: "k1", value: 0.998 },
+        { key: "k2", value: 0.02 },
+        { key: "k3", value: 1.001 },
+        { key: "k4", value: -0.01 },
       ],
       status: "PASS",
       documentation: {
-        before: {
-          id: "doc-1",
-          calibrationDetailId: 1,
-          parameterId: "param-ph",
-          photoType: "before",
-          previewUrl: "https://api.test/photos/ph_before.webp",
-          mimeType: "image/webp",
-          size: 12000,
-          uploadedAt: "2026-08-10T00:00:00.000Z",
-        },
         after: {
-          id: "doc-2",
-          calibrationDetailId: 1,
-          parameterId: "param-ph",
           photoType: "after",
-          previewUrl: "https://api.test/photos/ph_after.webp",
-          mimeType: "image/webp",
-          size: 13000,
+          previewUrl: "https://example.com/photos/ph-after.jpg",
+          originalName: "ph-after.jpg",
+          mimeType: "image/jpeg",
+          sizeBytes: 12000,
           uploadedAt: "2026-08-10T00:00:00.000Z",
         },
       },
@@ -167,8 +166,15 @@ describe("CalibrationReportDocument", () => {
     render(<CalibrationReportDocument detail={mockDetail} />);
 
     expect(screen.getByRole("heading", { name: "LAMPIRAN DOKUMENTASI" })).toBeInTheDocument();
-    expect(screen.getByText(/Dokumentasi Parameter: pH/)).toBeInTheDocument();
-    expect(screen.getByText(/Dokumentasi Parameter: DO/)).toBeInTheDocument();
-    expect(screen.getByText("Tidak ada foto sebelum kalibrasi")).toBeInTheDocument();
+    expect(screen.getByText("Dokumentasi Parameter: pH")).toBeInTheDocument();
+    expect(screen.getByText("Dokumentasi Parameter: DO")).toBeInTheDocument();
+    expect(screen.getAllByText("Tidak ada foto sebelum kalibrasi")).toHaveLength(2);
+  });
+
+  it("renders page footers with total page numbers", () => {
+    render(<CalibrationReportDocument detail={mockDetail} />);
+
+    expect(screen.getByText("Halaman 1 dari 2")).toBeInTheDocument();
+    expect(screen.getByText("Halaman 2 dari 2")).toBeInTheDocument();
   });
 });

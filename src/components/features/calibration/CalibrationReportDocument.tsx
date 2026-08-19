@@ -20,6 +20,7 @@ import type {
 
 interface CalibrationReportDocumentProps {
   detail: CalibrationDetail;
+  hideIndicator?: boolean;
 }
 
 type WaterSampleColumnDef = {
@@ -172,6 +173,7 @@ function formatCoefficients(param: ParameterCalibrationDetail): React.ReactNode 
 
 export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps> = ({
   detail,
+  hideIndicator = false,
 }) => {
   const formattedDateRange = formatCalibrationDateRange(
     detail.calibrationStartDate,
@@ -203,24 +205,26 @@ export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps>
   return (
     <div className="space-y-4">
       {/* Action Header / Document Indicator */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-4 dark:border-blue-900/40 dark:bg-blue-950/20 print:hidden">
-        <div>
-          <h3 className="text-sm font-bold text-blue-950 dark:text-blue-200">
-            Pratinjau Dokumen Frontend (Native Render)
-          </h3>
-          <p className="text-xs text-blue-700 dark:text-blue-400">
-            Tampilan dokumen resmi kalibrasi yang dirender langsung di browser tanpa ketergantungan PDF engine.
-          </p>
+      {!hideIndicator && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-4 dark:border-blue-900/40 dark:bg-blue-950/20 print:hidden">
+          <div>
+            <h3 className="text-sm font-bold text-blue-950 dark:text-blue-200">
+              Pratinjau Dokumen Frontend (Native Render)
+            </h3>
+            <p className="text-xs text-blue-700 dark:text-blue-400">
+              Tampilan dokumen resmi kalibrasi yang dirender langsung di browser tanpa ketergantungan PDF engine.
+            </p>
+          </div>
+          <Button
+            onClick={handlePrint}
+            variant="outline"
+            className="gap-2 bg-white hover:bg-slate-50 text-slate-800 border-slate-300 shadow-sm"
+          >
+            <Printer className="h-4 w-4" />
+            <span>Cetak Dokumen</span>
+          </Button>
         </div>
-        <Button
-          onClick={handlePrint}
-          variant="outline"
-          className="gap-2 bg-white hover:bg-slate-50 text-slate-800 border-slate-300 shadow-sm"
-        >
-          <Printer className="h-4 w-4" />
-          <span>Cetak Dokumen</span>
-        </Button>
-      </div>
+      )}
 
       {/* Main Document Paper (A4 Style) */}
       <div
@@ -353,20 +357,20 @@ export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps>
                       <td className="border border-slate-300 px-2.5 py-1.5 font-bold align-middle">
                         {paramTitle}
                       </td>
-                      <td className="border border-slate-300 px-2.5 py-1.5 text-center align-middle">
+                      <td className="border border-slate-300 px-2 py-1.5 text-center align-middle">
                         {standardLines.length > 0
                           ? standardLines.map((line, i) => <div key={i}>{line}</div>)
                           : "-"}
                       </td>
-                      <td className="border border-slate-300 px-2.5 py-1.5 text-center align-middle">
+                      <td className="border border-slate-300 px-2 py-1.5 text-center align-middle">
                         {readingLines.length > 0
                           ? readingLines.map((line, i) => <div key={i}>{line}</div>)
                           : "-"}
                       </td>
-                      <td className="border border-slate-300 px-2.5 py-1.5 text-center align-middle">
+                      <td className="border border-slate-300 px-2 py-1.5 text-center align-middle">
                         {formatCoefficients(param)}
                       </td>
-                      <td className="border border-slate-300 px-2.5 py-1.5 text-center align-middle">
+                      <td className="border border-slate-300 px-2 py-1.5 text-center align-middle">
                         {param.status === "PASS" ? (
                           <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold text-green-700 bg-green-50 border border-green-200">
                             Memenuhi
@@ -482,6 +486,12 @@ export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps>
               </div>
             </div>
           </div>
+
+          {/* Page 1 Document Footer */}
+          <div className="mt-8 pt-3 border-t border-slate-300 flex justify-between items-center text-[9.5px] text-slate-500 font-sans">
+            <span>PT CAHAYA MAS CEMERLANG — LAPORAN KALIBRASI RESMI</span>
+            <span>Halaman 1 dari {detail.parameters && detail.parameters.length > 0 ? "2" : "1"}</span>
+          </div>
         </section>
 
         {/* ================= HALAMAN 2: LAMPIRAN DOKUMENTASI FOTO ================= */}
@@ -532,7 +542,6 @@ export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps>
             <div className="space-y-4 my-3">
               {detail.parameters.map((param) => {
                 const paramTitle = formatCalibrationParameterName(param.parameterName);
-                const unitSuffix = param.parameterUnit ? ` (${param.parameterUnit})` : "";
                 const beforeDoc = param.documentation?.before;
                 const afterDoc = param.documentation?.after;
 
@@ -543,7 +552,6 @@ export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps>
                   >
                     <div className="font-bold text-[#0f2942] text-xs border-l-4 border-[#1e3a8a] pl-2 py-0.5 border-b border-slate-100 pb-1">
                       Dokumentasi Parameter: {paramTitle}
-                      {unitSuffix}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -592,6 +600,12 @@ export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps>
                   </div>
                 );
               })}
+            </div>
+
+            {/* Page 2 Document Footer */}
+            <div className="mt-8 pt-3 border-t border-slate-300 flex justify-between items-center text-[9.5px] text-slate-500 font-sans">
+              <span>PT CAHAYA MAS CEMERLANG — LAPORAN KALIBRASI RESMI</span>
+              <span>Halaman 2 dari 2</span>
             </div>
           </section>
         )}

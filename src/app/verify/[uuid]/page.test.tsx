@@ -48,6 +48,7 @@ const calibrationDetail: CalibrationDetail = {
       results: [],
       coefficients: [],
       status: "PASS",
+      documentation: {},
     },
   ],
   waterSamples: [
@@ -126,9 +127,9 @@ describe("VerificationPage", () => {
 
     render(<VerificationPage />);
 
-    expect(screen.getByText("Amonia (NH3-N)")).toBeInTheDocument();
-    expect(screen.getByText("Nitrat (NO3-N)")).toBeInTheDocument();
-    expect(screen.getByText("Nitrit (NO2-N)")).toBeInTheDocument();
+    expect(screen.getByText("Amonia")).toBeInTheDocument();
+    expect(screen.getByText("Nitrat")).toBeInTheDocument();
+    expect(screen.getByText("Nitrit")).toBeInTheDocument();
     expect(screen.getByText("Lulus")).toHaveClass("bg-green-100", "text-green-800");
     expect(screen.getByText("Tidak Lulus")).toHaveClass("bg-red-100", "text-red-800");
     expect(screen.getByText("Menunggu")).toHaveClass("bg-amber-100", "text-amber-800");

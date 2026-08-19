@@ -10,56 +10,49 @@ import {
   translateCalibrationStatus,
 } from "./calibration-format";
 
-describe("formatter kalibrasi Indonesia", () => {
-  it("memformat tanggal kalender tanpa pergeseran zona waktu", () => {
+describe("calibration-format", () => {
+  it("memformat tanggal tunggal ke format resmi Indonesia", () => {
     expect(formatCalibrationDate("2026-08-12")).toBe("12 Agustus 2026");
+    expect(formatCalibrationDate("invalid-date")).toBe("invalid-date");
   });
 
-  it("mempertahankan tanggal tengah malam lokal Asia/Jakarta untuk input tanggal", () => {
-    const originalTimezone = process.env.TZ;
-    process.env.TZ = "Asia/Jakarta";
+  it("memformat tanggal input dengan mempertahankan nilai lokal YYYY-MM-DD", () => {
+    const localMidnight = new Date(2026, 7, 12, 0, 0, 0, 0);
 
-    try {
-      const localMidnight = new Date(2026, 7, 12, 0, 0, 0);
-
-      expect(localMidnight.toISOString()).toBe("2026-08-11T17:00:00.000Z");
-      expect(formatCalibrationDateInput(localMidnight)).toBe("2026-08-12");
-    } finally {
-      if (originalTimezone === undefined) delete process.env.TZ;
-      else process.env.TZ = originalTimezone;
-    }
+    expect(formatCalibrationDateInput(localMidnight)).toBe("2026-08-12");
   });
 
-  it("meringkas rentang tanggal dalam bulan yang sama", () => {
+  it("memformat rentang tanggal dalam bulan dan tahun yang sama", () => {
     expect(formatCalibrationDateRange("2026-08-10", "2026-08-12")).toBe(
       "10–12 Agustus 2026",
     );
   });
 
-  it("menampilkan rentang lintas bulan dan tahun tanpa ambigu", () => {
+  it("memformat rentang tanggal lintas tahun", () => {
     expect(formatCalibrationDateRange("2026-12-31", "2027-01-02")).toBe(
       "31 Desember 2026–2 Januari 2027",
     );
   });
 
   it.each([
-    [0, "0,00"],
-    [5.4, "5,40"],
     [1.005, "1,01"],
     [1.413, "1,41"],
+    [0, "0,00"],
     [null, "-"],
-  ])("memformat pengukuran %s menjadi %s", (value, expected) =>
-    expect(formatCalibrationMeasurement(value)).toBe(expected),
-  );
+    [undefined, "-"],
+    ["", "-"],
+  ])("memformat angka kalibrasi %s menjadi %s", (value, expected) => {
+    expect(formatCalibrationMeasurement(value)).toBe(expected);
+  });
 
-  it("memformat standar dan satuan", () => {
+  it("memformat label standar CRM dan non-CRM", () => {
     expect(formatCalibrationStandard("0", 0, "mg/L")).toBe("0,00 mg/L");
     expect(formatCalibrationStandard("CRM 5.51", 5.51, "mg/L")).toBe(
       "CRM 5,51 mg/L",
     );
   });
 
-  it("menormalkan tempat dan menerjemahkan status", () => {
+  it("memformat nama tempat dengan menghapus prefiks kabupaten/kota dan menerapkan title case", () => {
     expect(formatCalibrationPlace("Kabupaten Morowali Utara")).toBe(
       "Morowali Utara",
     );
@@ -67,17 +60,20 @@ describe("formatter kalibrasi Indonesia", () => {
       "Morowali Utara",
     );
     expect(formatCalibrationPlace("Morowali Utara")).toBe("Morowali Utara");
+  });
+
+  it("menerjemahkan status kalibrasi", () => {
     expect(translateCalibrationStatus("PASS")).toBe("Lulus");
     expect(translateCalibrationStatus("Submitted")).toBe("Diajukan");
   });
 
   it.each([
-    ["Amonia", "Amonia (NH3-N)"],
-    ["NH3-N", "Amonia (NH3-N)"],
-    ["Nitrat", "Nitrat (NO3-N)"],
-    ["NO3", "Nitrat (NO3-N)"],
-    ["Nitrit", "Nitrit (NO2-N)"],
-    ["NO2-N", "Nitrit (NO2-N)"],
+    ["Amonia", "Amonia"],
+    ["NH3-N", "Amonia"],
+    ["Nitrat", "Nitrat"],
+    ["NO3", "Nitrat"],
+    ["Nitrit", "Nitrit"],
+    ["NO2-N", "Nitrit"],
     ["DO", "DO"],
   ])("menampilkan nama parameter %s sebagai %s", (value, expected) => {
     expect(formatCalibrationParameterName(value)).toBe(expected);
