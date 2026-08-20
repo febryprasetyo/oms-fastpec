@@ -2,7 +2,7 @@
 
 This is the frontend application.
 
-Related backend workspace root: ../aplikasi-backend
+Related backend workspace root: ../service-iot
 
 For full-stack tasks:
 - Ask the main agent to delegate backend work to a backend subagent.

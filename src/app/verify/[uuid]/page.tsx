@@ -15,9 +15,9 @@ import {
 import { sanitizeCalibrationNotes } from "@/lib/calibration-notes";
 
 const parameterStatusStyle = (status: CalibrationDetailStatus) => {
-  if (status === "PASS") return "border-green-200 bg-green-100 text-green-800";
-  if (status === "FAILED") return "border-red-200 bg-red-100 text-red-800";
-  return "border-amber-200 bg-amber-100 text-amber-800";
+  if (status === "PASS") return "text-green-700 font-bold";
+  if (status === "FAILED") return "text-red-700 font-bold";
+  return "text-slate-500 font-medium";
 };
 
 type CalibrationDetailStatus = "PASS" | "FAILED" | null;
@@ -115,7 +115,7 @@ export default function VerificationPage() {
                     <TableRow key={idx}>
                       <TableCell className="font-semibold text-xs text-slate-800">{formatCalibrationParameterName(p.parameterName)}</TableCell>
                       <TableCell className="text-center">
-                        <span className={`rounded border px-2 py-0.5 text-[10px] font-bold uppercase ${parameterStatusStyle(p.status)}`}>
+                        <span className={`text-xs uppercase ${parameterStatusStyle(p.status)}`}>
                           {translateCalibrationStatus(p.status ?? "PENDING")}
                         </span>
                       </TableCell>

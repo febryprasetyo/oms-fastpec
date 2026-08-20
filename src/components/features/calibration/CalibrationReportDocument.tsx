@@ -372,15 +372,15 @@ export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps>
                       </td>
                       <td className="border border-slate-300 px-2 py-1.5 text-center align-middle">
                         {param.status === "PASS" ? (
-                          <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold text-green-700 bg-green-50 border border-green-200">
+                          <span className="font-bold text-green-700">
                             Memenuhi
                           </span>
                         ) : param.status === "FAILED" ? (
-                          <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold text-red-700 bg-red-50 border border-red-200">
+                          <span className="font-bold text-red-700">
                             Tidak Memenuhi
                           </span>
                         ) : (
-                          <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200">
+                          <span className="font-medium text-slate-500">
                             Tidak diuji
                           </span>
                         )}

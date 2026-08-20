@@ -34,19 +34,28 @@ export default function CalibrationDetailPage() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      <div className="flex flex-col md:flex-row gap-6 items-start">
+    <div className="w-full min-w-0 max-w-6xl mx-auto space-y-6">
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Report Preview with Native Frontend Document Render */}
-        <div className="flex-1 w-full">
+        <div className="flex-1 w-full min-w-0 overflow-x-auto">
           <ReportPreview detail={detail} />
         </div>
 
         {/* Info & Side Panel (Hidden on print) */}
-        <div className="w-full md:w-auto space-y-4 shrink-0 print:hidden">
-          {detail.qrCodeDataUrl && <QRCodeCard dataUrl={detail.qrCodeDataUrl} verificationUrl={detail.verificationUrl} reportNo={detail.reportNo} />}
+        <div className="w-full lg:w-72 space-y-4 shrink-0 print:hidden">
+          {detail.qrCodeDataUrl && (
+            <QRCodeCard
+              dataUrl={detail.qrCodeDataUrl}
+              verificationUrl={detail.verificationUrl}
+              reportNo={detail.reportNo}
+            />
+          )}
 
           {role === "adm" && detail.status === "Submitted" && (
-            <Button onClick={handleApprove} className="w-full gap-2 text-white bg-green-600 hover:bg-green-700">
+            <Button
+              onClick={handleApprove}
+              className="w-full gap-2 text-white bg-emerald-600 hover:bg-emerald-700 shadow-md font-semibold h-10"
+            >
               <CheckCircle className="h-4 w-4" />
               <span>Setujui Kalibrasi</span>
             </Button>

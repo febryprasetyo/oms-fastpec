@@ -129,10 +129,9 @@ describe("VerificationPage", () => {
 
     expect(screen.getByText("Amonia")).toBeInTheDocument();
     expect(screen.getByText("Nitrat")).toBeInTheDocument();
-    expect(screen.getByText("Nitrit")).toBeInTheDocument();
-    expect(screen.getByText("Lulus")).toHaveClass("bg-green-100", "text-green-800");
-    expect(screen.getByText("Tidak Lulus")).toHaveClass("bg-red-100", "text-red-800");
-    expect(screen.getByText("Menunggu")).toHaveClass("bg-amber-100", "text-amber-800");
+    expect(screen.getByText("Lulus")).toHaveClass("text-green-700", "font-bold");
+    expect(screen.getByText("Tidak Lulus")).toHaveClass("text-red-700", "font-bold");
+    expect(screen.getByText("Menunggu")).toHaveClass("text-slate-500", "font-medium");
   });
 
   it("menampilkan keadaan memverifikasi dan gagal dalam bahasa Indonesia", () => {

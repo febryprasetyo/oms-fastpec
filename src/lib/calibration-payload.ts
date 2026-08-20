@@ -1,11 +1,12 @@
 import { format } from "date-fns";
 import type { CalibrationFormValues } from "@/schemas/calibration.schema";
 import type { CreateCalibrationDraftPayload, UpdateCalibrationPayload } from "@/schemas/calibration-api.schema";
+import { parseDecimalNumber } from "@/schemas/calibration.schema";
 
-const nullableNumber = (value: number | string | undefined | null) => {
+const nullableNumber = (value: number | string | undefined | null): number | null => {
   if (value === undefined || value === null || value === "") return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
+  const parsed = parseDecimalNumber(value);
+  return parsed !== undefined && !Number.isNaN(parsed) && Number.isFinite(parsed) ? parsed : null;
 };
 
 export const toCreateCalibrationDraftPayload = (values: Pick<CalibrationFormValues, "stationId" | "calibrationStartDate" | "calibrationEndDate" | "parameters">): CreateCalibrationDraftPayload => ({
@@ -24,18 +25,38 @@ export const toUpdateCalibrationPayload = (values: CalibrationFormValues): Updat
     ...(parameter.id > 0 ? { id: parameter.id } : {}),
     parameter_id: Number(parameter.parameterId),
     ...(parameter.coeffType ? { coeff_type: parameter.coeffType } : {}),
-    ...(parameter.coeffType && parameter.coefficients.some(({ value }) => value !== undefined && Number.isFinite(Number(value)))
-      ? { coefficients: Object.fromEntries(parameter.coefficients.filter(({ value }) => value !== undefined && Number.isFinite(Number(value))).map(({ key, value }) => [key, Number(value)])) }
+    ...(parameter.coeffType && parameter.coefficients.some(({ value }) => nullableNumber(value) !== null)
+      ? {
+          coefficients: Object.fromEntries(
+            parameter.coefficients
+              .filter(({ value }) => nullableNumber(value) !== null)
+              .map(({ key, value }) => [key, nullableNumber(value)!])
+          ),
+        }
       : {}),
     crm_reference_value: nullableNumber(parameter.crmReferenceValue),
     crm_reading_value: nullableNumber(parameter.crmReadingValue),
-    standards: parameter.results.map((result) => ({ ...(result.id > 0 ? { id: result.id } : {}), crm_name: result.standardName, calibration_result: nullableNumber(result.value) })),
+    standards: parameter.results.map((result) => ({
+      ...(result.id > 0 ? { id: result.id } : {}),
+      crm_name: result.standardName,
+      calibration_result: nullableNumber(result.value),
+    })),
   })),
   waterSamples: values.waterSamples.map((sample) => ({
-    ...(sample.id ? { id: Number(sample.id) } : {}), sample_name: sample.sampleName.trim(),
-    suhu: nullableNumber(sample.temperature), do: nullableNumber(sample.doValue), tur: nullableNumber(sample.turbidity),
-    tds: nullableNumber(sample.tds), ph: nullableNumber(sample.ph), orp: nullableNumber(sample.orp),
-    tss: nullableNumber(sample.tss), bod: nullableNumber(sample.bod), cod: nullableNumber(sample.cod),
-    amonia: nullableNumber(sample.nh3), nitrat: nullableNumber(sample.no3), nitrit: nullableNumber(sample.no2), kedalaman: nullableNumber(sample.depth),
+    ...(sample.id ? { id: Number(sample.id) } : {}),
+    sample_name: sample.sampleName.trim(),
+    suhu: nullableNumber(sample.temperature),
+    do: nullableNumber(sample.doValue),
+    tur: nullableNumber(sample.turbidity),
+    tds: nullableNumber(sample.tds),
+    ph: nullableNumber(sample.ph),
+    orp: nullableNumber(sample.orp),
+    tss: nullableNumber(sample.tss),
+    bod: nullableNumber(sample.bod),
+    cod: nullableNumber(sample.cod),
+    amonia: nullableNumber(sample.nh3),
+    nitrat: nullableNumber(sample.no3),
+    nitrit: nullableNumber(sample.no2),
+    kedalaman: nullableNumber(sample.depth),
   })),
 });

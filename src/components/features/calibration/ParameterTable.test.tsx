@@ -35,7 +35,7 @@ describe("ParameterTable", () => {
     render(<Harness />);
 
     const region = screen.getByRole("region", { name: "Input parameter kalibrasi" });
-    const measurement = screen.getByPlaceholderText("Nilai terukur");
+    const measurement = screen.getByPlaceholderText(/Nilai terukur/i);
 
     expect(region).toHaveClass("min-w-0", "overflow-x-auto");
     expect(measurement).not.toHaveAttribute("size");

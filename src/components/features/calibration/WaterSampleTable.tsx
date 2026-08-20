@@ -6,10 +6,26 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { formatCalibrationParameterName } from "@/lib/calibration-format";
+import { warnAndNormalizeDecimalInput } from "@/lib/decimal-input";
 
-interface WaterSampleTableProps { form: UseFormReturn<CalibrationFormValues>; }
+interface WaterSampleTableProps {
+  form: UseFormReturn<CalibrationFormValues>;
+}
 
-type SampleField = "temperature" | "doValue" | "tds" | "turbidity" | "ph" | "cod" | "bod" | "tss" | "nh3" | "no3" | "no2" | "orp" | "depth";
+type SampleField =
+  | "temperature"
+  | "doValue"
+  | "tds"
+  | "turbidity"
+  | "ph"
+  | "cod"
+  | "bod"
+  | "tss"
+  | "nh3"
+  | "no3"
+  | "no2"
+  | "orp"
+  | "depth";
 type SampleColumn = { field: SampleField; label: string; parameterNames?: string[] };
 
 const sampleColumns: SampleColumn[] = [
@@ -29,7 +45,7 @@ const sampleColumns: SampleColumn[] = [
 ];
 
 export const WaterSampleTable: React.FC<WaterSampleTableProps> = ({ form }) => {
-  const { control, register } = form;
+  const { control } = form;
   const { fields, append, remove } = useFieldArray({ control, name: "waterSamples" });
   const parameters = useWatch({ control, name: "parameters" }) ?? [];
   const selectedNames = new Set(parameters.map((parameter) => parameter.parameterName.trim().toLowerCase()));
@@ -42,21 +58,98 @@ export const WaterSampleTable: React.FC<WaterSampleTableProps> = ({ form }) => {
     remove(index);
   };
 
-  return <div className="space-y-4">
-    <div className="flex items-center justify-between"><h3 className="text-sm font-semibold text-slate-800">Pengukuran Sampel Air dan Uji Blangko</h3><Button type="button" variant="outline" size="sm" onClick={addSample} className="h-8 gap-1.5"><Plus className="h-4 w-4" />Tambah Sampel</Button></div>
-    <p className="text-xs text-muted-foreground">Kolom pengukuran mengikuti parameter kalibrasi yang dipilih; suhu selalu ditampilkan.</p>
-    <div className="overflow-x-auto rounded-md border bg-white">
-      <Table style={{ minWidth: `${Math.max(560, 260 + visibleColumns.length * 120)}px` }}>
-        <TableHeader><TableRow className="bg-slate-50"><TableHead className="w-[190px] font-bold text-slate-700">Jenis Sampel</TableHead>{visibleColumns.map((column) => <TableHead key={column.field} className="text-center font-bold text-slate-700">{column.label}</TableHead>)}<TableHead className="w-[56px] text-center">Tindakan</TableHead></TableRow></TableHeader>
-        <TableBody>{fields.length === 0 ? <TableRow><TableCell colSpan={visibleColumns.length + 2} className="py-6 text-center text-muted-foreground">Belum ada sampel air. Klik Tambah Sampel untuk menambahkan.</TableCell></TableRow> : fields.map((field, index) => <TableRow key={field.id}>
-          <TableCell><Input className="h-8 text-xs font-semibold" {...register(`waterSamples.${index}.sampleName`)} /></TableCell>
-          {visibleColumns.map((column) => {
-            const fieldPath = `waterSamples.${index}.${column.field}` as Path<CalibrationFormValues>;
-            return <TableCell key={column.field}><Input type="number" step="any" className="mx-auto h-8 text-center text-xs" {...register(fieldPath)} /></TableCell>;
-          })}
-          <TableCell className="text-center"><Button type="button" variant="ghost" size="icon" onClick={() => deleteSample(index)} className="h-8 w-8 text-red-500 hover:text-red-700" aria-label={`Hapus ${form.getValues(`waterSamples.${index}.sampleName`)}`}><Trash2 className="h-4 w-4" /></Button></TableCell>
-        </TableRow>)}</TableBody>
-      </Table>
+  return (
+    <div className="space-y-3.5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div>
+          <h3 className="text-sm font-bold text-slate-900">Pengukuran Sampel Air dan Uji Blangko</h3>
+          <p className="text-xs text-slate-500">
+            Kolom pengukuran otomatis menyesuaikan parameter aktif yang dipilih. Gunakan koma (,) untuk angka desimal.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={addSample}
+          className="h-8 gap-1.5 self-start sm:self-auto text-xs font-semibold bg-white border-slate-300 text-slate-700 hover:bg-slate-50 shadow-2xs"
+        >
+          <Plus className="h-4 w-4 text-blue-600" />
+          <span>Tambah Sampel</span>
+        </Button>
+      </div>
+
+      <div className="w-full max-w-full overflow-x-auto rounded-xl border border-slate-200/80 bg-white shadow-xs">
+        <Table style={{ minWidth: `${Math.max(480, 220 + visibleColumns.length * 110)}px` }}>
+          <TableHeader>
+            <TableRow className="bg-slate-50/80 border-b border-slate-200/80">
+              <TableHead className="w-[180px] font-bold text-slate-800 text-xs">Jenis Sampel</TableHead>
+              {visibleColumns.map((column) => (
+                <TableHead key={column.field} className="text-center font-bold text-slate-800 text-xs whitespace-nowrap px-2">
+                  {column.label}
+                </TableHead>
+              ))}
+              <TableHead className="w-[56px] text-center text-xs font-bold text-slate-800">Aksi</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {fields.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={visibleColumns.length + 2} className="py-8 text-center text-xs text-slate-400">
+                  Belum ada sampel air. Klik tombol &ldquo;Tambah Sampel&rdquo; untuk menambahkan.
+                </TableCell>
+              </TableRow>
+            ) : (
+              fields.map((field, index) => (
+                <TableRow key={field.id} className="hover:bg-slate-50/50">
+                  <TableCell className="p-2">
+                    <Input
+                      className="h-8 text-xs font-semibold bg-white border-slate-300 shadow-2xs"
+                      value={form.watch(`waterSamples.${index}.sampleName`) ?? ""}
+                      onChange={(e) => {
+                        form.setValue(`waterSamples.${index}.sampleName`, e.target.value, { shouldDirty: true });
+                      }}
+                    />
+                  </TableCell>
+                  {visibleColumns.map((column) => {
+                    const fieldPath = `waterSamples.${index}.${column.field}` as Path<CalibrationFormValues>;
+                    return (
+                      <TableCell key={column.field} className="p-2">
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          className="mx-auto h-8 text-center text-xs bg-white border-slate-300 shadow-2xs min-w-[70px] focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                          placeholder="0,00"
+                          value={(form.watch(fieldPath) as string | number | undefined) ?? ""}
+                          onChange={(e) => {
+                            const normalized = warnAndNormalizeDecimalInput(e.target.value);
+                            form.setValue(fieldPath, normalized as any, { shouldDirty: true });
+                          }}
+                        />
+                      </TableCell>
+                    );
+                  })}
+                  <TableCell className="text-center p-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteSample(index)}
+                      className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      aria-label={`Hapus ${form.getValues(`waterSamples.${index}.sampleName`)}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <p className="text-[11px] text-slate-400 block sm:hidden italic">
+        💡 Geser tabel secara horizontal untuk mengisi kolom parameter lainnya.
+      </p>
     </div>
-  </div>;
+  );
 };

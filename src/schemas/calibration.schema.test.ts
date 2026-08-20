@@ -181,4 +181,68 @@ describe("CalibrationSchema", () => {
     expect(payload.details?.[0].standards.map((standard) => standard.crm_name)).toEqual(["Standar", "Standar"]);
     expect(payload.waterSamples?.map((sample) => sample.sample_name)).toEqual(["Sampel Air", "Sampel Air"]);
   });
+
+  it("memverifikasi dan memproses angka desimal dengan koma atau titik sebagai standar", () => {
+    const formValues = CalibrationSchema.parse({
+      stationId: "1",
+      stationName: "Stasiun Uji",
+      address: "Jakarta",
+      latitude: "-6,2088",
+      longitude: "106,8456",
+      calibrationStartDate: new Date("2026-08-10T00:00:00"),
+      calibrationEndDate: new Date("2026-08-12T00:00:00"),
+      officer: "Budi Santoso",
+      parameters: [{
+        id: 1,
+        parameterId: "2",
+        parameterName: "TDS",
+        spec: "",
+        coeffType: "K/B",
+        crmReferenceValue: "5,51",
+        crmReadingValue: "5.48",
+        remark: null,
+        results: [
+          { id: 1, standardName: "Solution 1", standardValue: "1,413", minAcceptable: null, maxAcceptable: null, value: "1,40" },
+          { id: 2, standardName: "Solution 2", standardValue: 12.89, minAcceptable: null, maxAcceptable: null, value: "12.85" },
+        ],
+        coefficients: [
+          { key: "k", value: "1,05" },
+          { key: "b", value: "0,02" },
+        ],
+        status: null,
+      }],
+      waterSamples: [{
+        sampleName: "Sampel 1",
+        temperature: "27,5",
+        ph: "7,02",
+        doValue: "6.85",
+        turbidity: "12,4",
+        tds: "150,5",
+      }],
+      notes: "Pengujian kalibrasi dengan desimal koma dan titik",
+    });
+
+    expect(formValues.latitude).toBeCloseTo(-6.2088);
+    expect(formValues.longitude).toBeCloseTo(106.8456);
+    expect(formValues.parameters[0].crmReferenceValue).toBe(5.51);
+    expect(formValues.parameters[0].crmReadingValue).toBe(5.48);
+    expect(formValues.parameters[0].results[0].standardValue).toBe(1.413);
+    expect(formValues.parameters[0].coefficients[0].value).toBe(1.05);
+    expect(formValues.parameters[0].coefficients[1].value).toBe(0.02);
+    expect(formValues.waterSamples[0].temperature).toBe(27.5);
+    expect(formValues.waterSamples[0].ph).toBe(7.02);
+    expect(formValues.waterSamples[0].doValue).toBe(6.85);
+
+    const payload = toUpdateCalibrationPayload(formValues);
+    expect(payload.details?.[0].crm_reference_value).toBe(5.51);
+    expect(payload.details?.[0].crm_reading_value).toBe(5.48);
+    expect(payload.details?.[0].standards[0].calibration_result).toBe(1.4);
+    expect(payload.details?.[0].standards[1].calibration_result).toBe(12.85);
+    expect(payload.details?.[0].coefficients).toEqual({ k: 1.05, b: 0.02 });
+    expect(payload.waterSamples?.[0].suhu).toBe(27.5);
+    expect(payload.waterSamples?.[0].ph).toBe(7.02);
+    expect(payload.waterSamples?.[0].do).toBe(6.85);
+    expect(payload.waterSamples?.[0].tur).toBe(12.4);
+    expect(payload.waterSamples?.[0].tds).toBe(150.5);
+  });
 });

@@ -14,6 +14,7 @@ import {
   Receipt,
   ClipboardList,
   ClipboardCheck,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -127,6 +128,7 @@ export default function Sidebar() {
               <MenuItem to="/dashboard" label="Dashboard" Icon={LayoutGridIcon} />
               <MenuItem to="/database" label="Database" Icon={Database} />
               <MenuItem to="/history" label="History" Icon={History} />
+              <MenuItem to="/notifications" label="Notifikasi" Icon={Bell} />
             </div>
 
             {/* Admin Section */}
