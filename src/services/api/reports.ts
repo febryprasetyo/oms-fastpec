@@ -5,6 +5,8 @@ export type Report = {
   title: string;
   station_uuid: string;
   description: string;
+  action_description?: string;
+  allowed_statuses?: string[];
   pic_id?: number;
   pic_name: string;
   category: 'Perbaikan' | 'Penggantian Part';
@@ -18,6 +20,8 @@ export type CreateReportRequest = {
   station_uuid: string;
   description: string;
   category: string;
+  action_description?: string;
+  status?: 'Open' | 'Eskalasi' | 'Selesai';
 };
 
 export type UpdateReportRequest = {
@@ -26,6 +30,18 @@ export type UpdateReportRequest = {
   category?: string;
   pic_id?: number;
   pic_name?: string;
+  status?: 'Open' | 'Eskalasi' | 'Selesai';
+  action_description?: string;
+  activity_type?: string;
+};
+
+export type FollowUpReportRequest = {
+  description: string;
+  action_description?: string;
+  progress?: 'Pengerjaan' | 'Selesai';
+  status?: 'Open' | 'Eskalasi' | 'Selesai';
+  activity_type?: string;
+  photo_url?: string;
 };
 
 export const getReports = async (
@@ -65,6 +81,27 @@ export const getReportDetail = async (
   id: number
 ) => {
   const res = await axiosInstance.get(`/api/reports/${id}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  return res.data;
+};
+
+export const followUpReport = async (
+  accessToken: string,
+  id: number,
+  data: FollowUpReportRequest
+) => {
+  const res = await axiosInstance.post(`/api/reports/${id}/follow-up`, data, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  return res.data;
+};
+
+export const deleteReport = async (
+  accessToken: string,
+  id: number
+) => {
+  const res = await axiosInstance.delete(`/api/reports/${id}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   return res.data;
