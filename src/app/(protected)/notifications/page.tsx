@@ -88,6 +88,7 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     fetchNotifs(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, token]);
 
   const handleMarkAsRead = async (notif: Notification) => {

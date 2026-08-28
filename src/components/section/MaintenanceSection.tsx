@@ -106,6 +106,7 @@ export default function MaintenanceSection({ cookie }: Props) {
     if (isModalOpen && selectedUuid) {
       fetchAvailableReports();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isModalOpen, selectedUuid]);
 
   // Fetch station status list

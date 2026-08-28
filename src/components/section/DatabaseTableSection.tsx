@@ -72,6 +72,7 @@ export default function DatabaseTableSection({ cookie, limit, page }: Props) {
     setStartHour(now);
     setEndHour(now);
     setIsReady(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateFilters = (newStation?: string, newStart?: Date, newEnd?: Date) => {

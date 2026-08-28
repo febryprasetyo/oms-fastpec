@@ -200,6 +200,7 @@ export default function VerificationPage() {
         <header className="masthead">
           <div className="brand-lockup">
             <span className="brand-logo">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="https://uploads.onecompiler.io/44724abkh/44zkkskm3/logo-cmc.png"
                 alt="PT Cahaya Mas Cemerlang"
@@ -422,6 +423,7 @@ export default function VerificationPage() {
         <footer className="document-footer">
           <div className="footer-lockup">
             <span className="footer-logo">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="https://uploads.onecompiler.io/44724abkh/44zkkskm3/FASTPEC%20OMS-black.png"
                 alt="Fastpec OMS"
