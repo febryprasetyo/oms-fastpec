@@ -5,12 +5,116 @@ import { useParams } from "next/navigation";
 import { useCalibrationVerify } from "@/hook/useCalibration";
 import { AlertTriangle } from "lucide-react";
 import {
+  deriveCalibrationDetailStatus,
   formatCalibrationDateRange,
   formatCalibrationMeasurement,
   formatCalibrationParameterName,
   translateCalibrationStatus,
 } from "@/lib/calibration-format";
 import { sanitizeCalibrationNotes } from "@/lib/calibration-notes";
+import type { WaterSample } from "@/types/calibration";
+
+type WaterSampleColumnDef = {
+  key: string;
+  label: string;
+  unit: string;
+  paramNames: string[];
+  getter: (sample: WaterSample) => string | number | null | undefined;
+};
+
+const ALL_WATER_SAMPLE_COLUMNS: WaterSampleColumnDef[] = [
+  {
+    key: "suhu",
+    label: "Suhu",
+    unit: "°C",
+    paramNames: ["suhu", "temperature", "temp"],
+    getter: (s: any) => s.temperature ?? s.suhu,
+  },
+  {
+    key: "ph",
+    label: "pH",
+    unit: "",
+    paramNames: ["ph"],
+    getter: (s: any) => s.ph,
+  },
+  {
+    key: "do",
+    label: "DO",
+    unit: "mg/L",
+    paramNames: ["do", "do (dissolved oxygen)", "dissolved oxygen"],
+    getter: (s: any) => s.doValue ?? s.do,
+  },
+  {
+    key: "tur",
+    label: "Kekeruhan",
+    unit: "NTU",
+    paramNames: ["tur", "turbidity", "kekeruhan", "turbidity (kekeruhan)", "turbiditas"],
+    getter: (s: any) => s.turbidity ?? s.tur,
+  },
+  {
+    key: "tds",
+    label: "TDS",
+    unit: "mg/L",
+    paramNames: ["tds", "total dissolved solids", "tds (total dissolved solids)"],
+    getter: (s: any) => s.tds,
+  },
+  {
+    key: "orp",
+    label: "ORP",
+    unit: "mV",
+    paramNames: ["orp"],
+    getter: (s: any) => s.orp,
+  },
+  {
+    key: "cod",
+    label: "COD",
+    unit: "mg/L",
+    paramNames: ["cod", "cod (chemical oxygen demand)", "chemical oxygen demand"],
+    getter: (s: any) => s.cod,
+  },
+  {
+    key: "bod",
+    label: "BOD",
+    unit: "mg/L",
+    paramNames: ["bod", "bod (biological oxygen demand)", "biological oxygen demand"],
+    getter: (s: any) => s.bod,
+  },
+  {
+    key: "tss",
+    label: "TSS",
+    unit: "mg/L",
+    paramNames: ["tss", "total suspended solids", "tss (total suspended solids)"],
+    getter: (s: any) => s.tss,
+  },
+  {
+    key: "amonia",
+    label: "Amonia",
+    unit: "mg/L",
+    paramNames: ["amonia", "nh3", "nh3-n", "amonia (nh3-n)"],
+    getter: (s: any) => s.nh3 ?? s.amonia,
+  },
+  {
+    key: "nitrat",
+    label: "Nitrat",
+    unit: "mg/L",
+    paramNames: ["nitrat", "no3", "no3-n", "nitrat (no3-n)"],
+    getter: (s: any) => s.no3 ?? s.nitrat,
+  },
+  {
+    key: "nitrit",
+    label: "Nitrit",
+    unit: "mg/L",
+    paramNames: ["nitrit", "no2", "no2-n", "nitrit (no2-n)"],
+    getter: (s: any) => s.no2 ?? s.nitrit,
+  },
+  {
+    key: "depth",
+    label: "Kedalaman",
+    unit: "m",
+    paramNames: ["kedalaman", "depth", "level"],
+    getter: (s: any) => s.depth ?? s.kedalaman,
+  },
+];
 
 const getStatusConfig = (status: string | null | undefined) => {
   const normalized = status?.toUpperCase();
@@ -18,56 +122,17 @@ const getStatusConfig = (status: string | null | undefined) => {
     return {
       label: "Lulus",
       className: "status-text status-text--pass text-green-700 font-bold",
-      icon: (
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.25"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M20 6 9 17l-5-5"></path>
-        </svg>
-      ),
     };
   }
   if (normalized === "FAILED") {
     return {
       label: "Tidak Lulus",
       className: "status-text status-text--fail text-red-700 font-bold",
-      icon: (
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.25"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M18 6 6 18M6 6l12 12"></path>
-        </svg>
-      ),
     };
   }
   return {
     label: "Menunggu",
     className: "status-text status-text--neutral text-slate-500 font-medium",
-    icon: (
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.25"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="12" r="3"></circle>
-      </svg>
-    ),
   };
 };
 
@@ -106,6 +171,27 @@ export default function VerificationPage() {
         </div>
       </div>
     );
+  }
+
+  // Filter sample table columns dynamically based on API parameters and present data
+  const selectedParamNames = new Set<string>();
+  (detail.parameters || []).forEach((p) => {
+    const raw = (p.parameterName || "").trim().toLowerCase();
+    selectedParamNames.add(raw);
+    selectedParamNames.add(raw.replace(/\s*\([a-z0-9\-\+]+\)/g, "").trim());
+  });
+
+  let activeSampleColumns = ALL_WATER_SAMPLE_COLUMNS.filter((col) => {
+    const isMatchingParam = col.paramNames.some((name) => selectedParamNames.has(name));
+    const hasSampleValue = (detail.waterSamples || []).some((s) => {
+      const val = col.getter(s);
+      return val !== null && val !== undefined && val !== "";
+    });
+    return isMatchingParam || hasSampleValue;
+  });
+
+  if (activeSampleColumns.length === 0) {
+    activeSampleColumns = ALL_WATER_SAMPLE_COLUMNS.slice(0, 5);
   }
 
   return (
@@ -207,17 +293,21 @@ export default function VerificationPage() {
                 <thead>
                   <tr>
                     <th scope="col">Sampel</th>
-                    <th scope="col">Suhu (°C)</th>
-                    <th scope="col">pH</th>
-                    <th scope="col">DO (mg/L)</th>
-                    <th scope="col">Kekeruhan (NTU)</th>
-                    <th scope="col">TDS (mg/L)</th>
+                    {activeSampleColumns.map((col) => (
+                      <th key={col.key} scope="col">
+                        {col.label}
+                        {col.unit ? ` (${col.unit})` : ""}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {!detail.waterSamples || detail.waterSamples.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="text-center py-4 text-slate-500">
+                      <td
+                        colSpan={activeSampleColumns.length + 1}
+                        className="text-center py-4 text-slate-500"
+                      >
                         Tidak ada sampel air.
                       </td>
                     </tr>
@@ -227,27 +317,11 @@ export default function VerificationPage() {
                         <td className="sample-name" data-label="Sampel">
                           {sample.sampleName || "-"}
                         </td>
-                        <td data-label="Suhu">
-                          {formatCalibrationMeasurement(
-                            (sample as any).temperature ?? (sample as any).suhu
-                          )}
-                        </td>
-                        <td data-label="pH">
-                          {formatCalibrationMeasurement(sample.ph)}
-                        </td>
-                        <td data-label="DO">
-                          {formatCalibrationMeasurement(
-                            (sample as any).doValue ?? (sample as any).do
-                          )}
-                        </td>
-                        <td data-label="Kekeruhan">
-                          {formatCalibrationMeasurement(
-                            (sample as any).turbidity ?? (sample as any).tur
-                          )}
-                        </td>
-                        <td data-label="TDS">
-                          {formatCalibrationMeasurement(sample.tds)}
-                        </td>
+                        {activeSampleColumns.map((col) => (
+                          <td key={col.key} data-label={col.label}>
+                            {formatCalibrationMeasurement(col.getter(sample))}
+                          </td>
+                        ))}
                       </tr>
                     ))
                   )}
@@ -284,13 +358,19 @@ export default function VerificationPage() {
                     </tr>
                   ) : (
                     detail.parameters.map((p, idx) => {
-                      const statusCfg = getStatusConfig(p.status);
+                      const effectiveStatus =
+                        p.status ??
+                        deriveCalibrationDetailStatus(
+                          p.parameterName,
+                          p.results,
+                          p.status
+                        );
+                      const statusCfg = getStatusConfig(effectiveStatus);
                       return (
                         <tr key={p.id ?? idx}>
                           <td>{formatCalibrationParameterName(p.parameterName)}</td>
                           <td>
                             <span className={statusCfg.className}>
-                              {statusCfg.icon}
                               {statusCfg.label}
                             </span>
                           </td>
@@ -307,7 +387,6 @@ export default function VerificationPage() {
           <section className="section notes" aria-labelledby="notes-title">
             <div className="section-heading">
               <div>
-                <p className="section-kicker">Catatan Petugas Kalibrasi</p>
                 <h2 className="section-title" id="notes-title">
                   Catatan Teknis &amp; Evaluasi Lapangan
                 </h2>

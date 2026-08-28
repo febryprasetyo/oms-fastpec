@@ -111,7 +111,7 @@ describe("VerificationPage", () => {
     expect(notes?.querySelector("script, img, a, svg")).toBeNull();
   });
 
-  it("membedakan gaya dan label status lulus, tidak lulus, dan menunggu", () => {
+  it("membedakan gaya dan label status lulus, tidak lulus, dan menunggu tanpa icon checklist", () => {
     const baseParameter = calibrationDetail.parameters[0];
     useCalibrationVerify.mockReturnValueOnce({
       data: {
@@ -126,13 +126,59 @@ describe("VerificationPage", () => {
       error: null,
     });
 
-    render(<VerificationPage />);
+    const { container } = render(<VerificationPage />);
 
     expect(screen.getByText("Amonia")).toBeInTheDocument();
     expect(screen.getByText("Nitrat")).toBeInTheDocument();
-    expect(screen.getByText("Lulus")).toHaveClass("text-green-700", "font-bold");
-    expect(screen.getByText("Tidak Lulus")).toHaveClass("text-red-700", "font-bold");
-    expect(screen.getByText("Menunggu")).toHaveClass("text-slate-500", "font-medium");
+    const passElem = screen.getByText("Lulus");
+    const failElem = screen.getByText("Tidak Lulus");
+    const pendingElem = screen.getByText("Menunggu");
+
+    expect(passElem).toHaveClass("text-green-700", "font-bold");
+    expect(failElem).toHaveClass("text-red-700", "font-bold");
+    expect(pendingElem).toHaveClass("text-slate-500", "font-medium");
+
+    // Verify no SVG icons inside parameter table status cells
+    const paramTable = container.querySelector(".parameter-table");
+    expect(paramTable?.querySelector("svg")).toBeNull();
+
+    // Verify "Catatan Petugas Kalibrasi" is not rendered
+    expect(screen.queryByText("Catatan Petugas Kalibrasi")).toBeNull();
+  });
+
+  it("menyesuaikan kolom sampel air secara dinamis sesuai data yang diterima dari API", () => {
+    const baseParameter = calibrationDetail.parameters[0];
+    useCalibrationVerify.mockReturnValueOnce({
+      data: {
+        ...calibrationDetail,
+        parameters: [
+          { ...baseParameter, id: 1, parameterName: "COD", status: "PASS" },
+          { ...baseParameter, id: 2, parameterName: "BOD", status: "PASS" },
+          { ...baseParameter, id: 3, parameterName: "Amonia", status: "PASS" },
+        ],
+        waterSamples: [
+          {
+            id: "sample-custom",
+            sampleName: "Sampel Inlet Sungai",
+            cod: 45.2,
+            bod: 12.8,
+            nh3: 0.75,
+          },
+        ],
+      },
+      isLoading: false,
+      error: null,
+    });
+
+    render(<VerificationPage />);
+
+    expect(screen.getByText("Sampel Inlet Sungai")).toBeInTheDocument();
+    expect(screen.getByText("COD (mg/L)")).toBeInTheDocument();
+    expect(screen.getByText("BOD (mg/L)")).toBeInTheDocument();
+    expect(screen.getByText("Amonia (mg/L)")).toBeInTheDocument();
+    expect(screen.getByText("45,20")).toBeInTheDocument();
+    expect(screen.getByText("12,80")).toBeInTheDocument();
+    expect(screen.getByText("0,75")).toBeInTheDocument();
   });
 
   it("menampilkan keadaan memverifikasi dan gagal dalam bahasa Indonesia", () => {
