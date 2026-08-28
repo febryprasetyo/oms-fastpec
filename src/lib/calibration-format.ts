@@ -114,6 +114,22 @@ export const formatCalibrationMeasurement = (
   return formatCalibrationNumber(value);
 };
 
+export const formatCalibrationCoefficient = (
+  value: string | number | null | undefined,
+): string => {
+  if (value === null || value === undefined || value === "") return "-";
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(parsed)) {
+    return String(value);
+  }
+
+  return new Intl.NumberFormat("id-ID", {
+    minimumFractionDigits: 6,
+    maximumFractionDigits: 6,
+    useGrouping: false,
+  }).format(parsed);
+};
+
 export const formatCalibrationInput = (
   value: string | number | null | undefined,
 ): string => {
@@ -182,4 +198,85 @@ export const translateCalibrationStatus = (
 ): string => {
   if (!status) return "-";
   return CALIBRATION_STATUS_LABELS[status.toUpperCase()] ?? status;
+};
+
+export const evaluateStandardResult = (
+  parameterName: string,
+  readingValue: number | string | null | undefined,
+  standardValue: number | null | undefined,
+): "PASS" | "FAILED" | null => {
+  if (
+    readingValue === null ||
+    readingValue === undefined ||
+    readingValue === "" ||
+    standardValue === null ||
+    standardValue === undefined
+  ) {
+    return null;
+  }
+  const reading =
+    typeof readingValue === "number" ? readingValue : Number(readingValue);
+  const standard =
+    typeof standardValue === "number" ? standardValue : Number(standardValue);
+  if (!Number.isFinite(reading) || !Number.isFinite(standard)) return null;
+
+  const normalized = parameterName.trim().toLowerCase();
+
+  // pH accuracy +/- 0.05
+  if (normalized === "ph") {
+    return Math.abs(reading - standard) <= 0.05 + 1e-9 ? "PASS" : "FAILED";
+  }
+
+  // DO zero point accuracy +/- 0.05
+  if (normalized === "do" && standard === 0) {
+    return Math.abs(reading) <= 0.05 + 1e-9 ? "PASS" : "FAILED";
+  }
+
+  // Suhu / Temp +/- 0.5 C
+  if (normalized.startsWith("suhu") || normalized.startsWith("temp")) {
+    return Math.abs(reading - standard) <= 0.5 + 1e-9 ? "PASS" : "FAILED";
+  }
+
+  // Default: %Trueness = (reading / standard) * 100 in [90, 110]
+  if (standard === 0) {
+    return Math.abs(reading) <= 0.05 + 1e-9 ? "PASS" : "FAILED";
+  }
+  const trueness = (reading / standard) * 100;
+  return trueness >= 89.999999 && trueness <= 110.000001 ? "PASS" : "FAILED";
+};
+
+export const deriveCalibrationDetailStatus = (
+  parameterName: string,
+  results: { standardValue: number | null; value: string | number | null }[],
+  fallbackStatus?: "PASS" | "FAILED" | null,
+): "PASS" | "FAILED" | null => {
+  if (!results || results.length === 0) {
+    return fallbackStatus ?? null;
+  }
+
+  let hasEvaluable = false;
+  let hasMissing = false;
+
+  for (const r of results) {
+    if (
+      r.value === null ||
+      r.value === undefined ||
+      r.value === "" ||
+      r.standardValue === null ||
+      r.standardValue === undefined
+    ) {
+      hasMissing = true;
+      continue;
+    }
+    const evalStatus = evaluateStandardResult(
+      parameterName,
+      r.value,
+      r.standardValue,
+    );
+    if (evalStatus === "FAILED") return "FAILED";
+    if (evalStatus === "PASS") hasEvaluable = true;
+  }
+
+  if (hasEvaluable && !hasMissing) return "PASS";
+  return fallbackStatus ?? null;
 };

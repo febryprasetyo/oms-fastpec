@@ -14,10 +14,8 @@ import {
 } from "@/lib/calibration-format";
 import { sanitizeCalibrationNotes } from "@/lib/calibration-notes";
 
-const parameterStatusStyle = (status: CalibrationDetailStatus) => {
-  if (status === "PASS") return "text-green-700 font-bold";
-  if (status === "FAILED") return "text-red-700 font-bold";
-  return "text-slate-500 font-medium";
+const parameterStatusStyle = (_status: CalibrationDetailStatus) => {
+  return "text-slate-900 font-bold";
 };
 
 type CalibrationDetailStatus = "PASS" | "FAILED" | null;

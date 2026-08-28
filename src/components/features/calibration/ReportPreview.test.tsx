@@ -55,9 +55,7 @@ describe("ReportPreview", () => {
       downloadedFilename = this.download;
       downloadedHref = this.href;
     });
-    vi.spyOn(HTMLIFrameElement.prototype, "contentWindow", "get").mockReturnValue({
-      print: printSpy,
-    } as any);
+    vi.spyOn(window, "print").mockImplementation(printSpy);
   });
 
   afterEach(() => {
@@ -73,14 +71,12 @@ describe("ReportPreview", () => {
     expect(screen.getByText("2. Pengukuran Sampel Air dan Uji Blangko")).toBeInTheDocument();
   });
 
-  it("mencetak dokumen kalibrasi backend via hidden iframe print", async () => {
+  it("mencetak dokumen kalibrasi saat tombol Cetak diklik", async () => {
     render(<ReportPreview detail={calibrationDetail} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Cetak" }));
 
-    await waitFor(() => {
-      expect(printSpy).toHaveBeenCalled();
-    });
+    expect(printSpy).toHaveBeenCalled();
   });
 
   it("mengunduh artefak PDF dari backend saat tombol Unduh PDF diklik", async () => {

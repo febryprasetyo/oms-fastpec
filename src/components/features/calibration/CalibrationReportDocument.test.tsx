@@ -144,7 +144,7 @@ describe("CalibrationReportDocument", () => {
     render(<CalibrationReportDocument detail={mockDetail} />);
 
     expect(screen.getAllByText("Nomor Laporan: KAL/2026/08/001")).toHaveLength(2);
-    expect(screen.getByText(": Stasiun Bahoea Reko-Reko")).toBeInTheDocument();
+    expect(screen.getAllByText(": Stasiun Bahoea Reko-Reko")).toHaveLength(2);
     expect(screen.getByText(": 10–12 Agustus 2026")).toBeInTheDocument();
     expect(screen.getByText(": Kabupaten Morowali Utara")).toBeInTheDocument();
   });

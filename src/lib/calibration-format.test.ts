@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatCalibrationCoefficient,
   formatCalibrationDate,
   formatCalibrationDateInput,
   formatCalibrationDateRange,
@@ -43,6 +44,18 @@ describe("calibration-format", () => {
     ["", "-"],
   ])("memformat angka kalibrasi %s menjadi %s", (value, expected) => {
     expect(formatCalibrationMeasurement(value)).toBe(expected);
+  });
+
+  it.each([
+    [1.052599, "1,052599"],
+    [-0.087622, "-0,087622"],
+    [1.2, "1,200000"],
+    [0, "0,000000"],
+    [null, "-"],
+    [undefined, "-"],
+    ["", "-"],
+  ])("memformat koefisien kalibrasi %s menjadi 6 digit desimal: %s", (value, expected) => {
+    expect(formatCalibrationCoefficient(value)).toBe(expected);
   });
 
   it("memformat label standar CRM dan non-CRM", () => {
