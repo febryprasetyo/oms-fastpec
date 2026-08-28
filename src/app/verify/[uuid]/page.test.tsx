@@ -1,5 +1,5 @@
 import React from "react";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CalibrationDetail } from "@/types/calibration";
 import VerificationPage from "./page";
@@ -128,19 +128,22 @@ describe("VerificationPage", () => {
 
     const { container } = render(<VerificationPage />);
 
-    expect(screen.getByText("Amonia")).toBeInTheDocument();
-    expect(screen.getByText("Nitrat")).toBeInTheDocument();
-    const passElem = screen.getByText("Lulus");
-    const failElem = screen.getByText("Tidak Lulus");
-    const pendingElem = screen.getByText("Menunggu");
+    const paramTable = container.querySelector(".parameter-table") as HTMLElement;
+    expect(paramTable).toBeInTheDocument();
+    expect(within(paramTable).getByText("Amonia")).toBeInTheDocument();
+    expect(within(paramTable).getByText("Nitrat")).toBeInTheDocument();
+    expect(within(paramTable).getByText("Nitrit")).toBeInTheDocument();
+
+    const passElem = within(paramTable).getByText("Lulus");
+    const failElem = within(paramTable).getByText("Tidak Lulus");
+    const pendingElem = within(paramTable).getByText("Menunggu");
 
     expect(passElem).toHaveClass("text-green-700", "font-bold");
     expect(failElem).toHaveClass("text-red-700", "font-bold");
     expect(pendingElem).toHaveClass("text-slate-500", "font-medium");
 
     // Verify no SVG icons inside parameter table status cells
-    const paramTable = container.querySelector(".parameter-table");
-    expect(paramTable?.querySelector("svg")).toBeNull();
+    expect(paramTable.querySelector("svg")).toBeNull();
 
     // Verify "Catatan Petugas Kalibrasi" is not rendered
     expect(screen.queryByText("Catatan Petugas Kalibrasi")).toBeNull();
@@ -170,15 +173,18 @@ describe("VerificationPage", () => {
       error: null,
     });
 
-    render(<VerificationPage />);
+    const { container } = render(<VerificationPage />);
 
-    expect(screen.getByText("Sampel Inlet Sungai")).toBeInTheDocument();
-    expect(screen.getByText("COD (mg/L)")).toBeInTheDocument();
-    expect(screen.getByText("BOD (mg/L)")).toBeInTheDocument();
-    expect(screen.getByText("Amonia (mg/L)")).toBeInTheDocument();
-    expect(screen.getByText("45,20")).toBeInTheDocument();
-    expect(screen.getByText("12,80")).toBeInTheDocument();
-    expect(screen.getByText("0,75")).toBeInTheDocument();
+    const sampleCard = container.querySelector(".sample-card") as HTMLElement;
+    expect(sampleCard).toBeInTheDocument();
+
+    expect(within(sampleCard).getByText("Sampel: Sampel Inlet Sungai")).toBeInTheDocument();
+    expect(within(sampleCard).getByText("COD")).toBeInTheDocument();
+    expect(within(sampleCard).getByText("BOD")).toBeInTheDocument();
+    expect(within(sampleCard).getByText("Amonia")).toBeInTheDocument();
+    expect(within(sampleCard).getByText("45,20")).toBeInTheDocument();
+    expect(within(sampleCard).getByText("12,80")).toBeInTheDocument();
+    expect(within(sampleCard).getByText("0,75")).toBeInTheDocument();
   });
 
   it("menampilkan keadaan memverifikasi dan gagal dalam bahasa Indonesia", () => {

@@ -287,47 +287,36 @@ export default function VerificationPage() {
               </p>
             </div>
 
-            <div className="table-frame">
-              <table className="sample-table">
-                <caption>Hasil pengukuran sampel air</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Sampel</th>
+            {!detail.waterSamples || detail.waterSamples.length === 0 ? (
+              <div className="table-frame p-4 text-center text-sm text-slate-500">
+                Tidak ada sampel air.
+              </div>
+            ) : (
+              detail.waterSamples.map((sample, idx) => (
+                <div key={sample.id || idx} className="sample-card">
+                  {detail.waterSamples.length > 1 || sample.sampleName ? (
+                    <div className="sample-card-header">
+                      Sampel: {sample.sampleName || `Sampel ${idx + 1}`}
+                    </div>
+                  ) : null}
+                  <div className="metric-grid">
                     {activeSampleColumns.map((col) => (
-                      <th key={col.key} scope="col">
-                        {col.label}
-                        {col.unit ? ` (${col.unit})` : ""}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {!detail.waterSamples || detail.waterSamples.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={activeSampleColumns.length + 1}
-                        className="text-center py-4 text-slate-500"
-                      >
-                        Tidak ada sampel air.
-                      </td>
-                    </tr>
-                  ) : (
-                    detail.waterSamples.map((sample, idx) => (
-                      <tr key={sample.id || idx}>
-                        <td className="sample-name" data-label="Sampel">
-                          {sample.sampleName || "-"}
-                        </td>
-                        {activeSampleColumns.map((col) => (
-                          <td key={col.key} data-label={col.label}>
+                      <div key={col.key} className="metric-item">
+                        <span className="metric-label">{col.label}</span>
+                        <div className="metric-value-wrap">
+                          <span className="metric-value">
                             {formatCalibrationMeasurement(col.getter(sample))}
-                          </td>
-                        ))}
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                          </span>
+                          {col.unit && (
+                            <span className="metric-unit">{col.unit}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
           </section>
 
           {/* Status Parameter Kalibrasi */}
