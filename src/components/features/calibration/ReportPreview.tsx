@@ -19,9 +19,61 @@ interface ReportPreviewProps {
 export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
   const { token } = useCalibrationAuth();
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
-  const handlePrint = () => {
-    printCalibrationReport();
+  const handlePrint = async () => {
+    try {
+      setIsPrinting(true);
+      const pdf = await calibrationService.downloadPdf(detail.id, token);
+      const blobUrl = window.URL.createObjectURL(
+        new Blob([pdf], { type: "application/pdf" })
+      );
+
+      // Remove existing PDF print frame if present
+      const existingFrame = document.getElementById("calibration-pdf-print-frame");
+      if (existingFrame) {
+        existingFrame.remove();
+      }
+
+      const iframe = document.createElement("iframe");
+      iframe.id = "calibration-pdf-print-frame";
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "none";
+      iframe.src = blobUrl;
+      document.body.appendChild(iframe);
+
+      let printed = false;
+      const triggerPrint = () => {
+        if (printed) return;
+        printed = true;
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        } catch {
+          window.open(blobUrl, "_blank");
+        } finally {
+          setTimeout(() => {
+            window.URL.revokeObjectURL(blobUrl);
+            iframe.remove();
+          }, 60000);
+        }
+      };
+
+      iframe.onload = () => setTimeout(triggerPrint, 50);
+      setTimeout(triggerPrint, 150);
+    } catch (error) {
+      console.error("Gagal mengambil PDF backend, fallback ke cetak native", error);
+      toast.error(
+        "Gagal memuat dokumen PDF server. Menggunakan cetak pratinjau browser."
+      );
+      printCalibrationReport();
+    } finally {
+      setIsPrinting(false);
+    }
   };
 
   const handleDownloadPdf = async () => {
@@ -51,14 +103,23 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
     <div className="space-y-4">
       {/* Action Toolbar: Tombol Cetak & Unduh PDF */}
       <div className="flex justify-end gap-3 print:hidden">
-        <Button onClick={handlePrint} variant="outline" className="gap-2">
-          <Printer className="h-4 w-4" />
-          <span>Cetak</span>
+        <Button
+          onClick={handlePrint}
+          variant="outline"
+          className="gap-2"
+          disabled={isPrinting || isDownloading}
+        >
+          {isPrinting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Printer className="h-4 w-4" />
+          )}
+          <span>{isPrinting ? "Menyiapkan..." : "Cetak"}</span>
         </Button>
         <Button
           onClick={handleDownloadPdf}
           className="gap-2"
-          disabled={isDownloading}
+          disabled={isPrinting || isDownloading}
         >
           {isDownloading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
