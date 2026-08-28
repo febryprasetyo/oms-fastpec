@@ -11,6 +11,7 @@ import {
   formatCalibrationCoefficient,
   formatCalibrationParameterName,
   formatCalibrationPlace,
+  formatCalibrationReading,
   formatCalibrationStandard,
 } from "@/lib/calibration-format";
 import { sanitizeCalibrationNotes } from "@/lib/calibration-notes";
@@ -747,35 +748,36 @@ export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps>
               {detail.parameters.map((param) => {
                 const paramTitle = `Kalibrasi ${formatCalibrationParameterName(param.parameterName)}`;
 
+                const unit =
+                  param.parameterUnit && param.parameterName.toLowerCase() !== "ph"
+                    ? param.parameterUnit
+                    : undefined;
+
                 // Build standards and CRM list
                 const standardLines: string[] = param.results.map((r) =>
                   formatCalibrationStandard(
                     r.standardName,
                     r.standardValue,
-                    param.parameterUnit,
+                    unit,
                   ),
                 );
                 if (param.crmReferenceValue !== null && param.crmReferenceValue !== undefined) {
                   standardLines.push(
                     `CRM ${formatCalibrationMeasurement(param.crmReferenceValue)}${
-                      param.parameterUnit && param.parameterName.toLowerCase() !== "ph"
-                        ? ` ${param.parameterUnit}`
-                        : ""
+                      unit ? ` ${unit}` : ""
                     }`,
                   );
                 }
 
                 // Build readings list
                 const readingLines: string[] = param.results.map((r) =>
-                  formatCalibrationMeasurement(r.value),
+                  formatCalibrationReading(r.value, unit),
                 );
                 if (param.crmReadingValue !== null && param.crmReadingValue !== undefined) {
-                  const unitSuffix =
-                    param.parameterUnit && param.parameterName.toLowerCase() !== "ph"
-                      ? ` ${param.parameterUnit}`
-                      : "";
                   readingLines.push(
-                    `${formatCalibrationMeasurement(param.crmReadingValue)}${unitSuffix}`,
+                    `${formatCalibrationMeasurement(param.crmReadingValue)}${
+                      unit ? ` ${unit}` : ""
+                    }`,
                   );
                 }
 

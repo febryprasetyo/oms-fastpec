@@ -151,6 +151,16 @@ export const formatCalibrationStandard = (
   return `${isCrm ? "CRM " : ""}${formattedValue}${formattedUnit}`.trim();
 };
 
+export const formatCalibrationReading = (
+  value: string | number | null | undefined,
+  unit?: string,
+): string => {
+  const formattedValue = formatCalibrationMeasurement(value);
+  if (formattedValue === "-") return "-";
+  const formattedUnit = !unit ? "" : ` ${unit}`;
+  return `${formattedValue}${formattedUnit}`.trim();
+};
+
 export const formatCalibrationPlace = (value: string): string =>
   value
     .trim()
