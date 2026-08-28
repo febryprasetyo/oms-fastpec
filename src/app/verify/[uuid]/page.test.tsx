@@ -79,14 +79,15 @@ describe("VerificationPage", () => {
   it("menampilkan laporan terverifikasi dengan istilah dan format Indonesia", () => {
     render(<VerificationPage />);
 
-    expect(screen.getByText("Laporan Kalibrasi Autentik")).toBeInTheDocument();
+    expect(screen.getByText("Dokumen Terverifikasi")).toBeInTheDocument();
+    expect(screen.getByText("Laporan Hasil Kalibrasi")).toBeInTheDocument();
     expect(screen.getByText("Tanggal Kalibrasi")).toBeInTheDocument();
     expect(screen.getByText("10–12 Agustus 2026")).toBeInTheDocument();
     expect(screen.getByText("Status Parameter Kalibrasi")).toBeInTheDocument();
     expect(screen.getByText("Lulus")).toBeInTheDocument();
     expect(screen.getByText("26,50")).toBeInTheDocument();
     expect(
-      screen.queryByText(/Authentic|Verified|Report Number|Station Name|Calibration Date|Notes|Water Samples|Sample|Temp|Turbidity/i),
+      screen.queryByText(/Authentic|Report Number|Station Name|Calibration Date|Notes|Water Samples|Sample|Temp|Turbidity/i),
     ).not.toBeInTheDocument();
   });
 

@@ -3,9 +3,7 @@
 import React from "react";
 import { useParams } from "next/navigation";
 import { useCalibrationVerify } from "@/hook/useCalibration";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, AlertTriangle } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertTriangle } from "lucide-react";
 import {
   formatCalibrationDateRange,
   formatCalibrationMeasurement,
@@ -14,11 +12,64 @@ import {
 } from "@/lib/calibration-format";
 import { sanitizeCalibrationNotes } from "@/lib/calibration-notes";
 
-const parameterStatusStyle = (_status: CalibrationDetailStatus) => {
-  return "text-slate-900 font-bold";
+const getStatusConfig = (status: string | null | undefined) => {
+  const normalized = status?.toUpperCase();
+  if (normalized === "PASS") {
+    return {
+      label: "Lulus",
+      className: "status-text status-text--pass text-green-700 font-bold",
+      icon: (
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.25"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M20 6 9 17l-5-5"></path>
+        </svg>
+      ),
+    };
+  }
+  if (normalized === "FAILED") {
+    return {
+      label: "Tidak Lulus",
+      className: "status-text status-text--fail text-red-700 font-bold",
+      icon: (
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.25"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M18 6 6 18M6 6l12 12"></path>
+        </svg>
+      ),
+    };
+  }
+  return {
+    label: "Menunggu",
+    className: "status-text status-text--neutral text-slate-500 font-medium",
+    icon: (
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+    ),
+  };
 };
-
-type CalibrationDetailStatus = "PASS" | "FAILED" | null;
 
 export default function VerificationPage() {
   const { uuid } = useParams() as { uuid: string };
@@ -26,105 +77,300 @@ export default function VerificationPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
-        <p className="text-slate-600 font-medium">Memverifikasi keaslian laporan...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#edf1f3] p-6">
+        <div className="max-w-md w-full bg-white border border-[#d9e0e4] rounded-lg p-8 shadow-sm text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#123f38] mb-4"></div>
+          <p className="text-slate-700 font-medium text-sm">
+            Memverifikasi keaslian laporan...
+          </p>
+        </div>
       </div>
     );
   }
 
   if (error || !detail) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
-        <Card className="max-w-md w-full border-red-200">
-          <CardHeader className="bg-red-50 text-center pb-4">
+      <div className="min-h-screen flex items-center justify-center bg-[#edf1f3] p-6">
+        <div className="max-w-md w-full bg-white border border-red-200 rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-red-50 text-center p-6 border-b border-red-100">
             <div className="mx-auto bg-red-100 text-red-600 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-3">
               <AlertTriangle className="h-6 w-6" />
             </div>
-            <CardTitle className="text-lg font-bold text-red-800">Verifikasi Gagal</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 text-center text-sm text-slate-600 leading-relaxed">
-            Sertifikat kalibrasi ini tidak dapat diverifikasi. Hash dokumen mungkin telah diubah atau dokumen ini bukan sertifikat sah yang diterbitkan oleh PT Cahaya Mas Cemerlang.
-          </CardContent>
-        </Card>
+            <h1 className="text-lg font-bold text-red-800">Verifikasi Gagal</h1>
+          </div>
+          <div className="p-6 text-center text-sm text-slate-600 leading-relaxed">
+            Sertifikat kalibrasi ini tidak dapat diverifikasi. Hash dokumen mungkin
+            telah diubah atau dokumen ini bukan sertifikat sah yang diterbitkan oleh PT
+            Cahaya Mas Cemerlang.
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 flex flex-col items-center justify-center gap-6">
-      <Card className="max-w-2xl w-full border-green-200 shadow-lg">
-        <CardHeader className="bg-green-50 text-center pb-4 border-b border-green-100">
-          <div className="mx-auto bg-green-100 text-green-600 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-3">
-            <CheckCircle2 className="h-6 w-6" />
+    <div className="verify-page">
+      <article className="document" aria-labelledby="report-title">
+        <header className="masthead">
+          <div className="brand-lockup">
+            <span className="brand-logo">
+              <img
+                src="https://uploads.onecompiler.io/44724abkh/44zkkskm3/logo-cmc.png"
+                alt="PT Cahaya Mas Cemerlang"
+                height={48}
+              />
+            </span>
           </div>
-          <CardTitle className="text-xl font-bold text-green-800">Laporan Kalibrasi Autentik</CardTitle>
-          <p className="text-xs text-green-600 font-semibold mt-1">Terverifikasi dan diterbitkan oleh PT Cahaya Mas Cemerlang</p>
-        </CardHeader>
-        <CardContent className="p-6 space-y-6">
-          <div className="grid grid-cols-2 gap-4 text-xs">
-            <div>
-              <span className="font-bold text-slate-500 block">Nomor Laporan</span>
-              <span className="text-slate-800 font-semibold">{detail.reportNo}</span>
-            </div>
-            <div>
-              <span className="font-bold text-slate-500 block">Nama Stasiun</span>
-              <span className="text-slate-800 font-semibold">{detail.stationName}</span>
-            </div>
-            <div>
-              <span className="font-bold text-slate-500 block">Tanggal Kalibrasi</span>
-              <span className="text-slate-800 font-semibold">{formatCalibrationDateRange(detail.calibrationStartDate, detail.calibrationEndDate)}</span>
-            </div>
-            <div>
-              <span className="font-bold text-slate-500 block">Petugas Kalibrasi</span>
-              <span className="text-slate-800 font-semibold">{detail.officer}</span>
-            </div>
-            <div>
-              <span className="font-bold text-slate-500 block">Alamat</span>
-              <span className="text-slate-800 font-semibold">{detail.address}</span>
-            </div>
-            <div>
-              <span className="font-bold text-slate-500 block">Koordinat</span>
-              <span className="text-slate-800 font-semibold">{detail.latitude}, {detail.longitude}</span>
-            </div>
-          </div>
+          <p className="header-status">
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.25"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M20 6 9 17l-5-5"></path>
+            </svg>
+            Dokumen Terverifikasi
+          </p>
+        </header>
 
-          <div className="space-y-2 text-sm">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">Catatan</h4>
-            <div
-              className="calibration-notes-preview rounded-md border bg-slate-50 p-3 text-slate-600"
-              dangerouslySetInnerHTML={{ __html: sanitizeCalibrationNotes(detail.notes || "-") }}
-            />
-          </div>
+        <main className="report-content">
+          <header className="report-heading">
+            <div>
+              <p className="section-kicker">Quality Assurance & Calibration</p>
+              <h1 id="report-title">Laporan Hasil Kalibrasi</h1>
+            </div>
+            <div className="report-registry">
+              <p className="field-label">Nomor Registrasi Laporan</p>
+              <p className="registry-value">{detail.reportNo || "Tidak tersedia"}</p>
+            </div>
+          </header>
 
-          <div className="space-y-3"><h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">Sampel Air</h4><div className="overflow-x-auto rounded-md border"><Table><TableHeader><TableRow className="bg-slate-50"><TableHead>Sampel</TableHead><TableHead>Suhu</TableHead><TableHead>pH</TableHead><TableHead>DO</TableHead><TableHead>Kekeruhan</TableHead><TableHead>TDS</TableHead></TableRow></TableHeader><TableBody>{detail.waterSamples.length === 0 ? <TableRow><TableCell colSpan={6} className="py-4 text-center text-muted-foreground">Tidak ada sampel air.</TableCell></TableRow> : detail.waterSamples.map((sample) => <TableRow key={sample.id}><TableCell>{sample.sampleName}</TableCell><TableCell>{formatCalibrationMeasurement(sample.temperature)}</TableCell><TableCell>{formatCalibrationMeasurement(sample.ph)}</TableCell><TableCell>{formatCalibrationMeasurement(sample.doValue)}</TableCell><TableCell>{formatCalibrationMeasurement(sample.turbidity)}</TableCell><TableCell>{formatCalibrationMeasurement(sample.tds)}</TableCell></TableRow>)}</TableBody></Table></div></div>
+          <dl
+            className="metadata"
+            aria-label="Data stasiun dan pelaksanaan kalibrasi"
+          >
+            <div className="metadata-column">
+              <div className="field">
+                <dt className="field-label">Nama Stasiun</dt>
+                <dd>{detail.stationName || "Tidak tersedia"}</dd>
+              </div>
+              <div className="field">
+                <dt className="field-label">Tanggal Kalibrasi</dt>
+                <dd className="numeric">
+                  {formatCalibrationDateRange(
+                    detail.calibrationStartDate,
+                    detail.calibrationEndDate
+                  )}
+                </dd>
+              </div>
+              <div className="field">
+                <dt className="field-label">Petugas Pelaksana</dt>
+                <dd>{detail.officer || "Tidak tersedia"}</dd>
+              </div>
+            </div>
+            <div className="metadata-column">
+              <div className="field">
+                <dt className="field-label">Koordinat Geografis</dt>
+                <dd className="numeric">
+                  {detail.latitude && detail.longitude
+                    ? `${detail.latitude}, ${detail.longitude}`
+                    : "Tidak tersedia"}
+                </dd>
+              </div>
+              <div className="field">
+                <dt className="field-label">Alamat / Lokasi Stasiun</dt>
+                <dd>{detail.address || "Tidak tersedia"}</dd>
+              </div>
+            </div>
+          </dl>
 
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Status Parameter Kalibrasi</h4>
-            <div className="border rounded-md overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50">
-                    <TableHead className="font-bold text-slate-700 text-xs">Parameter</TableHead>
-                    <TableHead className="font-bold text-slate-700 text-xs text-center">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {detail.parameters.map((p, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell className="font-semibold text-xs text-slate-800">{formatCalibrationParameterName(p.parameterName)}</TableCell>
-                      <TableCell className="text-center">
-                        <span className={`text-xs uppercase ${parameterStatusStyle(p.status)}`}>
-                          {translateCalibrationStatus(p.status ?? "PENDING")}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+          {/* Data Pengukuran Sampel Air */}
+          <section className="section" aria-labelledby="sample-title">
+            <div className="section-heading">
+              <div>
+                <h2 className="section-title" id="sample-title">
+                  Hasil Pengukuran Sampel Air
+                </h2>
+              </div>
+              <p className="section-description">
+                Nilai sebagaimana tercatat pada laporan kalibrasi.
+              </p>
+            </div>
+
+            <div className="table-frame">
+              <table className="sample-table">
+                <caption>Hasil pengukuran sampel air</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Sampel</th>
+                    <th scope="col">Suhu (°C)</th>
+                    <th scope="col">pH</th>
+                    <th scope="col">DO (mg/L)</th>
+                    <th scope="col">Kekeruhan (NTU)</th>
+                    <th scope="col">TDS (mg/L)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {!detail.waterSamples || detail.waterSamples.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-4 text-slate-500">
+                        Tidak ada sampel air.
+                      </td>
+                    </tr>
+                  ) : (
+                    detail.waterSamples.map((sample, idx) => (
+                      <tr key={sample.id || idx}>
+                        <td className="sample-name" data-label="Sampel">
+                          {sample.sampleName || "-"}
+                        </td>
+                        <td data-label="Suhu">
+                          {formatCalibrationMeasurement(
+                            (sample as any).temperature ?? (sample as any).suhu
+                          )}
+                        </td>
+                        <td data-label="pH">
+                          {formatCalibrationMeasurement(sample.ph)}
+                        </td>
+                        <td data-label="DO">
+                          {formatCalibrationMeasurement(
+                            (sample as any).doValue ?? (sample as any).do
+                          )}
+                        </td>
+                        <td data-label="Kekeruhan">
+                          {formatCalibrationMeasurement(
+                            (sample as any).turbidity ?? (sample as any).tur
+                          )}
+                        </td>
+                        <td data-label="TDS">
+                          {formatCalibrationMeasurement(sample.tds)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* Status Parameter Kalibrasi */}
+          <section className="section" aria-labelledby="parameter-title">
+            <div className="section-heading">
+              <div>
+                <h2 className="section-title" id="parameter-title">
+                  Status Parameter Kalibrasi
+                </h2>
+              </div>
+            </div>
+
+            <div className="table-frame">
+              <table className="parameter-table">
+                <caption>Status kelulusan parameter kalibrasi</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Parameter</th>
+                    <th scope="col">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {!detail.parameters || detail.parameters.length === 0 ? (
+                    <tr>
+                      <td colSpan={2} className="text-center py-4 text-slate-500">
+                        Tidak ada parameter kalibrasi.
+                      </td>
+                    </tr>
+                  ) : (
+                    detail.parameters.map((p, idx) => {
+                      const statusCfg = getStatusConfig(p.status);
+                      return (
+                        <tr key={p.id ?? idx}>
+                          <td>{formatCalibrationParameterName(p.parameterName)}</td>
+                          <td>
+                            <span className={statusCfg.className}>
+                              {statusCfg.icon}
+                              {statusCfg.label}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* Catatan Teknis & Evaluasi Lapangan */}
+          <section className="section notes" aria-labelledby="notes-title">
+            <div className="section-heading">
+              <div>
+                <p className="section-kicker">Catatan Petugas Kalibrasi</p>
+                <h2 className="section-title" id="notes-title">
+                  Catatan Teknis &amp; Evaluasi Lapangan
+                </h2>
+              </div>
+            </div>
+            <div className="technical-notes">
+              <div
+                className="calibration-notes-preview"
+                dangerouslySetInnerHTML={{
+                  __html: sanitizeCalibrationNotes(detail.notes || "-"),
+                }}
+              />
+            </div>
+          </section>
+
+          {/* Verification Record */}
+          <section
+            className="verification-record"
+            aria-labelledby="verification-code-title"
+          >
+            <h2
+              className="verification-record-title"
+              id="verification-code-title"
+            >
+              Dokumen Terverifikasi &amp; Valid
+            </h2>
+            <p className="verification-record-copy">
+              Sertifikat kalibrasi ini diterbitkan secara sah oleh laboratorium PT
+              Cahaya Mas Cemerlang dan terdaftar dalam basis data resmi.
+            </p>
+            <p className="verification-id">
+              ID:
+              <output
+                className="verification-value"
+                id="verification-code"
+                aria-label="ID verifikasi"
+              >
+                {uuid}
+              </output>
+            </p>
+          </section>
+        </main>
+
+        <footer className="document-footer">
+          <div className="footer-lockup">
+            <span className="footer-logo">
+              <img
+                src="https://uploads.onecompiler.io/44724abkh/44zkkskm3/FASTPEC%20OMS-black.png"
+                alt="Fastpec OMS"
+                height={28}
+              />
+            </span>
+            <span className="footer-divider" aria-hidden="true"></span>
+            <div>
+              <p className="footer-copy">© 2026 PT Cahaya Mas Cemerlang — Fastpec</p>
+              <p className="footer-copy footer-description">
+                Water Quality Monitoring Systems — Laporan elektronik resmi terverifikasi.
+              </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </footer>
+      </article>
     </div>
   );
 }
+
