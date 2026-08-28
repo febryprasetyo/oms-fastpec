@@ -523,6 +523,97 @@ const REPORT_EMBEDDED_STYLES = `
   }
 `;
 
+export function printCalibrationReport(elementId = "calibration-native-report") {
+  if (typeof window === "undefined") return;
+
+  const reportElement = document.getElementById(elementId);
+  if (!reportElement) {
+    window.print();
+    return;
+  }
+
+  // Remove existing print frame if present
+  const existingFrame = document.getElementById("calibration-print-frame");
+  if (existingFrame) {
+    existingFrame.remove();
+  }
+
+  const iframe = document.createElement("iframe");
+  iframe.id = "calibration-print-frame";
+  iframe.style.position = "fixed";
+  iframe.style.right = "0";
+  iframe.style.bottom = "0";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.style.border = "none";
+  iframe.style.visibility = "hidden";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument || iframe.contentWindow?.document;
+  if (!doc) {
+    window.print();
+    return;
+  }
+
+  doc.open();
+  doc.write(`<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Laporan Kalibrasi</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 12mm 15mm 15mm 15mm;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+    ${REPORT_EMBEDDED_STYLES}
+    #calibration-native-report {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      background: #ffffff !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="calibration-native-report">
+    ${reportElement.innerHTML}
+  </div>
+</body>
+</html>`);
+  doc.close();
+
+  const triggerPrint = () => {
+    try {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    } catch {
+      window.print();
+    }
+  };
+
+  if (doc.readyState === "complete") {
+    setTimeout(triggerPrint, 50);
+  } else {
+    iframe.onload = () => setTimeout(triggerPrint, 50);
+  }
+}
+
 export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps> = ({
   detail,
   hideIndicator = false,
@@ -551,7 +642,7 @@ export const CalibrationReportDocument: React.FC<CalibrationReportDocumentProps>
     : "<ul><li>Tidak ada catatan.</li></ul>";
 
   const handlePrint = () => {
-    window.print();
+    printCalibrationReport();
   };
 
   return (

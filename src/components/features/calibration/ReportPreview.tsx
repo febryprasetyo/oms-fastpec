@@ -7,7 +7,10 @@ import { Button } from "@/components/ui/button";
 import { useCalibrationAuth } from "@/hook/useCalibration";
 import { calibrationService } from "@/services/api/calibration";
 import type { CalibrationDetail } from "@/types/calibration";
-import { CalibrationReportDocument } from "./CalibrationReportDocument";
+import {
+  CalibrationReportDocument,
+  printCalibrationReport,
+} from "./CalibrationReportDocument";
 
 interface ReportPreviewProps {
   detail: CalibrationDetail;
@@ -18,7 +21,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ detail }) => {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handlePrint = () => {
-    window.print();
+    printCalibrationReport();
   };
 
   const handleDownloadPdf = async () => {

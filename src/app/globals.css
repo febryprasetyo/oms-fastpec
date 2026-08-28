@@ -96,7 +96,7 @@ input[type="number"] {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 10mm 12mm;
+    margin: 12mm 15mm 15mm 15mm;
   }
 
   html,
@@ -110,12 +110,7 @@ input[type="number"] {
     color: #000 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-  }
-
-  *,
-  *::before,
-  *::after {
-    box-sizing: border-box !important;
+    color-adjust: exact !important;
   }
 
   /* Hide non-print elements */
@@ -125,127 +120,5 @@ input[type="number"] {
   aside,
   .no-print {
     display: none !important;
-  }
-
-  /* Ensure main wrappers use full printable width */
-  .container,
-  .wrapper,
-  .page,
-  .report,
-  .report-container,
-  main,
-  .mx-auto,
-  .max-w-\[800px\] {
-    width: 100% !important;
-    max-width: none !important;
-    min-width: 0 !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    transform: none !important;
-    zoom: 1 !important;
-  }
-
-  /* Remove overflow wrappers and allow tables to use full width */
-  .overflow-x-auto {
-    overflow-x: visible !important;
-    -webkit-overflow-scrolling: auto !important;
-  }
-
-  /* Neutralize restrictive utility classes used in markup */
-  .min-w-\[600px\] {
-    min-width: 0 !important;
-    width: 100% !important;
-  }
-
-  .max-w-\[800px\] {
-    max-width: none !important;
-    width: 100% !important;
-  }
-
-  /* Catch-all for any other arbitrary min-w/max-w utility classes */
-  [class*="min-w-"] {
-    min-width: 0 !important;
-    width: 100% !important;
-  }
-
-  [class*="max-w-"] {
-    max-width: none !important;
-    width: 100% !important;
-  }
-
-  /* Tables should fill printable width and not overflow */
-  table {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    box-sizing: border-box !important;
-    border-collapse: collapse !important;
-    table-layout: fixed !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  th,
-  td {
-    overflow-wrap: anywhere !important;
-    word-break: break-word !important;
-    white-space: normal !important;
-    padding: 4px 6px !important;
-  }
-
-  /* Specific sizing for sample table columns to avoid overflow */
-  /* Targeting header order as used in ReportPreview */
-  .overflow-x-auto table thead th:nth-child(1),
-  .overflow-x-auto table tbody td:nth-child(1) {
-    width: 22% !important; /* Sample Type wider */
-  }
-
-  .overflow-x-auto table thead th:nth-child(n+2),
-  .overflow-x-auto table tbody td:nth-child(n+2) {
-    width: 6.7% !important; /* evenly distribute remaining columns */
-  }
-
-  /* Reduce font sizes proportionally for print without scaling the whole page */
-  .bg-slate-900.text-white.font-bold,
-  .text-right,
-  .text-center,
-  table th,
-  table td {
-    font-size: 8pt !important;
-  }
-
-  /* Section headers slightly larger */
-  .bg-slate-900.text-white.font-bold {
-    font-size: 9pt !important;
-    padding-top: 6px !important;
-    padding-bottom: 6px !important;
-  }
-
-  /* Notes and signatures full width */
-  .border.border-slate-300,
-  .grid.grid-cols-2 {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-
-  /* Prevent page breaking inside signature area */
-  .grid.grid-cols-2 {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  /* Keep colors exact on print */
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* Remove Tailwind space-* vertical gaps that remain when first child is hidden via display:none
-     (e.g., action panel with class print:hidden). This prevents extra top margin on print. */
-  .space-y-\[4\] > * + *,
-  .space-y-4 > * + * {
-    margin-top: 0 !important;
   }
 }

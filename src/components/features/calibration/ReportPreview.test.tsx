@@ -56,6 +56,16 @@ describe("ReportPreview", () => {
       downloadedHref = this.href;
     });
     vi.spyOn(window, "print").mockImplementation(printSpy);
+    vi.spyOn(HTMLIFrameElement.prototype, "contentWindow", "get").mockReturnValue({
+      focus: vi.fn(),
+      print: printSpy,
+      document: {
+        open: vi.fn(),
+        write: vi.fn(),
+        close: vi.fn(),
+        readyState: "complete",
+      },
+    } as any);
   });
 
   afterEach(() => {
@@ -76,7 +86,9 @@ describe("ReportPreview", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Cetak" }));
 
-    expect(printSpy).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(printSpy).toHaveBeenCalled();
+    });
   });
 
   it("mengunduh artefak PDF dari backend saat tombol Unduh PDF diklik", async () => {
