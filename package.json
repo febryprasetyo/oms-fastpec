@@ -31,6 +31,8 @@
     "@tiptap/starter-kit": "^3.29.2",
     "@types/file-saver": "^2.0.7",
     "axios": "^1.6.7",
+    "baseline-browser-mapping": "^2.11.20",
+    "caniuse-lite": "^1.0.30001810",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "cookies-next": "^4.2.1",
